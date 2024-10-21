@@ -16,9 +16,9 @@ export default function Home() {
           <li className="mb-2">
             Get started by editing{" "}
             <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
+              app/page.tsx
             </code>
-            .
+            . sauce
           </li>
           <li>Save and see your changes instantly.</li>
         </ol>
