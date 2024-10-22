@@ -38,3 +38,5 @@ Ce projet est un boilerplate pour démarrer rapidement avec Next.js et Express. 
 
 ## Licence
 [Placeholder pour les informations de licence]
+
+Code coverage reports on [Codecov](https://app.codecov.io/github/TuberculeP/Devlab-M1G1)
