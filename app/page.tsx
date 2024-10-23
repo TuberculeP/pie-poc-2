@@ -5,7 +5,7 @@ import useUserHook from "@/hooks/userHook";
 import { useEffect } from "react";
 
 export default function Home() {
-  const { user, loading, isConnected, fetchUserData } = useUserHook();
+  const { user, loading, fetchUserData } = useUserHook();
   useEffect(() => {
     fetchUserData();
   }, []);
@@ -65,7 +65,7 @@ export default function Home() {
             Read our docs
           </a>
         </div>
-        {!isConnected ? (
+        {!user ? (
           <button
             style={{
               border: "1px solid black",
