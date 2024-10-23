@@ -1,7 +1,10 @@
 name: Run tests and upload coverage
 
-on: 
-  push
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
 
 jobs:
   test:
