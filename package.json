@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx -r dotenv/config server/src/main.ts",
     "build": "velite && next build && tsc -p server",
-    "start": "NODE_ENV=production node -r module-alias/register dist/main.js",
+    "start": "NODE_ENV=production node dist/main.js",
     "test": "jest"
   },
   "dependencies": {
