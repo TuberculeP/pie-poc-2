@@ -1,6 +1,23 @@
+"use client";
+
 import Image from "next/image";
+import useUserHook from "@/hooks/userHook";
+import { useEffect } from "react";
 
 export default function Home() {
+  const { user, loading, isConnected, fetchUserData } = useUserHook();
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid place-items-center min-h-screen">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
@@ -48,6 +65,28 @@ export default function Home() {
             Read our docs
           </a>
         </div>
+        {!isConnected ? (
+          <button
+            style={{
+              border: "1px solid black",
+              padding: "10px",
+              borderRadius: "5px",
+              backgroundColor: "white",
+              color: "black",
+            }}
+            onClick={() => (window.location.href = "/auth/google")}
+          >
+            Get authenticated
+          </button>
+        ) : (
+          <div>
+            <h1>
+              {user.first_name} {user.last_name}
+            </h1>
+            <p>{user.id}</p>
+            <img src={user.picture_url} />
+          </div>
+        )}
       </main>
       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
         <a

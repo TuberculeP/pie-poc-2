@@ -1,11 +1,16 @@
 import { Router } from "express";
 import { getAllFooBars } from "../domains/fooBar/fooBar.service";
+import { authRouter } from "./auth";
 
 const router = Router();
 
-router.get("/foo-bar", async (req, res) => {
+// test route
+router.get("/api/foo-bar", async (req, res) => {
   const results = await getAllFooBars();
   res.json(results);
 });
+
+// auth routes
+router.use("/auth", authRouter);
 
 export default router;

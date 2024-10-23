@@ -11,9 +11,6 @@
     "strict": true,
     "target": "ESNext",
     "skipLibCheck": true,
-    "paths": {
-      "#/*": ["./src/*"]
-    },
     "resolveJsonModule": true,
     "sourceMap": true
   },
