@@ -8,7 +8,7 @@ async function findOrCreateUser(profile: Profile): Promise<PgUser> {
     `SELECT * FROM users WHERE google_id = $1`,
     [profile.id]
   );
-  if (rows.length) {
+  if (rows.length && rows[0]?.google_id === profile.id) {
     return rows[0];
   }
   // else create one from profile with display name as pseudo
@@ -23,11 +23,6 @@ async function findOrCreateUser(profile: Profile): Promise<PgUser> {
 }
 
 async function findById(id: string): Promise<PgUser> {
-  console.log(
-    "\x1b[44m%s\x1b[0m",
-    "server/src/domains/users/users.service.ts:26 id",
-    id
-  );
   const { rows } = await pg.query<PgUser>(`SELECT * FROM users WHERE id = $1`, [
     id,
   ]);
