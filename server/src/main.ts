@@ -3,11 +3,7 @@ import path from "path";
 import express from "express";
 import next from "next";
 import { pgConnect } from "./config/db.config";
-import { initializePassportWithGoogle } from "./config/passport.config";
 import router from "./routes";
-import cookieParser from "cookie-parser";
-import session from "express-session";
-import passport from "passport";
 
 // Load environment variables
 const dev = process.env.NODE_ENV !== "production";
@@ -20,13 +16,6 @@ dotenv.config({
 
 // Init all configs
 pgConnect();
-initializePassportWithGoogle();
-
-const { SESSION_SECRET } = process.env;
-
-if (!SESSION_SECRET) {
-  throw new Error("Please provide all the required environment variables");
-}
 
 // Next.js initialization
 const app = next({ dev });
@@ -34,19 +23,7 @@ const handle = app.getRequestHandler();
 
 // Express.js initialization
 const server = express();
-server
-  .use(cookieParser())
-  .use(
-    session({
-      secret: SESSION_SECRET,
-      resave: false,
-      saveUninitialized: false,
-      cookie: { secure: false },
-    })
-  )
-  .use(express.json())
-  .use(passport.initialize())
-  .use(passport.session());
+server.use(express.json());
 
 // Express.js routing
 server.use("/public", express.static(path.join(__dirname, "public")));
