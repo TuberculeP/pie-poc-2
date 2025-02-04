@@ -6,7 +6,9 @@ function pgConnect() {
   const { POSTGRES_URL } = process.env;
 
   if (!POSTGRES_URL) {
-    throw new Error("Please provide all the required environment variables");
+    throw new Error(
+      `Please provide all the required environment variables. Current env : \n ${process.env}`
+    );
   }
 
   pg = new postgres.Client({
