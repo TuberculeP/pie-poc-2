@@ -21,3 +21,11 @@ jobs:
 
       - name: Run build
         run: npm run build
+
+      - name: Start the server
+        run: npm run start &
+        env:
+          EXPRESS_URL: ${{ secrets.EXPRESS_URL }}
+
+      - name: Check server is running
+        run: curl --max-time 10 --silent --fail http://localhost:3000
