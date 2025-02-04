@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch -r dotenv/config server/src/main.ts",
-    "build": "velite && next build && tsc -p server",
+    "build": "next build && tsc -p server",
     "start": "NODE_ENV=production node dist/main.js",
     "test": "jest"
   },
