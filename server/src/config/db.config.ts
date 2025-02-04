@@ -7,7 +7,11 @@ function pgConnect() {
 
   if (!POSTGRES_URL) {
     throw new Error(
-      `Please provide all the required environment variables. Current env : \n ${process.env}`
+      `Please provide all the required environment variables. Current env : \n ${JSON.stringify(
+        process.env,
+        null,
+        2
+      )}`
     );
   }
 
