@@ -19,6 +19,36 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Create artifact
+        run: tar -czf build-artifact.tar.gz node_modules
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifact
+          path: build-artifact.tar.gz
+
+  start_and_check:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # Change to your Node version
+
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifact
+          path: .
+
+      - name: Extract artifact
+        run: tar -xzf build-artifact.tar.gz
+
       - name: Run build
         run: npm run build
 
