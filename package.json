@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch -r dotenv/config server/src/main.ts",
+    "build": "tsc -p server && vite build",
     "start": "NODE_ENV=production node dist/main.js",
     "test": "jest"
   },

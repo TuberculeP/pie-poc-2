@@ -5,7 +5,6 @@ import { createServer as createViteServer } from "vite";
 import { createServer as createHttpServer } from "http";
 import { pgConnect } from "./config/db.config";
 import router from "./routes";
-import vue from "@vitejs/plugin-vue";
 
 // Load environment variables
 const dev = process.env.NODE_ENV !== "production";
@@ -27,17 +26,10 @@ async function init() {
 
   if (dev) {
     // Vite.js initialization
-    const vite = await createViteServer({
-      plugins: [vue()],
-      server: {
-        middlewareMode: {
-          server,
-        },
-      },
-    });
+    const vite = await createViteServer();
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.resolve(__dirname, "../app/dist")));
+    app.use(express.static(path.resolve(__dirname, "./client")));
   }
 
   // Express.js routing
