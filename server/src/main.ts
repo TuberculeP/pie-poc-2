@@ -1,9 +1,11 @@
 import dotenv from "dotenv";
 import path from "path";
 import express from "express";
-import next from "next";
+import { createServer as createViteServer } from "vite";
+import { createServer as createHttpServer } from "http";
 import { pgConnect } from "./config/db.config";
 import router from "./routes";
+import vue from "@vitejs/plugin-vue";
 
 // Load environment variables
 const dev = process.env.NODE_ENV !== "production";
@@ -17,31 +19,34 @@ dotenv.config({
 // Init all configs
 pgConnect();
 
-// Next.js initialization
-const app = next({ dev });
-const handle = app.getRequestHandler();
+async function init() {
+  // Express.js initialization
+  const app = express();
+  const server = createHttpServer(app);
+  app.use(express.json());
 
-// Express.js initialization
-const server = express();
-server.use(express.json());
+  if (dev) {
+    // Vite.js initialization
+    const vite = await createViteServer({
+      plugins: [vue()],
+      server: {
+        middlewareMode: {
+          server,
+        },
+      },
+    });
+    app.use(vite.middlewares);
+  } else {
+    app.use(express.static(path.resolve(__dirname, "../app/dist")));
+  }
 
-// Express.js routing
-server.use("/public", express.static(path.join(__dirname, "public")));
-server.use(router);
-
-// Start the server
-app.prepare().then(() => {
-  // Express.js routes and middleware go here
-  server.get("/api/custom-route", (req, res) => {
-    res.json({ message: "This is a custom API route." });
-  });
-
-  // nextjs
-  server.all("*", (req, res) => {
-    return handle(req, res);
-  });
+  // Express.js routing
+  app.use("/public", express.static(path.join(__dirname, "public")));
+  app.use(router);
 
   server.listen(3000, () => {
     console.log("> Ready on http://localhost:3000");
   });
-});
+}
+
+init();
