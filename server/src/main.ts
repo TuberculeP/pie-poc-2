@@ -38,8 +38,8 @@ const main = async () => {
 
   app.use("/public", express.static(path.join(__dirname, "public")));
 
-  server.listen(3030, () => {
-    console.log("> Ready on http://localhost:3030");
+  server.listen(3000, () => {
+    console.log("> Ready on http://localhost:3000");
   });
 };
 
