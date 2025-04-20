@@ -3,20 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch -r dotenv/config server/src/main.ts",
+    "dev": "nodemon server/src/main.ts",
     "build": "tsc -p server && vite build",
     "start": "NODE_ENV=production node dist/main.js",
     "test": "jest"
   },
   "bin": {
-  "create-vue-express-pg": "./create.js"
-},
+    "create-vue-express-pg": "./create.js"
+  },
   "dependencies": {
     "axios": "^1.7.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "pg": "^8.13.0",
+    "reflect-metadata": "^0.2.2",
+    "sqlite3": "^5.1.7",
+    "typeorm": "^0.3.22",
     "vue": "^3.5.13"
   },
   "devDependencies": {
@@ -27,6 +30,8 @@
     "@vue/tsconfig": "^0.7.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.15",
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.2",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3",
     "vite": "^6.0.5",

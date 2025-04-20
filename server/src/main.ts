@@ -1,39 +1,29 @@
-import dotenv from "dotenv";
+import "reflect-metadata";
+import "dotenv/config";
+import pg from "./config/db.config";
 import path from "path";
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import { createServer as createHttpServer } from "http";
-import { pgConnect } from "./config/db.config";
+import router from "./routes";
 
-// Load environment variables
-const dev = process.env.NODE_ENV !== "production";
-dotenv.config({
-  path: [
-    path.resolve(__dirname, `${dev ? "../" : ""}../.env.local`),
-    path.resolve(__dirname, `${dev ? "../" : ""}../.env`),
-  ],
-});
+const main = async () => {
+  const dev = process.env.NODE_ENV !== "production";
 
-// Init all configs
-pgConnect();
-
-async function init() {
-  // Express.js initialization
   const app = express();
   const server = createHttpServer(app);
   app.use(express.json());
+  app.use("/api", router);
 
   const vite = await createViteServer();
 
   if (dev) {
-    // Vite.js initialization
     app.use(vite.middlewares);
   } else {
     // Serve static files from the client directory
     app.use(express.static(path.resolve(__dirname, "./client")));
   }
 
-  // Middleware to handle all other routes with Vite
   app.use(async (req, res, next) => {
     if (req.path.startsWith("/api")) {
       next();
@@ -46,12 +36,16 @@ async function init() {
     }
   });
 
-  // Express.js routing
   app.use("/public", express.static(path.join(__dirname, "public")));
 
-  server.listen(3000, () => {
-    console.log("> Ready on http://localhost:3000");
+  server.listen(3030, () => {
+    console.log("> Ready on http://localhost:3030");
   });
-}
+};
 
-init();
+// start typeorm migration and server
+(async () => {
+  await pg.initialize();
+  await pg.runMigrations();
+  await main();
+})();

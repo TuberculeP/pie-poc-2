@@ -41,3 +41,6 @@ logs
 *.njsproj
 *.sln
 *.sw?
+
+*.sqlite
+*.db

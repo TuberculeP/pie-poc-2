@@ -1,46 +1,29 @@
-import { Pool, Client } from "pg";
+import "reflect-metadata";
+import "dotenv/config";
+import { DataSource } from "typeorm";
+import entities from "./entities";
 
-const pgPool = new Pool({
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+const { POSTGRES_URL } = process.env;
 
-let pgClient: Client;
+let pg: DataSource;
 
-async function pgConnect() {
-  const { POSTGRES_URL } = process.env;
-
-  if (!POSTGRES_URL) {
-    throw new Error("Please provide all the required environment variables");
-  }
-
-  pgPool.options.connectionString = POSTGRES_URL;
-  pgClient = new Client({
-    connectionString: POSTGRES_URL,
+if (POSTGRES_URL) {
+  pg = new DataSource({
+    type: "postgres",
+    url: POSTGRES_URL,
+    synchronize: true,
+    entities,
+    migrationsTableName: "migration_table",
   });
-
-  pgPool.connect((err) => {
-    if (err) {
-      console.error("Connection error", err.stack);
-    } else {
-      console.log("> Connected to the database via pool");
-    }
-  });
-
-  pgClient.connect((err) => {
-    if (err) {
-      console.error("Connection error", err.stack);
-    } else {
-      console.log("> Connected to the database via client");
-    }
-  });
-
-  pgClient.on("error", (err) => {
-    console.error("pgClient error", err.stack);
-    console.info("Attempting to reconnect pgClient");
-    pgConnect();
+} else {
+  console.warn("POSTGRES_URL not provided. Falling back to SQLite.");
+  pg = new DataSource({
+    type: "sqlite",
+    database: "sqlite.db",
+    synchronize: true,
+    entities,
+    migrationsTableName: "migration_table",
   });
 }
 
-export { pgPool as pg, pgClient, pgConnect };
+export default pg;
