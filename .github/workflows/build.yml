@@ -23,7 +23,7 @@ jobs:
         run: npm run build
 
       - name: Create artifact
-        run: tar -czf build-artifact.tar.gz node_modules dist .next next-env.d.ts
+        run: tar -czf build-artifact.tar.gz node_modules dist
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
