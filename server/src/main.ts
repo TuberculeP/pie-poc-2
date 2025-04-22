@@ -20,7 +20,6 @@ const main = async () => {
   if (dev) {
     app.use(vite.middlewares);
   } else {
-    // Serve static files from the client directory
     app.use(express.static(path.resolve(__dirname, "./client")));
   }
 

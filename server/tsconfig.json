@@ -22,7 +22,7 @@
     "noUncheckedSideEffectImports": true
   },
   "compileOnSave": true,
-  "include": ["src", "src/config/entities"],
+  "include": ["src"],
   "ts-node": {
     "files": true
   }

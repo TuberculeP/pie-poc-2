@@ -7,7 +7,8 @@ export default defineConfig({
         middlewareMode: true,
     },
     build: {
-        outDir: 'dist/client',
+        outDir: '../dist/client',
+        emptyOutDir: true,
     },
     root: 'webapp',
 })

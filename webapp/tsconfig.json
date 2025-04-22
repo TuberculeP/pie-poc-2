@@ -18,14 +18,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "server.mjs",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue"
-  ],
+  "include": ["**/*.ts", "**/*.vue"],
   "exclude": ["node_modules"],
   "extends": "@vue/tsconfig/tsconfig.dom.json"
 }
