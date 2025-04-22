@@ -9,4 +9,5 @@ export default defineConfig({
     build: {
         outDir: 'dist/client',
     },
+    root: 'webapp',
 })
