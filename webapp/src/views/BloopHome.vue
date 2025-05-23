@@ -8,5 +8,7 @@ const { t } = useI18n();
   <div>
     <h1>{{ t("app.title") }}</h1>
   </div>
-  <div><button>Accéder à l'application</button></div>
+  <div>
+    <RouterLink :to="{ name: 'app-main' }">Accéder à l'application</RouterLink>
+  </div>
 </template>

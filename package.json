@@ -9,6 +9,7 @@
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
+    "@vueuse/components": "^13.2.0",
     "@vueuse/core": "^13.2.0",
     "axios": "^1.7.7",
     "cors": "^2.8.5",
