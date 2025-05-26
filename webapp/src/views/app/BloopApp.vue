@@ -1,5 +1,14 @@
 <script setup lang="ts">
+import { onBeforeMount } from "vue";
+import BloopBasicSynth from "../../components/app/BloopBasicSynth.vue";
 import BloopSubWindow from "../../components/app/BloopSubWindow.vue";
+
+import { useMIDIStore } from "../../stores/MIDIStore.ts";
+const { initializeMIDI } = useMIDIStore();
+
+onBeforeMount(() => {
+  initializeMIDI();
+});
 </script>
 
 <template>
@@ -9,7 +18,7 @@ import BloopSubWindow from "../../components/app/BloopSubWindow.vue";
       <template #activator="{ active }">
         <button :class="{ active }">Test Sub window</button>
       </template>
-      <h1>Content</h1>
+      <BloopBasicSynth />
     </BloopSubWindow>
   </div>
 </template>
