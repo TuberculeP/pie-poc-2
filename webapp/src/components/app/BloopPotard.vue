@@ -12,15 +12,22 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import _ from "lodash";
 
 const bitRotation = defineModel<number>({ default: 0 });
+const { max = 127, precision = 1 } = defineProps<{
+  max?: number;
+  precision?: number;
+}>();
+
+const maxDragHeight = 150;
 
 const startY = ref(0);
 const startValue = ref(0);
 const dragging = ref(false);
 
 const computedStyle = computed(() => {
-  const angle = (bitRotation.value / 127) * 300 + 30;
+  const angle = (bitRotation.value / max) * 300 + 30;
   return {
     transform: `rotate(${angle}deg)`,
   };
@@ -32,8 +39,8 @@ function onDrag(e: MouseEvent | TouchEvent) {
     "touches" in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
   const delta = startY.value - clientY;
   let newValue = startValue.value + delta;
-  newValue = Math.max(0, Math.min(127, newValue));
-  bitRotation.value = newValue;
+  newValue = Math.max(0, Math.min(max, (max * delta) / maxDragHeight));
+  bitRotation.value = _.round(newValue, precision);
 }
 
 function stopDrag() {

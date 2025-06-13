@@ -1,25 +1,34 @@
 <script setup lang="ts">
-import { onBeforeMount } from "vue";
 import BloopBasicSynth from "../../components/app/instruments/BloopBasicSynth.vue";
 import BloopSubWindow from "../../components/app/BloopSubWindow.vue";
+import { useMainStore } from "../../stores/mainStore";
+import BloopElementarySynth from "../../components/app/instruments/BloopElementarySynth.vue";
+import { storeToRefs } from "pinia";
 
-import { useMIDIStore } from "../../stores/MIDIStore.ts";
-const { initializeMIDI } = useMIDIStore();
-
-onBeforeMount(() => {
-  initializeMIDI();
-});
+const mainStore = useMainStore();
+const { isLoaded, loadPercentage } = storeToRefs(mainStore);
+const { loadAll } = mainStore;
 </script>
 
 <template>
   <div>
     <h1>App</h1>
-    <BloopSubWindow>
-      <template #activator="{ active }">
-        <button :class="{ active }">Test Sub window</button>
-      </template>
-      <BloopBasicSynth />
-    </BloopSubWindow>
+    <p>App loading current state : {{ loadPercentage }}%</p>
+    <button @click="loadAll">Start app</button>
+    <div v-if="isLoaded">
+      <BloopSubWindow>
+        <template #activator="{ active }">
+          <button :class="{ active }">Basic</button>
+        </template>
+        <BloopBasicSynth />
+      </BloopSubWindow>
+      <BloopSubWindow>
+        <template #activator="{ active }">
+          <button :class="{ active }">Elementary</button>
+        </template>
+        <BloopElementarySynth />
+      </BloopSubWindow>
+    </div>
   </div>
 </template>
 
