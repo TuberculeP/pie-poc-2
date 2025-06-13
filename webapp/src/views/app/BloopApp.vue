@@ -4,6 +4,7 @@ import BloopSubWindow from "../../components/app/BloopSubWindow.vue";
 import { useMainStore } from "../../stores/mainStore";
 import BloopElementarySynth from "../../components/app/instruments/BloopElementarySynth.vue";
 import { storeToRefs } from "pinia";
+import BloopSmplr from "../../components/app/instruments/BloopSmplr.vue";
 
 const mainStore = useMainStore();
 const { isLoaded, loadPercentage } = storeToRefs(mainStore);
@@ -27,6 +28,12 @@ const { loadAll } = mainStore;
           <button :class="{ active }">Elementary</button>
         </template>
         <BloopElementarySynth />
+      </BloopSubWindow>
+      <BloopSubWindow>
+        <template #activator="{ active }">
+          <button :class="{ active }">Smplr</button>
+        </template>
+        <BloopSmplr />
       </BloopSubWindow>
     </div>
   </div>
