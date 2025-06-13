@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import BloopPotard from "./BloopPotard.vue";
-import type { Note } from "../../lib/utils/types.ts";
+import BloopPotard from "../BloopPotard.vue";
+import type { Note } from "../../../lib/utils/types.ts";
 import _ from "lodash";
-import { useMIDIStore } from "../../stores/MIDIStore.ts";
+import { useMIDIStore } from "../../../stores/MIDIStore.ts";
 import { ref } from "vue";
 import { watch } from "vue";
 const MIDIStore = useMIDIStore();
