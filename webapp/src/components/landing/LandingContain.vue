@@ -2,146 +2,164 @@
   <main class="main-section">
     <!-- Hero Section -->
     <section class="hero">
-  <div class="hero-background">
-    <div class="floating-cubes">
-      <div class="cube cube-1"></div>
-      <div class="cube cube-2"></div>
-      <div class="cube cube-3"></div>
-      <div class="cube cube-4"></div>
-      <div class="cube cube-5"></div>
-    </div>
-  </div>
-
-  <div class="hero-container">
-    <div class="hero-content">
-      <h1 class="hero-title">
-        <span class="title-highlight">BLOOP</span>
-        <span class="title-main">Compose, mixe, crée – sans rien installer</span>
-      </h1>
-      <p class="hero-description">
-        Compose, enregistre et mixe ta musique depuis ton navigateur. Aucun téléchargement, aucune limite.  
-        BLOOP te suit partout, que tu sois chez toi, en studio ou en tournée.
-      </p>
-      <div class="hero-stats">
-        <div class="stat">
-          <span class="stat-number">+20k</span>
-          <span class="stat-label">Créateurs actifs</span>
-        </div>
-        <div class="stat">
-          <span class="stat-number">100%</span>
-          <span class="stat-label">Basé sur le cloud</span>
-        </div>
-        <div class="stat">
-          <span class="stat-number">∞</span>
-          <span class="stat-label">Pistes & projets</span>
+      <div class="hero-background">
+        <div class="floating-cubes">
+          <div class="cube cube-1"></div>
+          <div class="cube cube-2"></div>
+          <div class="cube cube-3"></div>
+          <div class="cube cube-4"></div>
+          <div class="cube cube-5"></div>
         </div>
       </div>
-      <div class="hero-buttons">
-        <button class="btn btn-primary">
-          <i class="fas fa-headphones"></i>
-          Essayer BLOOP
-        </button>
-        <button class="btn btn-secondary">
-          <i class="fas fa-play"></i>
-          Voir la démo
-        </button>
-      </div>
-    </div>
 
-    <div class="hero-visual">
-      <div class="studio-mockup">
-        <div class="studio-header">
-          <span class="studio-title">Session: bloop-demo-session.bloop.app</span>
+      <div class="hero-container">
+        <div class="hero-content">
+          <h1 class="hero-title">
+            <span class="title-highlight">BLOOP</span>
+            <span class="title-main"
+              >Compose, mixe, crée – sans rien installer</span
+            >
+          </h1>
+          <p class="hero-description">
+            Compose, enregistre et mixe ta musique depuis ton navigateur. Aucun
+            téléchargement, aucune limite. BLOOP te suit partout, que tu sois
+            chez toi, en studio ou en tournée.
+          </p>
+          <div class="hero-stats">
+            <div class="stat">
+              <span class="stat-number">+20k</span>
+              <span class="stat-label">Créateurs actifs</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">100%</span>
+              <span class="stat-label">Basé sur le cloud</span>
+            </div>
+            <div class="stat">
+              <span class="stat-number">∞</span>
+              <span class="stat-label">Pistes & projets</span>
+            </div>
+          </div>
+          <div class="hero-buttons">
+            <a class="btn btn-primary" href="/app">
+              <i class="fas fa-headphones"></i>
+              Essayer BLOOP
+            </a>
+            <button class="btn btn-secondary">
+              <i class="fas fa-play"></i>
+              Voir la démo
+            </button>
+          </div>
         </div>
-        <div class="studio-console">
-          <div class="console-line">
-            <span class="timestamp">[00:00:01]</span>
-            <span class="info">🎧 BPM: 120 | Key: A Minor</span>
-          </div>
-          <div class="console-line">
-            <span class="timestamp">[00:00:05]</span>
-            <span class="success">🎹 Piano Roll activé</span>
-          </div>
-          <div class="console-line">
-            <span class="timestamp">[00:00:12]</span>
-            <span class="info">🎚️ Reverb ajoutée sur Piste 4</span>
-          </div>
-          <div class="console-line">
-            <span class="timestamp">[00:00:19]</span>
-            <span class="success">🎙️ Enregistrement vocal démarré</span>
+
+        <div class="hero-visual">
+          <div class="studio-mockup">
+            <div class="studio-header">
+              <span class="studio-title"
+                >Session: bloop-demo-session.bloop.app</span
+              >
+            </div>
+            <div class="studio-console">
+              <div class="console-line">
+                <span class="timestamp">[00:00:01]</span>
+                <span class="info">🎧 BPM: 120 | Key: A Minor</span>
+              </div>
+              <div class="console-line">
+                <span class="timestamp">[00:00:05]</span>
+                <span class="success">🎹 Piano Roll activé</span>
+              </div>
+              <div class="console-line">
+                <span class="timestamp">[00:00:12]</span>
+                <span class="info">🎚️ Reverb ajoutée sur Piste 4</span>
+              </div>
+              <div class="console-line">
+                <span class="timestamp">[00:00:19]</span>
+                <span class="success">🎙️ Enregistrement vocal démarré</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
-
+    </section>
 
     <!-- Features Section -->
     <section class="features">
-  <div class="container">
-    <h2 class="section-title">Pourquoi choisir BLOOP ?</h2>
-    <div class="features-grid">
-      
-      <div class="feature-card">
-        <div class="feature-icon">
-          <i class="fas fa-bolt"></i>
+      <div class="container">
+        <h2 class="section-title">Pourquoi choisir BLOOP ?</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-bolt"></i>
+            </div>
+            <h3>Performances audio pro</h3>
+            <p>
+              Latence ultra faible, rendu en temps réel, et moteur audio stable
+              pour une expérience studio fluide.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-cloud"></i>
+            </div>
+            <h3>100% Cloud</h3>
+            <p>
+              Accède à tous tes projets où que tu sois, depuis n'importe quel
+              appareil, sans installation.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-sliders-h"></i>
+            </div>
+            <h3>Interface intuitive</h3>
+            <p>
+              Un environnement pensé pour la créativité : simple, rapide, sans
+              distraction.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <h3>Collaboration en direct</h3>
+            <p>
+              Crée à plusieurs en temps réel. Invite des amis ou collègues à
+              rejoindre ta session instantanément.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-microphone-alt"></i>
+            </div>
+            <h3>Enregistrement multi-pistes</h3>
+            <p>
+              Enregistre voix, instruments et midi directement depuis ton
+              navigateur, sans plugin.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-infinity"></i>
+            </div>
+            <h3>Pistes et presets illimités</h3>
+            <p>
+              Compose sans contrainte : ajoute autant de pistes, effets et
+              instruments que tu veux.
+            </p>
+          </div>
         </div>
-        <h3>Performances audio pro</h3>
-        <p>Latence ultra faible, rendu en temps réel, et moteur audio stable pour une expérience studio fluide.</p>
       </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <i class="fas fa-cloud"></i>
-        </div>
-        <h3>100% Cloud</h3>
-        <p>Accède à tous tes projets où que tu sois, depuis n'importe quel appareil, sans installation.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <i class="fas fa-sliders-h"></i>
-        </div>
-        <h3>Interface intuitive</h3>
-        <p>Un environnement pensé pour la créativité : simple, rapide, sans distraction.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <i class="fas fa-users"></i>
-        </div>
-        <h3>Collaboration en direct</h3>
-        <p>Crée à plusieurs en temps réel. Invite des amis ou collègues à rejoindre ta session instantanément.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <i class="fas fa-microphone-alt"></i>
-        </div>
-        <h3>Enregistrement multi-pistes</h3>
-        <p>Enregistre voix, instruments et midi directement depuis ton navigateur, sans plugin.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <i class="fas fa-infinity"></i>
-        </div>
-        <h3>Pistes et presets illimités</h3>
-        <p>Compose sans contrainte : ajoute autant de pistes, effets et instruments que tu veux.</p>
-      </div>
-
-    </div>
-  </div>
-</section>
-
+    </section>
 
     <!-- Pricing Section -->
     <section class="pricing">
       <div class="container">
         <h2 class="section-title">Nos formules de création</h2>
         <div class="pricing-grid">
-
           <div class="pricing-card">
             <div class="pricing-header">
               <h3>Freenium</h3>
@@ -154,7 +172,9 @@
             <ul class="pricing-features">
               <li><i class="fas fa-check"></i> Accès à l’espace MAO limité.</li>
               <li><i class="fas fa-check"></i> Plus de 20000 boucles</li>
-              <li><i class="fas fa-check"></i> Plus de 500 instruments et sons</li>
+              <li>
+                <i class="fas fa-check"></i> Plus de 500 instruments et sons
+              </li>
               <li><i class="fas fa-check"></i> Espace communautaire</li>
             </ul>
             <button class="btn btn-outline">Démarrer gratuitement</button>
@@ -171,7 +191,9 @@
               </div>
             </div>
             <ul class="pricing-features">
-              <li><i class="fas fa-check"></i> Accès illimité à l’espace MAO </li>
+              <li>
+                <i class="fas fa-check"></i> Accès illimité à l’espace MAO
+              </li>
               <li><i class="fas fa-check"></i> Plus de 30000 boucles</li>
               <li><i class="fas fa-check"></i> Partage et collaboration</li>
               <li><i class="fas fa-check"></i> Espace communautaire enrichi</li>
@@ -190,83 +212,91 @@
               </div>
             </div>
             <ul class="pricing-features">
-              <li><i class="fas fa-check"></i> Accès illimité à l’espace MAO </li>
-              <li><i class="fas fa-check"></i> Collaboration avancée </li>
-              <li><i class="fas fa-check"></i> Real Time vocal tuning et + de 40 effets</li>
+              <li>
+                <i class="fas fa-check"></i> Accès illimité à l’espace MAO
+              </li>
+              <li><i class="fas fa-check"></i> Collaboration avancée</li>
+              <li>
+                <i class="fas fa-check"></i> Real Time vocal tuning et + de 40
+                effets
+              </li>
               <li><i class="fas fa-check"></i> Espace communautaire premium</li>
-              <li><i class="fas fa-check"></i> Diffusion de podcast sur Spotify </li>
+              <li>
+                <i class="fas fa-check"></i> Diffusion de podcast sur Spotify
+              </li>
             </ul>
             <button class="btn btn-outline">Choisir ce plan</button>
           </div>
-
         </div>
       </div>
     </section>
-
 
     <LandingIncluded />
 
     <!-- Community Section -->
     <section class="community">
-  <div class="container">
-    <div class="community-content">
+      <div class="container">
+        <div class="community-content">
+          <div class="community-text">
+            <h2>Rejoignez la communauté BLOOP</h2>
+            <p>
+              Des milliers de beatmakers, producteurs et musiciens créent déjà
+              avec BLOOP. Échange, collabore et progresse au sein d’un
+              écosystème 100% dédié à la création sonore.
+            </p>
 
-      <div class="community-text">
-        <h2>Rejoignez la communauté BLOOP</h2>
-        <p>Des milliers de beatmakers, producteurs et musiciens créent déjà avec BLOOP. Échange, collabore et progresse au sein d’un écosystème 100% dédié à la création sonore.</p>
-        
-        <div class="community-stats">
-          <div class="community-stat">
-            <i class="fab fa-discord"></i>
-            <span>+8 000 membres sur Discord</span>
-          </div>
-          <div class="community-stat">
-            <i class="fas fa-music"></i>
-            <span>Sessions collaboratives en continu</span>
-          </div>
-        </div>
-
-        <button class="btn btn-secondary">
-          <i class="fab fa-discord"></i>
-          Rejoindre la communauté
-        </button>
-      </div>
-
-      <div class="community-visual">
-        <div class="testimonial">
-          <div class="testimonial-content">
-            <p>"BLOOP m’a permis de produire un EP complet depuis mon ordi portable, sans rien installer. Une vraie révolution."</p>
-            <div class="testimonial-author">
-              <div class="author-avatar">
-                <i class="fas fa-user-music"></i>
+            <div class="community-stats">
+              <div class="community-stat">
+                <i class="fab fa-discord"></i>
+                <span>+8 000 membres sur Discord</span>
               </div>
-              <div class="author-info">
-                <span class="author-name">LunaBeats</span>
-                <span class="author-role">Productrice indépendante</span>
+              <div class="community-stat">
+                <i class="fas fa-music"></i>
+                <span>Sessions collaboratives en continu</span>
+              </div>
+            </div>
+
+            <button class="btn btn-secondary">
+              <i class="fab fa-discord"></i>
+              Rejoindre la communauté
+            </button>
+          </div>
+
+          <div class="community-visual">
+            <div class="testimonial">
+              <div class="testimonial-content">
+                <p>
+                  "BLOOP m’a permis de produire un EP complet depuis mon ordi
+                  portable, sans rien installer. Une vraie révolution."
+                </p>
+                <div class="testimonial-author">
+                  <div class="author-avatar">
+                    <i class="fas fa-user-music"></i>
+                  </div>
+                  <div class="author-info">
+                    <span class="author-name">LunaBeats</span>
+                    <span class="author-role">Productrice indépendante</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-    </div>
-  </div>
-</section>
-
+    </section>
   </main>
 </template>
 
 <script>
-import LandingIncluded from './LandingIncluded.vue'
+import LandingIncluded from "./LandingIncluded.vue";
 
 export default {
-  name: 'HelloWorld',
+  name: "HelloWorld",
   components: {
-    LandingIncluded
-  }
-}
+    LandingIncluded,
+  },
+};
 </script>
-
 
 <style scoped>
 .main-section {
@@ -303,20 +333,45 @@ export default {
   position: absolute;
   width: 20px;
   height: 20px;
-  background: #FFD269;
+  background: #ffd269;
   transform: rotate(45deg);
   animation: float 6s ease-in-out infinite;
 }
 
-.cube-1 { top: 20%; left: 10%; animation-delay: 0s; }
-.cube-2 { top: 60%; left: 20%; animation-delay: 2s; }
-.cube-3 { top: 30%; right: 15%; animation-delay: 4s; }
-.cube-4 { bottom: 20%; left: 30%; animation-delay: 1s; }
-.cube-5 { bottom: 40%; right: 10%; animation-delay: 3s; }
+.cube-1 {
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+.cube-2 {
+  top: 60%;
+  left: 20%;
+  animation-delay: 2s;
+}
+.cube-3 {
+  top: 30%;
+  right: 15%;
+  animation-delay: 4s;
+}
+.cube-4 {
+  bottom: 20%;
+  left: 30%;
+  animation-delay: 1s;
+}
+.cube-5 {
+  bottom: 40%;
+  right: 10%;
+  animation-delay: 3s;
+}
 
 @keyframes float {
-  0%, 100% { transform: rotate(45deg) translateY(0px); }
-  50% { transform: rotate(45deg) translateY(-20px); }
+  0%,
+  100% {
+    transform: rotate(45deg) translateY(0px);
+  }
+  50% {
+    transform: rotate(45deg) translateY(-20px);
+  }
 }
 
 .hero-container {
@@ -336,8 +391,14 @@ export default {
 }
 
 @keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-30px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .hero-title {
@@ -349,7 +410,7 @@ export default {
 
 .title-highlight {
   display: block;
-  background: linear-gradient(45deg, #FFD269, #FFD269);
+  background: linear-gradient(45deg, #ffd269, #ffd269);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -381,7 +442,7 @@ export default {
   display: block;
   font-size: 2rem;
   font-weight: bold;
-  color: #FFD269;
+  color: #ffd269;
 }
 
 .stat-label {
@@ -409,8 +470,8 @@ export default {
 }
 
 .btn-primary {
-  background: linear-gradient(45deg, #FFD269, #FFD269);
-  color: #060B17;
+  background: linear-gradient(45deg, #ffd269, #ffd269);
+  color: #060b17;
 }
 
 .btn-primary:hover {
@@ -421,11 +482,11 @@ export default {
 .btn-secondary {
   background: transparent;
   color: #fff;
-  border: 2px solid #FFD269;
+  border: 2px solid #ffd269;
 }
 
 .btn-secondary:hover {
-  background: #FFD269;
+  background: #ffd269;
   transform: translateY(-2px);
 }
 
@@ -443,7 +504,7 @@ export default {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   width: 100%;
   max-width: 500px;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: "Courier New", Courier, monospace;
   overflow: hidden;
 }
 
@@ -486,7 +547,7 @@ export default {
 }
 
 .success {
-  color: #FFD269;
+  color: #ffd269;
 }
 
 .warning {
@@ -540,7 +601,7 @@ export default {
 .feature-icon {
   width: 60px;
   height: 60px;
-  background: linear-gradient(45deg, #FFD269, #FFD269);
+  background: linear-gradient(45deg, #ffd269, #ffd269);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -592,7 +653,7 @@ export default {
 }
 
 .pricing-card.popular {
-  border: 2px solid #FFD269;
+  border: 2px solid #ffd269;
   transform: scale(1.05);
 }
 
@@ -601,7 +662,7 @@ export default {
   top: -10px;
   left: 50%;
   transform: translateX(-50%);
-  background: #FFD269;
+  background: #ffd269;
   color: #fff;
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -621,14 +682,14 @@ export default {
 
 .currency {
   font-size: 1.2rem;
-  color: #FFD269;
+  color: #ffd269;
   vertical-align: top;
 }
 
 .amount {
   font-size: 3rem;
   font-weight: 700;
-  color: #FFD269;
+  color: #ffd269;
 }
 
 .period {
@@ -650,17 +711,17 @@ export default {
 }
 
 .pricing-features i {
-  color: #FFD269;
+  color: #ffd269;
 }
 
 .btn-outline {
   background: transparent;
-  color: #FFD269;
-  border: 2px solid #FFD269;
+  color: #ffd269;
+  border: 2px solid #ffd269;
 }
 
 .btn-outline:hover {
-  background: #FFD269;
+  background: #ffd269;
   color: #fff;
 }
 
@@ -705,7 +766,7 @@ export default {
 }
 
 .community-stat i {
-  color: #FFD269;
+  color: #ffd269;
   font-size: 1.2rem;
 }
 
@@ -732,7 +793,7 @@ export default {
 .author-avatar {
   width: 50px;
   height: 50px;
-  background: #FFD269;
+  background: #ffd269;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -763,30 +824,31 @@ export default {
     text-align: center;
   }
 
-  .pricing-card, .pricing-card.popular{
+  .pricing-card,
+  .pricing-card.popular {
     display: flex;
     flex-direction: column;
     align-items: center;
   }
-  
+
   .hero-title {
     font-size: 2.5rem;
   }
-  
+
   .hero-buttons {
     justify-content: center;
   }
-  
+
   .hero-stats {
     justify-content: center;
   }
-  
+
   .community-content {
     grid-template-columns: 1fr;
     gap: 2rem;
     text-align: center;
   }
-  
+
   .pricing-card.popular {
     transform: none;
   }
