@@ -1,11 +1,13 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import BloopHome from "./views/BloopHome.vue";
-import BloopApp from "./views/BloopApp.vue";
+
+// Bloob Webapp
+import BloopApp from "./views/app/BloopApp.vue";
 
 const routes = [
   { path: "/", component: BloopHome },
-  { path: "/app", component: BloopApp },
+  { path: "/app", component: BloopApp, name: "app-main" },
 ];
 
 export const router = createRouter({
