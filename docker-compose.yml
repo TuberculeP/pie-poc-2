@@ -21,8 +21,6 @@ services:
     container_name: express-vue-app
     environment:
       POSTGRES_URL: postgres://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-mydatabase}
-    ports:
-      - "3000:3000"
     depends_on:
       postgres:
         condition: service_healthy
