@@ -40,7 +40,7 @@ socket.on("connect", () => {
   state.connected = true;
   console.log("WebSocket connected");
   state._immediateListeners.forEach((cb) => cb(socket));
-  state._immediateListeners = [];
+  state._immediateListeners.splice(0);
 });
 
 socket.on("disconnect", () => {
