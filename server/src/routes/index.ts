@@ -1,6 +1,7 @@
 import { Router } from "express";
 import pg from "../config/db.config";
 import { Foo } from "../config/entities/Foo";
+import postsRouter from "./network/posts";
 
 const router = Router();
 
@@ -12,5 +13,7 @@ router.get("/", (_, res) => {
     foos,
   });
 });
+
+router.use("/posts", postsRouter);
 
 export default router;
