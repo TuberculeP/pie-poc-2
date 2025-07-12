@@ -34,6 +34,7 @@ postsRouter.post("/", async (req, res) => {
             message: "Post successfully created",
             body: newPost
         })
+        return;
     } catch (err) {
         res.json(err)
     }
@@ -51,6 +52,7 @@ postsRouter.get("/", async (_, res) => {
             message: "Posts successfully retrieved",
             body: allPosts
         })
+        return;
     } catch (err) {
         res.json(err)
     }
@@ -68,6 +70,7 @@ postsRouter.get("/:id", async (req, res) => {
                 status: 404,
                 message: "Post not found",
             })
+            return;
         }
 
         res.status(200).json({
@@ -75,6 +78,7 @@ postsRouter.get("/:id", async (req, res) => {
             message: "Post successfully retrieved",
             body: post
         })
+        return;
     } catch (err) {
         res.json(err)
     }
@@ -90,18 +94,20 @@ postsRouter.patch("/:id", async (req, res) => {
         })
 
         if (post) {
-            await postRepository.save({...post, ...updates})
-            res.status(204).json({
-                status: 204,
-                message: "Post successfully deleted",
+            const postUpdated = await postRepository.save({...post, ...updates})
+            res.status(200).json({
+                status: 200,
+                message: "Post successfully updated",
+                body: postUpdated
             })
+            return;
         }
 
         res.status(404).json({
             status: 404,
             message: "Post not found",
         })
-
+        return;
     } catch (err) {
         res.json(err)
     }
@@ -115,17 +121,21 @@ postsRouter.delete("/:id", async (req, res) => {
         })
 
         if (post) {
-            await postRepository.remove(post)
+            /*await postRepository.remove(post)*/
+            await postRepository.query(`DELETE FROM post WHERE id = ?`, [req.params.id])
+
             res.status(204).json({
                 status: 204,
                 message: "Post successfully deleted",
             })
+            return;
         }
 
         res.status(404).json({
             status: 404,
             message: "Post not found",
         })
+        return;
     } catch (err) {
         res.json(err)
     }
