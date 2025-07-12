@@ -4,7 +4,7 @@ import {Post} from "../../config/entities/Post";
 
 const postsRouter = Router();
 
-postsRouter.post("/create/new", async (req, res) => {
+postsRouter.post("/", async (req, res) => {
     try {
         const postRepository = pg.getRepository(Post)
         let {author, body, tags, comment_of, comments, highlight_on_tag, pinned_by_user} = req.body
@@ -39,10 +39,12 @@ postsRouter.post("/create/new", async (req, res) => {
     }
 })
 
-postsRouter.get("/fetch/all", async (_, res) => {
+postsRouter.get("/", async (_, res) => {
     try {
         const postRepository = pg.getRepository(Post)
-        let allPosts = await postRepository.find()
+        let allPosts = await postRepository.find({
+            order: { createdAt: "DESC" }
+        })
 
         res.status(200).json({
             status: 200,
@@ -54,7 +56,7 @@ postsRouter.get("/fetch/all", async (_, res) => {
     }
 })
 
-postsRouter.get("/fetch/:id", async (req, res) => {
+postsRouter.get("/:id", async (req, res) => {
     try {
         const postRepository = pg.getRepository(Post)
         let post = await postRepository.findOne({
@@ -62,8 +64,8 @@ postsRouter.get("/fetch/:id", async (req, res) => {
         })
 
         if (!post) {
-            res.status(200).json({
-                status: 204,
+            res.status(404).json({
+                status: 404,
                 message: "Post not found",
             })
         }
@@ -78,7 +80,7 @@ postsRouter.get("/fetch/:id", async (req, res) => {
     }
 })
 
-postsRouter.put("/update/:id", async (req, res) => {
+postsRouter.patch("/:id", async (req, res) => {
     try {
         const postRepository = pg.getRepository(Post)
         const updates = req.body
@@ -86,19 +88,26 @@ postsRouter.put("/update/:id", async (req, res) => {
         const post = await postRepository.findOne({
             where: { id: req.params.id }
         })
-        const updatedPost = await postRepository.save({...post, ...updates})
 
-        res.status(200).json({
-            status: 200,
-            message: "Post successfully updated",
-            body: updatedPost
+        if (post) {
+            await postRepository.save({...post, ...updates})
+            res.status(204).json({
+                status: 204,
+                message: "Post successfully deleted",
+            })
+        }
+
+        res.status(404).json({
+            status: 404,
+            message: "Post not found",
         })
+
     } catch (err) {
         res.json(err)
     }
 })
 
-postsRouter.delete("/delete/:id", async (req, res) => {
+postsRouter.delete("/:id", async (req, res) => {
     try {
         const postRepository = pg.getRepository(Post)
         const post = await postRepository.findOne({
@@ -107,16 +116,16 @@ postsRouter.delete("/delete/:id", async (req, res) => {
 
         if (post) {
             await postRepository.remove(post)
-            res.status(200).json({
-                status: 200,
+            res.status(204).json({
+                status: 204,
                 message: "Post successfully deleted",
             })
-        } else {
-            res.status(404).json({
-                status: 404,
-                message: "Post not founded",
-            })
         }
+
+        res.status(404).json({
+            status: 404,
+            message: "Post not found",
+        })
     } catch (err) {
         res.json(err)
     }
