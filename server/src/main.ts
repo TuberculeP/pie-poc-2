@@ -8,6 +8,10 @@ import { createServer as createHttpServer } from "http";
 import { Server as WSServer } from "socket.io";
 import { registerWebsocketListeners } from "./events/event_handler";
 import router from "./routes";
+import session from "express-session";
+import cookieParser from "cookie-parser";
+import passport from "passport";
+import './config/passport.config'; // Ensure passport is configured
 
 const main = async () => {
   const dev = process.env.NODE_ENV !== "production";
@@ -16,6 +20,20 @@ const main = async () => {
   const server = createHttpServer(app);
   app.use(express.json());
   app.use("/api", router);
+  
+  app
+  .use(cookieParser())
+  .use(
+    session({
+      secret: "ouiouifaitdelavoiture",
+      resave: false,
+      saveUninitialized: false,
+      cookie: { secure: false },
+    })
+  )
+  .use(express.json())
+  .use(passport.initialize())
+  .use(passport.session());
 
   const vite = await createViteServer();
 

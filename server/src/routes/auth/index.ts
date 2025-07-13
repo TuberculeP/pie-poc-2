@@ -3,6 +3,8 @@ import { User } from "../../config/entities/User";
 import pg from "../../config/db.config";
 import bcrypt from "bcrypt";
 import _ from "lodash";
+import passport from "passport";
+
 
 const authRouter = Router();
 
@@ -33,32 +35,10 @@ authRouter.post("/register", async (req, res) => {
   });
 });
 
-authRouter.post("/login", async (req, res) => {
-  // Validate user
-  const { email, password } = req.body;
-  if (!email || !password) {
-    res.status(400).json({ message: "All fields are required" });
-    return;
-  }
-
-  const userRepository = pg.getRepository(User);
-  const existingUser = await userRepository.findOne({ where: { email } });
-  if (!existingUser) {
-    res.status(404).json({ message: "User not found" });
-    return;
-  }
-
-  const isPasswordValid = bcrypt.compareSync(password, existingUser.password);
-
-  if (!isPasswordValid) {
-    res.status(401).json({ message: "Invalid credentials" });
-    return;
-  }
-
-  res.status(200).json({
-    success: true,
-    user: _.omit(existingUser, "password"),
-  });
-});
+authRouter.post("/login", passport.authenticate('local', {
+  successRedirect: '/',
+  failureRedirect: '/login'
+}
+));
 
 export default authRouter;
