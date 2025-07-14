@@ -2,7 +2,6 @@ import { Router } from "express";
 import { User } from "../../config/entities/User";
 import pg from "../../config/db.config";
 import bcrypt from "bcrypt";
-import _ from "lodash";
 import passport from "passport";
 
 const authRouter = Router();
@@ -39,20 +38,20 @@ authRouter.post(
   passport.authenticate("local", {
     successRedirect: "/",
     failureRedirect: "https://google.fr",
-  })
+  }),
 );
 
 authRouter.get("/test", (req, res) => {
   console.log(
     "\x1b[41m%s\x1b[0m",
     "server/src/routes/auth/index.ts:46 res.user",
-    req.user
+    req.user,
   );
   if (req.isAuthenticated()) {
     console.log(
       "\x1b[44m%s\x1b[0m",
       "server/src/routes/auth/index.ts:47 req.user",
-      req.user
+      req.user,
     );
   }
   res.status(200).json({

@@ -29,7 +29,7 @@ const main = async () => {
         resave: false,
         saveUninitialized: false,
         cookie: { secure: false },
-      })
+      }),
     )
     .use(cookieParser())
     .use(express.json())

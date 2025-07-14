@@ -28,7 +28,7 @@ async function submitForm() {
     console.log(
       "\x1b[44m%s\x1b[0m",
       "webapp/src/components/FormulaireDégueulasse.vue:23 result",
-      result
+      result,
     );
   } catch (error) {
     console.error("Erreur lors de l'envoi du formulaire :", error);

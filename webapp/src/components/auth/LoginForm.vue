@@ -23,7 +23,7 @@ async function submitForm() {
   try {
     const result = await apiClient.postRequest<{ success: boolean }>(
       "/api/auth/login",
-      form
+      form,
     );
     if (result.success) {
       isLogged.value = true;
