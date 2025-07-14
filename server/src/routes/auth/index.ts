@@ -5,7 +5,6 @@ import bcrypt from "bcrypt";
 import _ from "lodash";
 import passport from "passport";
 
-
 const authRouter = Router();
 
 authRouter.post("/register", async (req, res) => {
@@ -35,10 +34,30 @@ authRouter.post("/register", async (req, res) => {
   });
 });
 
-authRouter.post("/login", passport.authenticate('local', {
-  successRedirect: '/',
-  failureRedirect: '/login'
-}
-));
+authRouter.post(
+  "/login",
+  passport.authenticate("local", {
+    successRedirect: "/",
+    failureRedirect: "https://google.fr",
+  })
+);
+
+authRouter.get("/test", (req, res) => {
+  console.log(
+    "\x1b[41m%s\x1b[0m",
+    "server/src/routes/auth/index.ts:46 res.user",
+    req.user
+  );
+  if (req.isAuthenticated()) {
+    console.log(
+      "\x1b[44m%s\x1b[0m",
+      "server/src/routes/auth/index.ts:47 req.user",
+      req.user
+    );
+  }
+  res.status(200).json({
+    message: "Test route",
+  });
+});
 
 export default authRouter;

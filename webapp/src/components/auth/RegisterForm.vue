@@ -7,6 +7,8 @@
     <input type="text" v-model="form.lastName" placeholder="Nom" />
     <button @click="submitForm">Envoyer</button>
   </div>
+
+  <button @click="test">TESTEZ MOIIII</button>
 </template>
 
 <script setup lang="ts">
@@ -31,6 +33,10 @@ async function submitForm() {
   } catch (error) {
     console.error("Erreur lors de l'envoi du formulaire :", error);
   }
+}
+
+async function test() {
+  apiClient.getRequest("/api/auth/test");
 }
 </script>
 

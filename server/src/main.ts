@@ -11,29 +11,32 @@ import router from "./routes";
 import session from "express-session";
 import cookieParser from "cookie-parser";
 import passport from "passport";
-import './config/passport.config'; // Ensure passport is configured
+import "./config/passport.config"; // Ensure passport is configured
+import initializePassport from "./config/passport.config";
 
 const main = async () => {
   const dev = process.env.NODE_ENV !== "production";
 
+  initializePassport();
+
   const app = express();
   const server = createHttpServer(app);
-  app.use(express.json());
-  app.use("/api", router);
-  
   app
-  .use(cookieParser())
-  .use(
-    session({
-      secret: "ouiouifaitdelavoiture",
-      resave: false,
-      saveUninitialized: false,
-      cookie: { secure: false },
-    })
-  )
-  .use(express.json())
-  .use(passport.initialize())
-  .use(passport.session());
+    .use(express.json())
+    .use(
+      session({
+        secret: "ouiouifaitdelavoiture",
+        resave: false,
+        saveUninitialized: false,
+        cookie: { secure: false },
+      })
+    )
+    .use(cookieParser())
+    .use(express.json())
+    .use(passport.initialize())
+    .use(passport.session());
+
+  app.use("/api", router);
 
   const vite = await createViteServer();
 
