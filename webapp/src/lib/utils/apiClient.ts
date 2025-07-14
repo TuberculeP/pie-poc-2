@@ -2,7 +2,7 @@ import axios from "axios";
 
 const postRequest = async <T>(
   url: string,
-  params?: Record<string, unknown>
+  params?: Record<string, unknown>,
 ): Promise<T> => {
   // post request with cookie credentials
   const { data, status } = await axios.post<T>(url, params || {}, {
