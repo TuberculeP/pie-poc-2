@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 import { Post } from "./Post";
 
 @Entity()
@@ -12,7 +18,7 @@ export class Tag {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column({ type: "datetime", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn()
   createdAt: Date;
 
   @ManyToMany(() => Post, (post) => post.tags)
