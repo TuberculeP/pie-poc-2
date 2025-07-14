@@ -39,7 +39,7 @@ export default function initializePassport() {
   );
 
   passport.serializeUser((user, done) => {
-    done(null, (user as User).id);
+    done(null, user.id);
   });
 
   passport.deserializeUser(async (id: string, done) => {

@@ -48,11 +48,7 @@ authRouter.get("/test", (req, res) => {
     req.user,
   );
   if (req.isAuthenticated()) {
-    console.log(
-      "\x1b[44m%s\x1b[0m",
-      "server/src/routes/auth/index.ts:47 req.user",
-      req.user,
-    );
+    console.log("User is authenticated:", req.user);
   }
   res.status(200).json({
     message: "Test route",
