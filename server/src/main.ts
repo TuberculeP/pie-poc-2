@@ -13,11 +13,14 @@ import cookieParser from "cookie-parser";
 import passport from "passport";
 import "./config/passport.config"; // Ensure passport is configured
 import initializePassport from "./config/passport.config";
+import * as sqlite3 from "sqlite3";
+import sqliteStoreFactory from "express-session-sqlite";
 
 const main = async () => {
   const dev = process.env.NODE_ENV !== "production";
 
   initializePassport();
+  const SqliteStore = sqliteStoreFactory(session);
 
   const app = express();
   const server = createHttpServer(app);
@@ -29,6 +32,13 @@ const main = async () => {
         resave: false,
         saveUninitialized: false,
         cookie: { secure: false },
+        store: new SqliteStore({
+          driver: sqlite3.Database,
+          path: "./express_session_local.db",
+          ttl: 86400,
+          prefix: "sess:",
+          cleanupInterval: 300000,
+        }),
       }),
     )
     .use(cookieParser())

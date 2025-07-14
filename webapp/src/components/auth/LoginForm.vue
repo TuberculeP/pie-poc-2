@@ -25,11 +25,11 @@ async function submitForm() {
       "/api/auth/login",
       form,
     );
-    if (result.success) {
-      isLogged.value = true;
-    } else {
-      isLogged.value = false;
-    }
+    console.log(
+      "\x1b[44m%s\x1b[0m",
+      "webapp/src/components/auth/LoginForm.vue:29 result",
+      result,
+    );
   } catch (error) {
     console.error("Erreur lors de l'envoi du formulaire :", error);
   }

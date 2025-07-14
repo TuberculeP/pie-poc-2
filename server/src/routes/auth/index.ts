@@ -35,10 +35,28 @@ authRouter.post("/register", async (req, res) => {
 
 authRouter.post(
   "/login",
-  passport.authenticate("local", {
-    successRedirect: "/",
-    failureRedirect: "https://google.fr",
-  }),
+
+  (req, _, next) => {
+    console.log(
+      "\x1b[44m%s\x1b[0m",
+      "server/src/routes/auth/index.ts:37 req.isAuthenticated()",
+      req.isAuthenticated(),
+    );
+    next();
+  },
+
+  passport.authenticate("local"),
+
+  (req, res) => {
+    if (req.isAuthenticated()) {
+      res.status(200).json({
+        message: "Login successful",
+        user: req.user,
+      });
+    } else {
+      res.status(401).json({ message: "Login failed" });
+    }
+  },
 );
 
 authRouter.get("/test", (req, res) => {
