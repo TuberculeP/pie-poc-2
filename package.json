@@ -9,7 +9,8 @@
     "test": "jest --passWithNoTests",
     "lint": "eslint .",
     "lint:webapp": "eslint webapp",
-    "lint:server": "eslint server"
+    "lint:server": "eslint server",
+    "dockerize": "docker compose up --build --force-recreate -d"
   },
   "dependencies": {
     "@elemaudio/core": "^4.0.1",
