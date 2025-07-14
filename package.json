@@ -6,7 +6,10 @@
     "dev": "nodemon server/src/main.ts",
     "build": "tsc -p server && vite build",
     "start": "NODE_ENV=production node dist/main.js",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "lint": "eslint .",
+    "lint:webapp": "eslint webapp",
+    "lint:server": "eslint server"
   },
   "dependencies": {
     "@elemaudio/core": "^4.0.1",
