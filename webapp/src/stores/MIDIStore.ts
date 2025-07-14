@@ -51,7 +51,7 @@ export const useMIDIStore = defineStore("midiStore", () => {
   };
 
   const currentKeyToNoteMap = computed<Record<string, Note>>(
-    () => keyToNoteMap[keyboardConfiguration.value]
+    () => keyToNoteMap[keyboardConfiguration.value],
   );
 
   const pressedKeys = ref<Record<string, boolean>>({});
@@ -83,7 +83,7 @@ export const useMIDIStore = defineStore("midiStore", () => {
       const note = currentKeyToNoteMap.value[cleanedKey];
       if (note) {
         onNotePlayedCallbackList.value.forEach((callback) =>
-          callback(note, cleanedKey)
+          callback(note, cleanedKey),
         );
       }
     });
@@ -93,7 +93,7 @@ export const useMIDIStore = defineStore("midiStore", () => {
       const note = currentKeyToNoteMap.value[cleanedKey];
       if (note) {
         onNoteStoppedCallbackList.value.forEach((callback) =>
-          callback(note, cleanedKey)
+          callback(note, cleanedKey),
         );
       }
     });
