@@ -1,11 +1,13 @@
 <template>
   <section class="features-wrapper">
     <div class="container">
-
       <!-- Titre principal -->
       <h2 class="section-title">Inclus de base.</h2>
       <span>
-        <p class="section-subtitle">Tout ce qu’il faut pour créer, enregistrer et partager votre musique depuis votre navigateur.</p>
+        <p class="section-subtitle">
+          Tout ce qu’il faut pour créer, enregistrer et partager votre musique
+          depuis votre navigateur.
+        </p>
       </span>
       <!-- Catégories côte à côte -->
       <div class="horizontal-categories">
@@ -13,7 +15,11 @@
         <div class="category-column">
           <h3 class="section-category">Stabilité & sécurité</h3>
           <div class="features-grid square-grid">
-            <div v-for="(item, i) in stabiliteSecurite" :key="'sec-' + i" class="feature-card centered">
+            <div
+              v-for="(item, i) in stabiliteSecurite"
+              :key="'sec-' + i"
+              class="feature-card centered"
+            >
               <div class="feature-inner">
                 <div class="feature-icon">{{ item.emoji }}</div>
                 <h4 class="feature-title">{{ item.title }}</h4>
@@ -27,7 +33,11 @@
         <div class="category-column">
           <h3 class="section-category">Performance & connectivité</h3>
           <div class="features-grid square-grid">
-            <div v-for="(item, i) in performance" :key="'perf-' + i" class="feature-card centered">
+            <div
+              v-for="(item, i) in performance"
+              :key="'perf-' + i"
+              class="feature-card centered"
+            >
               <div class="feature-inner">
                 <div class="feature-icon">{{ item.emoji }}</div>
                 <h4 class="feature-title">{{ item.title }}</h4>
@@ -41,7 +51,11 @@
       <!-- Fonctionnalités pro -->
       <h3 class="section-category">Fonctionnalités pro</h3>
       <div class="features-grid">
-        <div v-for="(item, i) in proFeatures" :key="'pro-' + i" class="feature-card centered">
+        <div
+          v-for="(item, i) in proFeatures"
+          :key="'pro-' + i"
+          class="feature-card centered"
+        >
           <div class="feature-inner">
             <div class="feature-icon">{{ item.emoji }}</div>
             <h4 class="feature-title">{{ item.title }}</h4>
@@ -49,7 +63,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </section>
 </template>
@@ -60,12 +73,14 @@
   padding: 4rem 1rem;
 }
 
- h3, span p {
-  color: #FFF !important;
+h3,
+span p {
+  color: #fff !important;
 }
 
-h1, h2{
-  color: #FFD269 !important;
+h1,
+h2 {
+  color: #ffd269 !important;
 }
 
 .container {
@@ -193,31 +208,87 @@ h1, h2{
 
 <script>
 export default {
-  name: 'InclusDeBase'
-}
+  name: "InclusDeBase",
+};
 </script>
 
 <script setup>
 const stabiliteSecurite = [
-  { emoji: '🛡️', title: 'Connexion sécurisée', description: 'Toutes vos sessions sont chiffrées par SSL.' },
-  { emoji: '🚨', title: 'Reprise automatique', description: 'Revenez à votre dernier projet même après un crash.' },
-  { emoji: '🔒', title: 'Sessions isolées', description: 'Chaque projet est indépendant et protégé.' },
-  { emoji: '🕵️‍♂️', title: 'Protection des données', description: 'Sauvegardes automatiques dans le cloud.' },
+  {
+    emoji: "🛡️",
+    title: "Connexion sécurisée",
+    description: "Toutes vos sessions sont chiffrées par SSL.",
+  },
+  {
+    emoji: "🚨",
+    title: "Reprise automatique",
+    description: "Revenez à votre dernier projet même après un crash.",
+  },
+  {
+    emoji: "🔒",
+    title: "Sessions isolées",
+    description: "Chaque projet est indépendant et protégé.",
+  },
+  {
+    emoji: "🕵️‍♂️",
+    title: "Protection des données",
+    description: "Sauvegardes automatiques dans le cloud.",
+  },
 ];
 
 const performance = [
-  { emoji: '⚡', title: 'Audio en temps réel', description: 'Aucune latence pendant l’enregistrement ou le mix.' },
-  { emoji: '🚀', title: 'Interface rapide', description: 'Chaque action est fluide, sans ralentissements.' },
-  { emoji: '🌐', title: 'Connexion partout', description: 'Accédez à votre studio depuis n’importe où.' },
-  { emoji: '🔗', title: 'Collaboration live', description: 'Travaillez à plusieurs sur un même projet en direct.' },
+  {
+    emoji: "⚡",
+    title: "Audio en temps réel",
+    description: "Aucune latence pendant l’enregistrement ou le mix.",
+  },
+  {
+    emoji: "🚀",
+    title: "Interface rapide",
+    description: "Chaque action est fluide, sans ralentissements.",
+  },
+  {
+    emoji: "🌐",
+    title: "Connexion partout",
+    description: "Accédez à votre studio depuis n’importe où.",
+  },
+  {
+    emoji: "🔗",
+    title: "Collaboration live",
+    description: "Travaillez à plusieurs sur un même projet en direct.",
+  },
 ];
 
 const proFeatures = [
-  { emoji: '🎹', title: 'Piano roll intégré', description: 'Composez vos mélodies, arpèges et accords facilement.' },
-  { emoji: '🎤', title: 'Enregistrement audio', description: 'Micro ou instrument, enregistrez sans plugin.' },
-  { emoji: '🎛️', title: 'Effets temps réel', description: 'Ajoutez EQ, reverb, compresseur, delay instantanément.' },
-  { emoji: '📤', title: 'Export pro', description: 'Export MP3, WAV, stems ou projet compressé.' },
-  { emoji: '📁', title: 'Import facile', description: 'Fichiers audio, MIDI ou presets, tout est glissé-déposé.' },
-  { emoji: '🧠', title: 'Interface intuitive', description: 'Aucune courbe d’apprentissage, tout est à sa place.' },
+  {
+    emoji: "🎹",
+    title: "Piano roll intégré",
+    description: "Composez vos mélodies, arpèges et accords facilement.",
+  },
+  {
+    emoji: "🎤",
+    title: "Enregistrement audio",
+    description: "Micro ou instrument, enregistrez sans plugin.",
+  },
+  {
+    emoji: "🎛️",
+    title: "Effets temps réel",
+    description: "Ajoutez EQ, reverb, compresseur, delay instantanément.",
+  },
+  {
+    emoji: "📤",
+    title: "Export pro",
+    description: "Export MP3, WAV, stems ou projet compressé.",
+  },
+  {
+    emoji: "📁",
+    title: "Import facile",
+    description: "Fichiers audio, MIDI ou presets, tout est glissé-déposé.",
+  },
+  {
+    emoji: "🧠",
+    title: "Interface intuitive",
+    description: "Aucune courbe d’apprentissage, tout est à sa place.",
+  },
 ];
 </script>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import BloopPotard from "../BloopPotard.vue";
 import type { Note } from "../../../lib/utils/types.ts";
-import _ from "lodash";
 import { useMIDIStore } from "../../../stores/MIDIStore.ts";
 import { ref } from "vue";
 import { watch } from "vue";
@@ -20,10 +19,10 @@ watch(
     gain.connect(audioContext.destination);
     gain.gain.exponentialRampToValueAtTime(
       gain.gain.value,
-      audioContext.currentTime + 0.03
+      audioContext.currentTime + 0.03,
     );
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const oscillators = ref<Record<number, any>>({});

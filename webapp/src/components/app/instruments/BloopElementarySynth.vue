@@ -41,14 +41,14 @@ const computedVoices = computed(() =>
       //   el.const({ key: `${voice.key}:d`, value: 0 }),
       //   el.const({ key: `${voice.key}:s`, value: 1 }),
       //   el.const({ key: `${voice.key}:r`, value: 10 }),
-      el.const({ key: `${voice.key}:gate`, value: 0.2 * voice.gate })
+      el.const({ key: `${voice.key}:gate`, value: 0.2 * voice.gate }),
     );
 
     return el.mul(
       env,
-      el.cycle(el.const({ key: `${voice.key}:freq`, value: voice.freq }))
+      el.cycle(el.const({ key: `${voice.key}:freq`, value: voice.freq })),
     );
-  })
+  }),
 );
 
 watch(computedVoices, () => {
@@ -60,7 +60,7 @@ onMounted(async () => {
   await WebMidi.enable();
   console.log(
     "midi enabled",
-    WebMidi.inputs.map((i) => i.name)
+    WebMidi.inputs.map((i) => i.name),
   );
 
   const selectedInput = WebMidi.inputs[0];
@@ -78,7 +78,7 @@ onMounted(async () => {
     const midiNote = e.note.number;
     const key = "v" + midiNote;
     voices.value = voices.value.map((voice: any) =>
-      voice.key === key ? { ...voice, gate: 0 } : voice
+      voice.key === key ? { ...voice, gate: 0 } : voice,
     );
   });
 

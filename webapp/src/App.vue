@@ -1,4 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { onSocketConnected } from "./lib/utils/websocket";
+
+onSocketConnected((socket) => {
+  socket.emit("test", { message: "Hello from Vue!" });
+});
+</script>
 
 <template>
   <RouterView />
