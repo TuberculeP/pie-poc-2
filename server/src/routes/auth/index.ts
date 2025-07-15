@@ -35,16 +35,14 @@ authRouter.post("/register", async (req, res) => {
 
 authRouter.post(
   "/login",
-
   (req, res, next) => {
     if (req.isAuthenticated()) {
-      return res.status(400).json({ message: "Already logged in" });
+      res.status(200).json({ message: "Already logged in", user: req.user });
+      return;
     }
-    return next();
+    next();
   },
-
   passport.authenticate("local"),
-
   (req, res) => {
     if (req.isAuthenticated()) {
       res.status(200).json({
@@ -56,5 +54,26 @@ authRouter.post(
     }
   },
 );
+
+authRouter.get("/check", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.status(200).json({
+      message: "User is authenticated",
+      user: req.user,
+    });
+  } else {
+    res.status(401).json({ message: "User is not authenticated" });
+  }
+});
+
+authRouter.post("/logout", (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      res.status(500).json({ message: "Logout failed", error: err });
+      return;
+    }
+    res.status(200).json({ message: "Logout successful" });
+  });
+});
 
 export default authRouter;

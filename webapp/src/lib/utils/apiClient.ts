@@ -16,13 +16,11 @@ const apiClient = {
     try {
       const result = await axiosClient.get<T>(url, { params });
       return {
-        status: result.status,
         data: result.data,
         error: null,
       };
     } catch (error) {
       return {
-        status: (error as AxiosError).response?.status || 500,
         data: null,
         error: (error as AxiosError).message || "An error occurred",
       };
@@ -35,13 +33,11 @@ const apiClient = {
         try {
           const result = await axiosClient[method]<T>(url, data);
           return {
-            status: result.status,
             data: result.data,
             error: null,
           };
         } catch (error) {
           return {
-            status: (error as AxiosError).response?.status || 500,
             data: null,
             error: (error as AxiosError).message || "An error occurred",
           };
@@ -53,7 +49,7 @@ const apiClient = {
       "post" | "put" | "patch" | "delete",
       <T>(
         ...args: any[]
-      ) => Promise<{ status: number; data: T | null; error: string | null }>
+      ) => Promise<{ data: T; error: null } | { data: null; error: string }>
     >,
   ),
 };

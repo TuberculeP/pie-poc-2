@@ -7,6 +7,10 @@
     <input type="text" v-model="form.lastName" placeholder="Nom" />
     <button @click="submitForm">Envoyer</button>
   </div>
+  <p>
+    Déjà inscrit ?
+    <router-link :to="{ name: 'app-login' }"> Connectez-vous </router-link>
+  </p>
 </template>
 
 <script setup lang="ts">
