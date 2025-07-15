@@ -1,30 +1,57 @@
 import axios from "axios";
+import type { AxiosError } from "axios";
 
-const postRequest = async <T>(
-  url: string,
-  params?: Record<string, unknown>,
-): Promise<T> => {
-  // post request with cookie credentials
-  const { data, status } = await axios.post<T>(url, params || {}, {
-    withCredentials: true,
-  });
-  if (status !== 200) {
-    throw new Error("Request failed");
-  }
-  return data;
+const axiosClient = axios.create({
+  baseURL: "/api",
+  withCredentials: true, // Include cookies in requests
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+const dataMethods = ["post", "put", "patch", "delete"] as const;
+
+const apiClient = {
+  get: async <T>(url: string, params?: any) => {
+    try {
+      const result = await axiosClient.get<T>(url, { params });
+      return {
+        data: result.data,
+        error: null,
+      };
+    } catch (error) {
+      return {
+        data: null,
+        error: (error as AxiosError).message || "An error occurred",
+      };
+    }
+  },
+
+  ...dataMethods.reduce(
+    (acc, method) => {
+      acc[method] = async <T>(url: string, data?: any) => {
+        try {
+          const result = await axiosClient[method]<T>(url, data);
+          return {
+            data: result.data,
+            error: null,
+          };
+        } catch (error) {
+          return {
+            data: null,
+            error: (error as AxiosError).message || "An error occurred",
+          };
+        }
+      };
+      return acc;
+    },
+    {} as Record<
+      "post" | "put" | "patch" | "delete",
+      <T>(
+        ...args: any[]
+      ) => Promise<{ data: T; error: null } | { data: null; error: string }>
+    >,
+  ),
 };
-
-const getRequest = async <T>(url: string): Promise<T> => {
-  // get request with cookie credentials
-  const { data, status } = await axios.get<T>(url, {
-    withCredentials: true,
-  });
-  if (status !== 200) {
-    throw new Error("Request failed");
-  }
-  return data;
-};
-
-const apiClient = { postRequest, getRequest };
 
 export default apiClient;

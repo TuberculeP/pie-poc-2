@@ -1,6 +1,7 @@
 import { Router } from "express";
 import pg from "../config/db.config";
 import { Foo } from "../config/entities/Foo";
+import authRouter from "./auth";
 
 const router = Router();
 
@@ -12,5 +13,7 @@ router.get("/", (_, res) => {
     foos,
   });
 });
+
+router.use("/auth", authRouter);
 
 export default router;
