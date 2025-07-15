@@ -36,13 +36,11 @@ authRouter.post("/register", async (req, res) => {
 authRouter.post(
   "/login",
 
-  (req, _, next) => {
-    console.log(
-      "\x1b[44m%s\x1b[0m",
-      "server/src/routes/auth/index.ts:37 req.isAuthenticated()",
-      req.isAuthenticated(),
-    );
-    next();
+  (req, res, next) => {
+    if (req.isAuthenticated()) {
+      return res.status(400).json({ message: "Already logged in" });
+    }
+    return next();
   },
 
   passport.authenticate("local"),
@@ -58,19 +56,5 @@ authRouter.post(
     }
   },
 );
-
-authRouter.get("/test", (req, res) => {
-  console.log(
-    "\x1b[41m%s\x1b[0m",
-    "server/src/routes/auth/index.ts:46 res.user",
-    req.user,
-  );
-  if (req.isAuthenticated()) {
-    console.log("User is authenticated:", req.user);
-  }
-  res.status(200).json({
-    message: "Test route",
-  });
-});
 
 export default authRouter;

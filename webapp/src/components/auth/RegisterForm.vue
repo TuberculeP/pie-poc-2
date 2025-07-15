@@ -7,8 +7,6 @@
     <input type="text" v-model="form.lastName" placeholder="Nom" />
     <button @click="submitForm">Envoyer</button>
   </div>
-
-  <button @click="test">TESTEZ MOIIII</button>
 </template>
 
 <script setup lang="ts">
@@ -24,19 +22,15 @@ const form = reactive({
 
 async function submitForm() {
   try {
-    const result = await apiClient.postRequest("/api/auth/register", form);
+    const result = await apiClient.post("/auth/register", form);
     console.log(
       "\x1b[44m%s\x1b[0m",
       "webapp/src/components/FormulaireDégueulasse.vue:23 result",
-      result,
+      result.data,
     );
   } catch (error) {
     console.error("Erreur lors de l'envoi du formulaire :", error);
   }
-}
-
-async function test() {
-  apiClient.getRequest("/api/auth/test");
 }
 </script>
 

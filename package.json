@@ -19,6 +19,7 @@
     "@vueuse/core": "^13.2.0",
     "axios": "^1.7.7",
     "bcrypt": "^6.0.0",
+    "connect-redis": "^8.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -31,6 +32,7 @@
     "passport-local": "^1.0.0",
     "pg": "^8.13.0",
     "pinia": "^3.0.2",
+    "redis": "^4.7.1",
     "reflect-metadata": "^0.2.2",
     "smplr": "^0.16.3",
     "socket.io": "^4.8.1",
@@ -46,6 +48,7 @@
   "devDependencies": {
     "@eslint/js": "^9.31.0",
     "@types/bcrypt": "^5.0.2",
+    "@types/connect-redis": "^0.0.23",
     "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.18.2",

@@ -24,6 +24,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+  
+  cache:
+    image: redis:latest
+    container_name: redis_cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
 
 volumes:
   postgres_data:
+  redis_data:
+    driver: local

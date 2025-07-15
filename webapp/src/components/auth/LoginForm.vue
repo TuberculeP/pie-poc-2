@@ -21,15 +21,25 @@ const form = reactive({
 
 async function submitForm() {
   try {
-    const result = await apiClient.postRequest<{ success: boolean }>(
-      "/api/auth/login",
+    const result = await apiClient.post<{ success: boolean }>(
+      "/auth/login",
       form,
     );
-    console.log(
-      "\x1b[44m%s\x1b[0m",
-      "webapp/src/components/auth/LoginForm.vue:29 result",
-      result,
-    );
+    if (result.status === 200) {
+      console.log(
+        "\x1b[44m%s\x1b[0m",
+        "webapp/src/components/auth/LoginForm.vue:29 was not authenticated",
+      );
+    } else if (result.status === 400) {
+      console.log(
+        "\x1b[44m%s\x1b[0m",
+        "webapp/src/components/auth/LoginForm.vue:32 was authenticated",
+      );
+      isLogged.value = true;
+    } else {
+      console.error("Erreur lors de l'authentification :", result.data);
+      isLogged.value = false;
+    }
   } catch (error) {
     console.error("Erreur lors de l'envoi du formulaire :", error);
   }

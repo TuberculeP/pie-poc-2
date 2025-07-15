@@ -8,39 +8,22 @@ import { createServer as createHttpServer } from "http";
 import { Server as WSServer } from "socket.io";
 import { registerWebsocketListeners } from "./events/event_handler";
 import router from "./routes";
-import session from "express-session";
 import cookieParser from "cookie-parser";
 import passport from "passport";
-import "./config/passport.config"; // Ensure passport is configured
 import initializePassport from "./config/passport.config";
-import * as sqlite3 from "sqlite3";
-import sqliteStoreFactory from "express-session-sqlite";
+
+import customSession from "./config/cache.config";
 
 const main = async () => {
   const dev = process.env.NODE_ENV !== "production";
 
   initializePassport();
-  const SqliteStore = sqliteStoreFactory(session);
 
   const app = express();
   const server = createHttpServer(app);
   app
     .use(express.json())
-    .use(
-      session({
-        secret: "ouiouifaitdelavoiture",
-        resave: false,
-        saveUninitialized: false,
-        cookie: { secure: false },
-        store: new SqliteStore({
-          driver: sqlite3.Database,
-          path: "./express_session_local.db",
-          ttl: 86400,
-          prefix: "sess:",
-          cleanupInterval: 300000,
-        }),
-      }),
-    )
+    .use(customSession())
     .use(cookieParser())
     .use(express.json())
     .use(passport.initialize())
