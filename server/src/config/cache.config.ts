@@ -13,7 +13,9 @@ const DEFAULT_PREFIX = "sess:";
 // Will be used in app.use
 export default function customSession() {
   const SqliteStore = sqliteStoreFactory(session);
-  const redisClient = createClient();
+  const redisClient = createClient({
+    url: "redis://cache:6379", // Use the Docker service name for Redis
+  });
   redisClient.connect().catch(console.error);
 
   const store =

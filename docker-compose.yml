@@ -13,6 +13,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  
+  cache:
+    image: redis:latest
+    container_name: redis_cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 
   app:
     build:
@@ -24,14 +38,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-  
-  cache:
-    image: redis:latest
-    container_name: redis_cache
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
+      cache:
+        condition: service_healthy
 
 volumes:
   postgres_data:

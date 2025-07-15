@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "lint:webapp": "eslint webapp",
     "lint:server": "eslint server",
-    "dockerize": "docker compose up --build --force-recreate -d"
+    "dockerize": "docker compose -f docker-compose.yml -f docker-compose.local.yml up --build --force-recreate -d"
   },
   "dependencies": {
     "@elemaudio/core": "^4.0.1",
