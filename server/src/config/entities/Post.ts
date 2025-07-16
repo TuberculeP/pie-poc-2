@@ -4,6 +4,7 @@ import {
   OneToMany,
   ManyToMany,
   Column,
+  CreateDateColumn,
 } from "typeorm";
 import { User } from "./User";
 import { Tag } from "./Tag";
@@ -22,10 +23,10 @@ export class Post {
   @Column("text")
   body: string;
 
-  @Column({ type: "datetime", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @Column({ type: "datetime", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn()
   updatedAt: Date;
 
   @Column({ default: true })
