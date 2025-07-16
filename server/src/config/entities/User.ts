@@ -6,6 +6,7 @@ import {
   ManyToMany,
   ManyToOne,
   OneToOne,
+  CreateDateColumn,
 } from "typeorm";
 import { Post } from "./Post";
 import { Subscription } from "./Subscription";
@@ -55,4 +56,7 @@ export class User {
 
   @ManyToOne(() => DirectMessage, (directMessage) => directMessage.receiver)
   receivedMessages: DirectMessage[];
+
+  @CreateDateColumn()
+  createdAt: Date;
 }

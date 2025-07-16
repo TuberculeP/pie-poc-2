@@ -19,7 +19,8 @@
     "isolatedModules": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "typeRoots": ["@types", "./node_modules/@types"]
   },
   "compileOnSave": true,
   "include": ["src"],
