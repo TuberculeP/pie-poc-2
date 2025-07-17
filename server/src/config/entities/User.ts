@@ -41,7 +41,7 @@ export class User {
   @ManyToMany(() => User, (user) => user.following)
   followers: User[];
 
-  @ManyToOne(() => Post, (post) => post.author)
+  @OneToMany(() => Post, (post) => post.author)
   posts: Post[];
 
   @ManyToMany(() => Post, (post) => post.likedBy)
