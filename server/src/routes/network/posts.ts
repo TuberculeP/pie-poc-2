@@ -1,29 +1,39 @@
 import { Router } from "express";
 import pg from "../../config/db.config";
 import {Post} from "../../config/entities/Post";
+import {User} from "../../config/entities/User";
 
 const postsRouter = Router();
 
 postsRouter.post("/", async (req, res) => {
     try {
-        const postRepository = pg.getRepository(Post)
-        let {author, body, tags, comment_of, comments, highlight_on_tag, pinned_by_user} = req.body
+        if (!req.isAuthenticated()) {
+            res.status(401).json({
+                status: 401,
+                message: "Login required to create a post",
+                })
+            return;
+        }
 
-        if (!author || !body) {
+        const postRepository = pg.getRepository(Post)
+        const {body, tags, is_highlight, pinned_by_user} = req.body
+
+        if (!body) {
             res.status(422).json({
                 status: 422,
                 message: "Missing data",
             })
         }
 
-        let payload = {
+        const userRepository = pg.getRepository(User);
+        const author = await userRepository.findOneBy({ id: req.user.id });
+
+        let payload: any = {
             author: author,
             body: body,
             tags: tags,
-            comment_of: comment_of,
-            comments: comments,
-            highlight_on_tag: highlight_on_tag,
-            pinned_by_user: pinned_by_user
+            is_highlight: is_highlight,
+            pinned_by_user: pinned_by_user,
         }
 
         const newPost = postRepository.create(payload)
@@ -44,7 +54,8 @@ postsRouter.get("/", async (_, res) => {
     try {
         const postRepository = pg.getRepository(Post)
         let allPosts = await postRepository.find({
-            order: { createdAt: "DESC" }
+            order: { createdAt: "DESC" },
+            relations: ["author"]
         })
 
         res.status(200).json({
@@ -62,7 +73,8 @@ postsRouter.get("/:id", async (req, res) => {
     try {
         const postRepository = pg.getRepository(Post)
         let post = await postRepository.findOne({
-            where: { id: req.params.id }
+            where: { id: req.params.id },
+            relations: ["author"]
         })
 
         if (!post) {
@@ -76,7 +88,7 @@ postsRouter.get("/:id", async (req, res) => {
         res.status(200).json({
             status: 200,
             message: "Post successfully retrieved",
-            body: post
+            body: post,
         })
         return;
     } catch (err) {
@@ -86,12 +98,29 @@ postsRouter.get("/:id", async (req, res) => {
 
 postsRouter.patch("/:id", async (req, res) => {
     try {
+        if (!req.isAuthenticated()) {
+            res.status(401).json({
+                status: 401,
+                message: "User not log",
+            })
+            return;
+        }
+
         const postRepository = pg.getRepository(Post)
         const updates = req.body
 
         const post = await postRepository.findOne({
-            where: { id: req.params.id }
+            where: { id: req.params.id },
+            relations: ["author"]
         })
+
+        if (post && post.author.id !== req.user.id) {
+            res.status(401).json({
+                status: 401,
+                message: "Not the author of the post",
+            })
+            return;
+        }
 
         if (post) {
             const postUpdated = await postRepository.save({...post, ...updates})
@@ -115,10 +144,27 @@ postsRouter.patch("/:id", async (req, res) => {
 
 postsRouter.delete("/:id", async (req, res) => {
     try {
+        if (!req.isAuthenticated()) {
+            res.status(401).json({
+                status: 401,
+                message: "User not log",
+            })
+            return;
+        }
+
         const postRepository = pg.getRepository(Post)
         const post = await postRepository.findOne({
-            where: { id: req.params.id }
+            where: { id: req.params.id },
+            relations: ["author"]
         })
+
+        if (post && post.author.id !== req.user.id) {
+            res.status(401).json({
+                status: 401,
+                message: "Not the author of the post",
+            })
+            return;
+        }
 
         if (post) {
             /*await postRepository.remove(post)*/
