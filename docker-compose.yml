@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:15
-    container_name: postgres
+    container_name: postgres-${COOLIFY_BRANCH:-local}
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
@@ -13,10 +13,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  
+    networks:
+      - app_network_${COOLIFY_BRANCH:-local}
+
   cache:
     image: redis:latest
-    container_name: redis_cache
+    container_name: redis_cache-${COOLIFY_BRANCH:-local}
     volumes:
       - redis_data:/data
     healthcheck:
@@ -24,13 +26,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app_network_${COOLIFY_BRANCH:-local}
 
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: express-vue-app
+    container_name: express-vue-app-${COOLIFY_BRANCH:-local}
     environment:
       POSTGRES_URL: postgres://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-mydatabase}
     depends_on:
@@ -38,8 +42,19 @@ services:
         condition: service_healthy
       cache:
         condition: service_healthy
+    volumes:
+      - public_app_data:/app/public
+    networks:
+      - app_network_${COOLIFY_BRANCH:-local}
 
 volumes:
   postgres_data:
+    name: postgres_data_${COOLIFY_BRANCH:-local}
   redis_data:
-    driver: local
+    name: redis_data_${COOLIFY_BRANCH:-local}
+  public_app_data:
+    name: public_app_data_${COOLIFY_BRANCH:-local}
+
+networks:
+  app_network_${COOLIFY_BRANCH:-local}:
+    driver: bridge
