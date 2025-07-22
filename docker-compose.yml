@@ -43,6 +43,8 @@ services:
 
 volumes:
   public_app_data:
+    driver: local
   postgres_data:
+    driver: local
   redis_data:
     driver: local
