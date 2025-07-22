@@ -13,7 +13,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  
+    networks:
+      - app_network_${COOLIFY_BRANCH:-local}
+
   cache:
     image: redis:latest
     container_name: redis_cache-${COOLIFY_BRANCH:-local}
@@ -24,6 +26,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - app_network_${COOLIFY_BRANCH:-local}
 
 
   app:
@@ -40,6 +44,8 @@ services:
         condition: service_healthy
     volumes:
       - public_app_data:/app/public
+    networks:
+      - app_network_${COOLIFY_BRANCH:-local}
 
 volumes:
   postgres_data:
@@ -48,3 +54,7 @@ volumes:
     name: redis_data_${COOLIFY_BRANCH:-local}
   public_app_data:
     name: public_app_data_${COOLIFY_BRANCH:-local}
+
+networks:
+  app_network_${COOLIFY_BRANCH:-local}:
+    driver: bridge
