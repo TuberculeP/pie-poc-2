@@ -38,8 +38,11 @@ services:
         condition: service_healthy
       cache:
         condition: service_healthy
+    volumes:
+      - public_app_data:/app/public
 
 volumes:
+  public_app_data:
   postgres_data:
   redis_data:
     driver: local

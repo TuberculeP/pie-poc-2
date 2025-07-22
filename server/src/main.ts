@@ -33,6 +33,8 @@ const main = async () => {
 
   const vite = await createViteServer();
 
+  app.use("/public", express.static("public"));
+
   if (dev) {
     app.use(vite.middlewares);
   } else {
@@ -40,18 +42,12 @@ const main = async () => {
   }
 
   app.use(async (req, res, next) => {
-    if (req.path.startsWith("/api")) {
-      next();
+    if (dev) {
+      vite.middlewares(req, res, next);
     } else {
-      if (dev) {
-        vite.middlewares(req, res, next);
-      } else {
-        res.sendFile(path.resolve(__dirname, "./client/index.html"));
-      }
+      res.sendFile(path.resolve(__dirname, "./client/index.html"));
     }
   });
-
-  app.use("/public", express.static(path.join(__dirname, "public")));
 
   // WebSocket server
   const wss = new WSServer(server);

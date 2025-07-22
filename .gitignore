@@ -45,3 +45,6 @@ logs
 
 *.sqlite
 *.db
+
+# Ignore uploads directory
+/public/uploads/**/*

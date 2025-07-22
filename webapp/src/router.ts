@@ -8,6 +8,7 @@ import RegisterView from "./views/auth/RegisterView.vue";
 import { useAuthStore } from "./stores/authStore";
 import apiClient from "./lib/utils/apiClient";
 import type { User } from "./lib/utils/types";
+import TestView from "./views/TestView.vue";
 
 async function authGuard(to: any, from: any, next: any) {
   const authStore = useAuthStore();
@@ -26,13 +27,14 @@ async function authGuard(to: any, from: any, next: any) {
 
 const routes = [
   { path: "/", component: LandingIndex, name: "landing-main" },
+  { path: "/test", component: TestView, name: "test-main" },
   { path: "/app", component: BloopApp, name: "app-main" },
   { path: "/login", component: LoginView, name: "app-login" },
   { path: "/register", component: RegisterView, name: "app-register" },
 ];
 
 const getGuardedRoutes = () => {
-  const guardedMatches = ["app", "network", "settings", "profile"];
+  const guardedMatches = ["app", "network", "settings", "profile", "test"];
   return routes.map((route) => {
     if (guardedMatches.some((match) => route.path.includes(match))) {
       return {

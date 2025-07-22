@@ -11,6 +11,7 @@ import {
 import { Post } from "./Post";
 import { Subscription } from "./Subscription";
 import { DirectMessage } from "./DirectMessage";
+import { Upload } from "./Upload";
 
 @Entity()
 export class User {
@@ -21,7 +22,7 @@ export class User {
   email: string;
 
   @Column()
-  password: string;
+  password?: string;
 
   @Column()
   firstName: string;
@@ -56,6 +57,9 @@ export class User {
 
   @ManyToOne(() => DirectMessage, (directMessage) => directMessage.receiver)
   receivedMessages: DirectMessage[];
+
+  @ManyToOne(() => Upload, (upload) => upload.user)
+  uploads: Upload[];
 
   @CreateDateColumn()
   createdAt: Date;

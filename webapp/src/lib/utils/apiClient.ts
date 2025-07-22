@@ -29,9 +29,17 @@ const apiClient = {
 
   ...dataMethods.reduce(
     (acc, method) => {
-      acc[method] = async <T>(url: string, data?: any) => {
+      acc[method] = async <T>(url: string, data?: any, config?: any) => {
         try {
-          const result = await axiosClient[method]<T>(url, data);
+          const isFormData = data instanceof FormData;
+          const headers = isFormData
+            ? { "Content-Type": "multipart/form-data", ...config?.headers }
+            : config?.headers;
+
+          const result = await axiosClient[method]<T>(url, data, {
+            ...config,
+            headers,
+          });
           return {
             data: result.data,
             error: null,
@@ -48,7 +56,9 @@ const apiClient = {
     {} as Record<
       "post" | "put" | "patch" | "delete",
       <T>(
-        ...args: any[]
+        url: string,
+        data?: any,
+        config?: any,
       ) => Promise<{ data: T; error: null } | { data: null; error: string }>
     >,
   ),

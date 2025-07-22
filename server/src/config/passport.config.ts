@@ -25,7 +25,7 @@ export default function initializePassport() {
 
         const isPasswordValid = bcrypt.compareSync(
           password,
-          existingUser.password,
+          existingUser.password ?? "",
         );
 
         if (!isPasswordValid) {
