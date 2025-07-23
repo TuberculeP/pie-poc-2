@@ -66,7 +66,7 @@ export const createPost = async (data: CreatePostData): Promise<Post> => {
 
 export const updatePost = async (
   id: string,
-  data: Partial<Post>
+  data: Partial<Post>,
 ): Promise<Post> => {
   const response = await axios.patch(`${API_URL}/${id}`, data);
   return response.data.body;
