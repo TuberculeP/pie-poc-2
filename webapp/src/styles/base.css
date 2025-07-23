@@ -1,0 +1,292 @@
+/* Typographie de base */
+:root {
+  --font-heading: "grenadine-mvb", "Georgia", serif;
+  --font-body: "greycliff-cf", "Inter", sans-serif;
+  background-color: var(--color-bg-primary-dark);
+}
+
+/* Styles pour le corps de texte */
+body {
+  font-family: var(--font-body);
+  font-weight: 400; /* Regular */
+  line-height: 1.6;
+  color: var(--color-white);
+}
+
+/* Styles pour tous les titres */
+h1 {
+  font-family: grenadine-mvb, Georgia, serif;
+}
+
+/* Tailles spécifiques des titres */
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+h2 {
+  font-family: grenadine-mvb, Georgia, serif;
+  position: relative;
+  font-weight: inherit;
+}
+h2::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background: var(--color-accent);
+  border-radius: 2px;
+}
+
+h3 {
+  font-size: 1.5rem;
+}
+
+h4 {
+  font-size: 1.25rem;
+}
+
+h5 {
+  font-size: 1.125rem;
+}
+
+h6 {
+  font-size: 1rem;
+}
+
+/* Styles pour le texte */
+p {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  color: var(--color-white);
+}
+
+/* Liens */
+a {
+  font-family: var(--font-body);
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+/* Listes */
+ul,
+ol {
+  font-family: var(--font-body);
+  font-weight: 400;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+/* Texte en gras et italique */
+strong,
+b {
+  font-weight: 600;
+}
+
+em,
+i {
+  font-style: italic;
+}
+
+/* Citations */
+blockquote {
+  font-family: var(--font-body);
+  font-style: italic;
+  margin: 1.5rem 0;
+  padding: 1rem 1.5rem;
+  border-left: 4px solid var(--color-accent);
+  background-color: var(--color-bg-secondary-dark);
+  color: var(--color-white);
+}
+
+/* Code */
+code {
+  font-family: "Monaco", "Consolas", monospace;
+  background-color: var(--color-bg-secondary-dark);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+pre {
+  font-family: "Monaco", "Consolas", monospace;
+  background-color: var(--color-bg-secondary-dark);
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+/* Formulaires et inputs */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  color: var(--color-white);
+  font-weight: 500;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+}
+
+/* Styles de base pour tous les inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  width: 100%;
+  padding: 12px 16px;
+  background-color: var(--color-bg-secondary-dark);
+  border: 1px solid var(--color-black);
+  border-radius: 8px;
+  color: var(--color-white);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+/* Placeholders */
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-secondary);
+  opacity: 0.7;
+}
+
+/* États focus */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgba(145, 165, 249, 0.1);
+  background-color: var(--color-bg-primary-dark);
+}
+
+/* États hover */
+input:hover:not(:focus),
+textarea:hover:not(:focus),
+select:hover:not(:focus) {
+  border-color: var(--color-border-secondary);
+}
+
+/* États disabled */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--color-bg-secondary-dark);
+}
+
+/* Textarea spécifique */
+textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.4;
+}
+
+/* Select spécifique */
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+/* Boutons de formulaire */
+.form-button,
+button[type="submit"],
+input[type="submit"] {
+  padding: 12px 24px;
+  background: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.form-button:hover,
+button[type="submit"]:hover,
+input[type="submit"]:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 112, 155, 0.3);
+}
+
+.form-button:active,
+button[type="submit"]:active,
+input[type="submit"]:active {
+  background: var(--color-primary-active);
+  transform: translateY(0);
+}
+
+.form-button:disabled,
+button[type="submit"]:disabled,
+input[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Conteneurs de formulaire */
+.form-container {
+  background-color: var(--color-bg-primary-dark);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 12px;
+  padding: 32px;
+  transition: all 0.3s ease;
+}
+
+.form-container:hover {
+  border-color: var(--color-border-secondary-hover);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+/* Messages d'erreur */
+.form-error {
+  color: var(--color-error);
+  font-size: 0.85em;
+  margin-top: 4px;
+  font-family: var(--font-body);
+}
+
+/* Messages de succès */
+.form-success {
+  color: var(--color-validate);
+  font-size: 0.85em;
+  margin-top: 4px;
+  font-family: var(--font-body);
+}
