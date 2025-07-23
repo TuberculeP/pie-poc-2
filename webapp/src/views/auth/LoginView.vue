@@ -1,5 +1,4 @@
 <template>
-<<<<<<< HEAD
   <div class="login-container">
     <form class="form-container" @submit.prevent="submitForm">
       <h2>Connexion</h2>
@@ -35,16 +34,6 @@
         </router-link>
       </div>
     </form>
-=======
-  <h2>Login</h2>
-  <div>
-    <input type="email" v-model="form.email" placeholder="Email" />
-    <input type="password" v-model="form.password" placeholder="Mot de passe" />
-    <button @click="submitForm">Envoyer</button>
-    <router-link :to="{ name: 'app-register' }">
-      Pas encore inscrit ?
-    </router-link>
->>>>>>> origin/main
   </div>
 </template>
 
@@ -74,7 +63,6 @@ async function submitForm() {
 </script>
 
 <style scoped>
-<<<<<<< HEAD
 .login-container {
   display: flex;
   flex-direction: column;
@@ -125,12 +113,5 @@ async function submitForm() {
   .login-container {
     min-height: 70vh;
   }
-=======
-div {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: baseline;
->>>>>>> origin/main
 }
 </style>

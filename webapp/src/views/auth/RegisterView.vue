@@ -1,15 +1,14 @@
 <template>
-<<<<<<< HEAD
   <div class="register-container">
     <form class="form-container" @submit.prevent="submitForm">
       <h2>Inscription</h2>
-      
+
       <div class="form-group">
         <label for="email">Email</label>
-        <input 
+        <input
           id="email"
-          type="email" 
-          v-model="form.email" 
+          type="email"
+          v-model="form.email"
           placeholder="Entrez votre email"
           required
         />
@@ -47,11 +46,9 @@
           required
         />
       </div>
-      
-      <button type="submit">
-        Créer mon compte
-      </button>
-      
+
+      <button type="submit">Créer mon compte</button>
+
       <div class="form-footer">
         <router-link :to="{ name: 'app-login' }" class="login-link">
           Déjà inscrit ? Se connecter
@@ -59,31 +56,14 @@
       </div>
     </form>
   </div>
-=======
-  <h2>Register</h2>
-  <div>
-    <input type="email" v-model="form.email" placeholder="Email" />
-    <input type="password" v-model="form.password" placeholder="Mot de passe" />
-    <input type="text" v-model="form.firstName" placeholder="Prénom" />
-    <input type="text" v-model="form.lastName" placeholder="Nom" />
-    <button @click="submitForm">Envoyer</button>
-  </div>
-  <p>
-    Déjà inscrit ?
-    <router-link :to="{ name: 'app-login' }"> Connectez-vous </router-link>
-  </p>
->>>>>>> origin/main
 </template>
 
 <script setup lang="ts">
 import { reactive } from "vue";
 import apiClient from "../../lib/utils/apiClient";
-<<<<<<< HEAD
 import { useRouter } from "vue-router";
 
 const router = useRouter();
-=======
->>>>>>> origin/main
 
 const form = reactive({
   email: "",
@@ -95,7 +75,6 @@ const form = reactive({
 async function submitForm() {
   try {
     const result = await apiClient.post("/auth/register", form);
-<<<<<<< HEAD
     if (!result.error) {
       console.log("Inscription réussie:", result.data);
       // Rediriger vers la page de connexion après inscription
@@ -105,21 +84,11 @@ async function submitForm() {
     }
   } catch (error) {
     console.error("Erreur lors de l'envoi du formulaire:", error);
-=======
-    console.log(
-      "\x1b[44m%s\x1b[0m",
-      "webapp/src/components/FormulaireDégueulasse.vue:23 result",
-      result.data,
-    );
-  } catch (error) {
-    console.error("Erreur lors de l'envoi du formulaire :", error);
->>>>>>> origin/main
   }
 }
 </script>
 
 <style scoped>
-<<<<<<< HEAD
 .register-container {
   display: flex;
   flex-direction: column;
@@ -166,16 +135,9 @@ async function submitForm() {
     padding: 24px;
     margin: 16px;
   }
-  
+
   .register-container {
     min-height: 70vh;
   }
-=======
-div {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: baseline;
->>>>>>> origin/main
 }
 </style>
