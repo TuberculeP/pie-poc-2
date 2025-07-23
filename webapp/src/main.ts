@@ -4,7 +4,7 @@ import { router } from "./router";
 import { i18n } from "./lib/lang";
 import { createPinia } from "pinia";
 
-import "./reset.css";
+import "./styles/reset.css";
 import "./styles/colors.css";
 import "./styles/base.css";
 
