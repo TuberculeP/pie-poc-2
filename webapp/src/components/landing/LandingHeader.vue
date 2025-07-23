@@ -139,7 +139,7 @@ header .logo img {
   header .logo {
     display: none;
   }
-  
+
   header ul {
     width: auto;
     margin: 0 auto;
@@ -148,6 +148,7 @@ header .logo img {
 header ul {
   position: relative;
   display: flex;
+  align-items: center;
 }
 header ul li {
   position: relative;
@@ -159,15 +160,15 @@ header ul li a {
   position: relative;
   display: inline-block;
   margin: 0 15px;
-  color: #fff;
+  color: var(--color-white);
   text-decoration: none;
 }
 header ul li a:hover {
-  color: darkorange;
+  color: var(--color-accent);
 }
 
 header.sticky {
-  background-color: #fff;
+  background-color: var(--color-white);
   padding: 8px 96px;
 }
 header.sticky .logo {
@@ -182,35 +183,34 @@ header.sticky ul li a {
   display: flex;
   align-items: center;
   gap: 1rem;
-}
 
-.login-btn,
-.register-btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 500;
-  text-decoration: none !important;
-  transition: all 0.3s ease;
-}
+  .login-btn,
+  .register-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
 
-.login-btn {
-  color: #fff !important;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
+  .login-btn {
+    color: var(--color-white);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
 
-.login-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff !important;
-}
+  .login-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-white);
+  }
 
-.register-btn {
-  background: darkorange;
-  color: #fff !important;
-}
+  .register-btn {
+    background: var(--color-accent);
+    color: var(--color-black);
+  }
 
-.register-btn:hover {
-  background: #ff8c00;
-  color: #fff !important;
+  .register-btn:hover {
+    background: var(--color-accent-hover);
+  }
 }
 
 /* Menu de profil */
@@ -219,7 +219,7 @@ header.sticky ul li a {
 }
 
 .profile-link {
-  display: flex !important;
+  display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
@@ -235,13 +235,13 @@ header.sticky ul li a {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: darkorange;
+  background: var(--color-accent);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
   font-size: 14px;
-  color: #fff;
+  color: var(--color-white);
 }
 
 .profile-name {
@@ -261,7 +261,7 @@ header.sticky ul li a {
   position: absolute;
   top: 100%;
   right: 0;
-  background: #fff;
+  background: var(--color-white);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   min-width: 180px;
@@ -277,7 +277,7 @@ header.sticky ul li a {
   right: 20px;
   width: 12px;
   height: 12px;
-  background: #fff;
+  background: var(--color-white);
   transform: rotate(45deg);
   box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -285,7 +285,7 @@ header.sticky ul li a {
 .profile-dropdown a {
   display: block;
   padding: 12px 16px;
-  color: #333 !important;
+  color: #333;
   text-decoration: none;
   font-weight: 400;
   transition: background 0.2s ease;
@@ -293,22 +293,22 @@ header.sticky ul li a {
 
 .profile-dropdown a:hover {
   background: #f5f5f5;
-  color: darkorange !important;
+  color: var(--color-accent);
 }
 
 /* Styles sticky pour le profil */
 header.sticky .login-btn {
-  color: #000 !important;
+  color: #000;
   border-color: rgba(0, 0, 0, 0.2);
 }
 
 header.sticky .login-btn:hover {
   background: rgba(0, 0, 0, 0.1);
-  color: #000 !important;
+  color: #000;
 }
 
 header.sticky .profile-link {
-  color: #000 !important;
+  color: #000;
 }
 
 header.sticky .profile-link:hover {
