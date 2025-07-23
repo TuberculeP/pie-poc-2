@@ -1,0 +1,231 @@
+/* Design System Colors */
+:root {
+  /* Primaire (Default, Hover, Active) */
+  --color-primary: #4f709b;
+  --color-primary-hover: #3e5a7f;
+  --color-primary-active: #2d4460;
+
+  /* Secondaire (Default, Hover, Active) */
+  --color-secondary: #91a5f9;
+  --color-secondary-hover: #7a93f8;
+  --color-secondary-active: #5567ae;
+
+  /* Borders */
+  --color-border-secondary: rgba(145, 165, 249, 0.5);
+  --color-border-secondary-hover: rgba(145, 165, 249, 0.7);
+
+  /* Black (Default, Hover, Active) */
+  --color-black: #060b17;
+  --color-black-hover: #040810;
+  --color-black-active: #020408;
+
+  /* White (Default, Hover, Active, Light) */
+  --color-white: #f5f5f5;
+  --color-white-hover: #e8e8e8;
+  --color-white-active: #dcdcdc;
+  --color-white-light: #e6e7e8;
+
+  /* Accent (Default, Hover, Active) */
+  --color-accent: #ffd269;
+  --color-accent-hover: #ffc94a;
+  --color-accent-active: #b38d34;
+
+  /* Status Success (Default, Hover, Active) */
+  --color-success: #7cc8f5;
+  --color-success-hover: #61bdf3;
+  --color-success-active: #4484aa;
+
+  /* Status Validate (Default, Hover, Active) */
+  --color-validate: #60bd61;
+  --color-validate-hover: #40b041;
+  --color-validate-active: #2d7b2e;
+
+  /* Status Error (Default, Hover, Active) */
+  --color-error: #ee3535;
+  --color-error-hover: #ea0c0c;
+  --color-error-active: #a40808;
+
+  /* Status Warning (Default, Hover, Active) */
+  --color-warning: #fdf2e8;
+  --color-warning-hover: #ed9140;
+  --color-warning-active: #e97a19;
+
+  /* Backgrounds */
+  --color-bg-primary: #f0f2f7;
+  --color-bg-secondary: #e6eaff;
+  --color-bg-error: #fde7e7;
+  --color-bg-warning: #fdf2e8;
+  --color-bg-success: #ecf7ec;
+
+  /* Dark Backgrounds */
+  --color-bg-primary-dark: #0a0e16;
+  --color-bg-secondary-dark: #1a1e2a;
+  --color-bg-error-dark: #3a2323;
+  --color-bg-warning-dark: #3a2f23;
+  --color-bg-success-dark: #233a2f;
+}
+
+/* Utility classes for quick usage */
+.color-primary {
+  color: var(--color-primary);
+}
+.color-primary-hover {
+  color: var(--color-primary-hover);
+}
+.color-primary-active {
+  color: var(--color-primary-active);
+}
+
+.color-secondary {
+  color: var(--color-secondary);
+}
+.color-secondary-hover {
+  color: var(--color-secondary-hover);
+}
+.color-secondary-active {
+  color: var(--color-secondary-active);
+}
+
+.color-black {
+  color: var(--color-black);
+}
+.color-black-hover {
+  color: var(--color-black-hover);
+}
+.color-black-active {
+  color: var(--color-black-active);
+}
+
+.color-white {
+  color: var(--color-white);
+}
+.color-white-hover {
+  color: var(--color-white-hover);
+}
+.color-white-active {
+  color: var(--color-white-active);
+}
+
+.color-accent {
+  color: var(--color-accent);
+}
+.color-accent-hover {
+  color: var(--color-accent-hover);
+}
+.color-accent-active {
+  color: var(--color-accent-active);
+}
+
+.color-success {
+  color: var(--color-success);
+}
+.color-validate {
+  color: var(--color-validate);
+}
+.color-error {
+  color: var(--color-error);
+}
+.color-warning {
+  color: var(--color-warning-hover);
+}
+
+/* Border utility classes */
+.border-secondary {
+  border-color: var(--color-border-secondary);
+}
+.border-secondary-hover {
+  border-color: var(--color-border-secondary-hover);
+}
+
+/* Background utility classes */
+.bg-primary {
+  background-color: var(--color-primary);
+}
+.bg-secondary {
+  background-color: var(--color-secondary);
+}
+.bg-black {
+  background-color: var(--color-black);
+}
+.bg-white {
+  background-color: var(--color-white);
+}
+.bg-accent {
+  background-color: var(--color-accent);
+}
+
+.bg-success {
+  background-color: var(--color-success);
+}
+.bg-validate {
+  background-color: var(--color-validate);
+}
+.bg-error {
+  background-color: var(--color-error);
+}
+.bg-warning {
+  background-color: var(--color-warning);
+}
+
+/* Background layouts */
+.bg-layout-primary {
+  background-color: var(--color-bg-primary);
+}
+.bg-layout-secondary {
+  background-color: var(--color-bg-secondary);
+}
+.bg-layout-error {
+  background-color: var(--color-bg-error);
+}
+.bg-layout-warning {
+  background-color: var(--color-bg-warning);
+}
+.bg-layout-success {
+  background-color: var(--color-bg-success);
+}
+
+/* Button state mixins for hover and active states */
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.btn-primary:active {
+  background-color: var(--color-primary-active);
+}
+
+.btn-secondary {
+  background-color: var(--color-secondary);
+  color: var(--color-white);
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-secondary-hover);
+}
+
+.btn-secondary:active {
+  background-color: var(--color-secondary-active);
+}
+
+.btn-accent {
+  background-color: var(--color-accent);
+  color: var(--color-black);
+  border: none;
+  transition: background-color 0.2s ease;
+}
+
+.btn-accent:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.btn-accent:active {
+  background-color: var(--color-accent-active);
+}

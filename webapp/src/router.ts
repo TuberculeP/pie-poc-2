@@ -23,16 +23,32 @@ async function authGuard(to: any, from: any, next: any) {
     next({ name: "app-login", query: { redirect: to.name } });
   }
 }
+import BlogApp from "./views/blog/BlogApp.vue";
+import BlogSearchResults from "./views/blog/BlogSearchResults.vue";
+import BlogPostDetail from "./views/blog/BlogPostDetail.vue";
+import ProfileView from "./views/profil/ProfileView.vue";
 
 const routes = [
   { path: "/", component: LandingIndex, name: "landing-main" },
   { path: "/app", component: BloopApp, name: "app-main" },
   { path: "/login", component: LoginView, name: "app-login" },
   { path: "/register", component: RegisterView, name: "app-register" },
+  { path: "/blog", component: BlogApp, name: "app-blog" },
+  {
+    path: "/blog/search",
+    component: BlogSearchResults,
+    name: "blog-search-results",
+  },
+  {
+    path: "/blog/post/:id",
+    component: BlogPostDetail,
+    name: "blog-post-detail",
+  },
+  { path: "/profile", component: ProfileView, name: "profile" },
 ];
 
 const getGuardedRoutes = () => {
-  const guardedMatches = ["app", "network", "settings", "profile"];
+  const guardedMatches = ["app", "blog", "settings", "profile"];
   return routes.map((route) => {
     if (guardedMatches.some((match) => route.path.includes(match))) {
       return {

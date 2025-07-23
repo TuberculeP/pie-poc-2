@@ -5,6 +5,8 @@ import {
   ManyToMany,
   Column,
   CreateDateColumn,
+  ManyToOne,
+  JoinTable,
 } from "typeorm";
 import { User } from "./User";
 import { Tag } from "./Tag";
@@ -14,7 +16,7 @@ export class Post {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @OneToMany(() => User, (user) => user.id)
+  @ManyToOne(() => User, (user) => user.posts)
   author: User;
 
   @ManyToMany(() => User, (user) => user.likedPosts)
@@ -33,13 +35,14 @@ export class Post {
   isActive: boolean;
 
   @ManyToMany(() => Tag, (tag) => tag.posts)
+  @JoinTable()
   tags: Tag[];
 
-  @OneToMany(() => Post, (post) => post.id, { nullable: true })
+  @ManyToOne(() => Post, (post) => post.comments, { nullable: true })
   comment_of?: Post;
 
-  @ManyToMany(() => Post, (post) => post.comment_of)
-  comments: Post[];
+  @OneToMany(() => Post, (post) => post.comment_of)
+  comments?: Post[];
 
   @Column({ default: false })
   is_highlight: boolean;
