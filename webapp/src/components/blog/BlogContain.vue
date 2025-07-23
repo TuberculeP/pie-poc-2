@@ -4,6 +4,7 @@ import BlogCreate from "./BlogCreate.vue";
 import BlogPosts from "./BlogPosts.vue";
 import BlogTrends from "./BlogTrends.vue";
 import { useAuthStore } from "../../stores/authStore";
+import BlogSearch from "./BlogSearch.vue";
 // import BlogUsers from "./BlogUsers.vue";
 
 const postsKey = ref(0);
@@ -55,6 +56,7 @@ onMounted(() => {
       <BlogPosts :key="postsKey" />
     </div>
     <div class="blog-trends">
+      <BlogSearch />
       <BlogTrends />
       <!-- <BlogUsers /> -->
     </div>
@@ -73,6 +75,9 @@ onMounted(() => {
 
   .blog-trends {
     flex: 0 0 400px; /* Largeur fixe pour la colonne des tendances */
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 }
 
