@@ -55,16 +55,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-<style scoped>
-.loading,
-.error,
-.no-posts {
-  text-align: center;
-  padding: 20px;
-  color: var(--color-secondary);
-}
-
-.error {
-  color: var(--color-error);
-}
-</style>

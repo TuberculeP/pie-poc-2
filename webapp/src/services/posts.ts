@@ -54,7 +54,7 @@ export const getAllPosts = async (): Promise<Post[]> => {
   }
 };
 
-export const getPostById = async (id: number): Promise<Post> => {
+export const getPostById = async (id: string): Promise<Post> => {
   const response = await axios.get(`${API_URL}/${id}`);
   return response.data.body;
 };
@@ -65,7 +65,7 @@ export const createPost = async (data: CreatePostData): Promise<Post> => {
 };
 
 export const updatePost = async (
-  id: number,
+  id: string,
   data: Partial<Post>
 ): Promise<Post> => {
   const response = await axios.patch(`${API_URL}/${id}`, data);

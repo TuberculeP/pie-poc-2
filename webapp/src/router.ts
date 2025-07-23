@@ -25,6 +25,8 @@ async function authGuard(to: any, from: any, next: any) {
 }
 import BlogApp from "./views/blog/BlogApp.vue";
 import BlogSearchResults from "./views/blog/BlogSearchResults.vue";
+import BlogPostDetail from "./views/blog/BlogPostDetail.vue";
+import ProfileView from "./views/profil/ProfileView.vue";
 
 const routes = [
   { path: "/", component: LandingIndex, name: "landing-main" },
@@ -37,6 +39,12 @@ const routes = [
     component: BlogSearchResults,
     name: "blog-search-results",
   },
+  {
+    path: "/blog/post/:id",
+    component: BlogPostDetail,
+    name: "blog-post-detail",
+  },
+  { path: "/profile", component: ProfileView, name: "profile" },
 ];
 
 const getGuardedRoutes = () => {

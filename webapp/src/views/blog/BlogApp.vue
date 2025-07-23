@@ -11,5 +11,3 @@ import LandingLayout from "../../layouts/LandingLayout.vue";
     <LandingFooter />
   </LandingLayout>
 </template>
-
-<style scoped></style>

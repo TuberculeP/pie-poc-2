@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, computed, ref } from "vue";
+import { useRouter } from "vue-router";
 import {
   deletePost,
   updatePost,
@@ -13,12 +14,14 @@ import BaseButton from "../ui/BaseButton.vue";
 
 const props = defineProps<{
   post: Post;
+  showExpanded?: boolean; // Pour afficher en mode étendu sur la page de détail
 }>();
 
 const emit = defineEmits<{
   refresh: [];
 }>();
 
+const router = useRouter();
 const authStore = useAuthStore();
 
 // État pour gérer l'affichage des commentaires
@@ -183,7 +186,7 @@ const handleDelete = async () => {
 const toggleHighlight = async () => {
   if (props.post.id) {
     try {
-      await updatePost(props.post.id, {
+      await updatePost(String(props.post.id), {
         is_highlight: !props.post.is_highlight,
       });
       emit("refresh");
@@ -204,11 +207,29 @@ const formatDate = (dateString?: string) => {
     minute: "2-digit",
   });
 };
+
+// Navigation vers la page de détail
+const goToPostDetail = () => {
+  console.log("clicked post", props.post.id);
+
+  if (props.post.id) {
+    console.log("Navigating to post detail:", props.post.id);
+    router.push(`/blog/post/${props.post.id}`);
+  }
+};
+
+const goToAuthorProfile = () => {};
 </script>
 <template>
-  <div class="post-container" :class="{ highlighted: post.is_highlight }">
+  <div
+    class="post-container"
+    :class="{
+      highlighted: post.is_highlight,
+    }"
+    @click="goToPostDetail"
+  >
     <div class="post-header">
-      <div class="author">
+      <div class="author" @click="goToAuthorProfile">
         {{
           post.author
             ? `${post.author.firstName} ${post.author.lastName}` ||
@@ -382,379 +403,3 @@ const formatDate = (dateString?: string) => {
     </div>
   </div>
 </template>
-<style scoped>
-.post-container {
-  display: flex;
-  flex-direction: column;
-  background-color: var(--color-bg-primary-dark);
-  border: 1px solid var(--color-border-secondary);
-  border-radius: 8px;
-  padding: 16px;
-  margin: 16px 0;
-  transition: all 0.3s ease;
-}
-
-.post-container:hover {
-  box-shadow: 0 4px 16px rgba(0, 255, 136, 0.2);
-  transform: translateY(-2px);
-  border: 1px solid var(--color-border-secondary-hover);
-}
-
-.btn-secondary {
-  background: var(--color-secondary);
-  color: #fff;
-
-  border: 2px solid #ffd269;
-}
-
-.btn-secondary:hover {
-  background: #ffd269;
-  transform: translateY(-2px);
-}
-
-.btn {
-  padding: 1rem 2rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-}
-
-/* Style spécial pour les posts en highlight */
-.post-container.highlighted {
-  border: 2px solid var(--color-accent);
-  box-shadow: 0 4px 16px rgba(0, 255, 136, 0.2);
-  position: relative;
-}
-
-.post-container.highlighted::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-
-  border-radius: 6px 6px 0 0;
-}
-
-.post-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  gap: 16px;
-}
-
-.admin-controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.highlight-button {
-  background: var(--color-secondary);
-  color: var(--color-white);
-  border: none;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.highlight-button:hover {
-  background: var(--color-accent);
-  transform: scale(1.1);
-}
-
-.highlight-button.active {
-  background: var(--color-accent);
-  color: var(--color-white);
-  box-shadow: 0 2px 6px rgba(0, 255, 136, 0.3);
-}
-
-.delete-button {
-  background: var(--color-error);
-  color: var(--color-white);
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.delete-button:hover {
-  background: var(--color-error-hover);
-  transform: scale(1.1);
-}
-
-.author {
-  color: var(--color-white);
-  font-size: 1.2em;
-}
-
-.date {
-  font-size: 0.8em;
-  color: var(--color-secondary);
-  font-weight: normal;
-}
-
-.post-content {
-  margin-bottom: 12px;
-  line-height: 1.5;
-  color: var(--color-white);
-}
-
-.post-footer {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-/* Styles pour le bouton like avec icône de cœur */
-.like-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  color: var(--color-secondary);
-}
-
-.like-button:hover:not(:disabled) {
-  background-color: rgba(255, 92, 92, 0.1);
-  transform: translateY(-1px);
-}
-
-.like-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.heart-icon {
-  font-size: 18px;
-  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  color: var(--color-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.heart-icon.liked {
-  color: #ff5c5c;
-  transform: scale(1.2);
-  text-shadow: 0 0 10px rgba(255, 92, 92, 0.5);
-}
-
-.heart-icon.liking {
-  animation: heartBeat 0.6s ease-in-out;
-}
-
-@keyframes heartBeat {
-  0% {
-    transform: scale(1);
-  }
-  14% {
-    transform: scale(1.3);
-  }
-  28% {
-    transform: scale(1);
-  }
-  42% {
-    transform: scale(1.3);
-  }
-  70% {
-    transform: scale(1);
-  }
-}
-
-.like-count {
-  font-size: 0.85em;
-  font-weight: 600;
-  color: var(--color-white);
-  min-width: 16px;
-  text-align: left;
-}
-
-/* Styles pour la section des commentaires */
-.comments-section {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-black);
-}
-
-.comments-loading {
-  text-align: center;
-  color: var(--color-secondary);
-  padding: 16px;
-  font-style: italic;
-}
-
-.comments-error {
-  color: var(--color-error);
-  text-align: center;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.comments-empty {
-  text-align: center;
-  color: var(--color-secondary);
-  padding: 16px;
-  font-style: italic;
-}
-
-.comments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.comment-item {
-  background-color: var(--color-bg-secondary-dark);
-  border: 1px solid var(--color-black);
-  border-radius: 6px;
-  padding: 12px;
-  margin-left: 20px;
-  position: relative;
-}
-
-.comment-item::before {
-  content: "";
-  position: absolute;
-  left: -10px;
-  top: 16px;
-  width: 0;
-  height: 0;
-  border-top: 6px solid transparent;
-  border-bottom: 6px solid transparent;
-  border-right: 10px solid var(--color-bg-secondary-dark);
-}
-
-.comment-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  gap: 12px;
-}
-
-.comment-author {
-  color: var(--color-accent);
-  font-weight: 600;
-  font-size: 0.9em;
-}
-
-.comment-date {
-  font-size: 0.75em;
-  color: var(--color-secondary);
-  opacity: 0.8;
-}
-
-.comment-content {
-  line-height: 1.4;
-  color: var(--color-white);
-  font-size: 0.9em;
-}
-
-.retry-button {
-  margin-top: 8px;
-}
-
-/* Styles pour le formulaire de commentaire */
-.comment-form {
-  background-color: var(--color-bg-secondary-dark);
-  border: 1px solid var(--color-secondary);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.comment-form-header {
-  margin-bottom: 12px;
-}
-
-.comment-form-header h4 {
-  color: var(--color-white);
-  margin: 0;
-  font-size: 1.1em;
-  font-weight: 600;
-}
-
-.comment-form-content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.comment-input {
-  width: 100%;
-  background-color: var(--color-bg-primary-dark);
-  border: 1px solid var(--color-black);
-  border-radius: 6px;
-  padding: 12px;
-  color: var(--color-white);
-  font-family: inherit;
-  font-size: 0.9em;
-  line-height: 1.4;
-  resize: vertical;
-  min-height: 80px;
-  transition: border-color 0.2s ease;
-}
-
-.comment-input:focus {
-  outline: none;
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.1);
-}
-
-.comment-input::placeholder {
-  color: var(--color-secondary);
-  opacity: 0.7;
-}
-
-.comment-input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.comment-form-error {
-  color: var(--color-error);
-  font-size: 0.85em;
-  padding: 8px 12px;
-  background-color: rgba(255, 92, 92, 0.1);
-  border: 1px solid var(--color-error);
-  border-radius: 4px;
-}
-
-.comment-form-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-</style>
