@@ -3,6 +3,7 @@ import pg from "../../config/db.config";
 import { Post } from "../../config/entities/Post";
 import { User } from "../../config/entities/User";
 import { Tag } from "../../config/entities/Tag";
+import { IsNull } from "typeorm";
 
 const postsRouter = Router();
 
@@ -17,7 +18,8 @@ postsRouter.post("/", async (req, res) => {
     }
 
     const postRepository = pg.getRepository(Post);
-    const { body, tags, is_highlight, pinned_by_user } = req.body;
+    const { body, tags, is_highlight, pinned_by_user, comment_of_post_id } =
+      req.body;
 
     if (!body) {
       res.status(422).json({
@@ -44,6 +46,22 @@ postsRouter.post("/", async (req, res) => {
       pinned_by_user: pinned_by_user,
     };
 
+    if (comment_of_post_id) {
+      const postComment = await postRepository.findOne({
+        where: { id: comment_of_post_id },
+        relations: ["author"],
+      });
+
+      if (!postComment) {
+        res.status(404).json({
+          status: 404,
+          message: "Post not found",
+        });
+      }
+
+      payload.comment_of = postComment;
+    }
+
     const newPost = postRepository.create(payload);
     await postRepository.save(newPost);
 
@@ -62,14 +80,23 @@ postsRouter.get("/", async (_, res) => {
   try {
     const postRepository = pg.getRepository(Post);
     let allPosts = await postRepository.find({
+      where: { comment_of: IsNull(), isActive: true },
       order: { createdAt: "DESC" },
-      relations: ["author", "tags"],
+      relations: ["author", "tags", "comments", "likedBy"],
+    });
+
+    const postsWithLikeCount = allPosts.map((post) => {
+      const { likedBy, ...rest } = post;
+      return {
+        ...rest,
+        like: likedBy?.length || 0,
+      };
     });
 
     res.status(200).json({
       status: 200,
       message: "Posts successfully retrieved",
-      body: allPosts,
+      body: postsWithLikeCount,
     });
     return;
   } catch (err) {
@@ -82,7 +109,7 @@ postsRouter.get("/:id", async (req, res) => {
     const postRepository = pg.getRepository(Post);
     let post = await postRepository.findOne({
       where: { id: req.params.id },
-      relations: ["author", "tags"],
+      relations: ["author", "tags", "likedBy", "comments", "comments.author"],
     });
 
     if (!post) {
@@ -93,10 +120,16 @@ postsRouter.get("/:id", async (req, res) => {
       return;
     }
 
+    const { likedBy, ...rest } = post;
+    let postWithLikeCount = {
+      ...rest,
+      like: likedBy?.length || 0,
+    };
+
     res.status(200).json({
       status: 200,
       message: "Post successfully retrieved",
-      body: post,
+      body: postWithLikeCount,
     });
     return;
   } catch (err) {

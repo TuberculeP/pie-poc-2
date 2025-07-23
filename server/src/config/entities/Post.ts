@@ -38,11 +38,11 @@ export class Post {
   @JoinTable()
   tags: Tag[];
 
-  @OneToMany(() => Post, (post) => post.id, { nullable: true })
+  @ManyToOne(() => Post, (post) => post.comments, { nullable: true })
   comment_of?: Post;
 
   @OneToMany(() => Post, (post) => post.comment_of)
-  comments: Post[];
+  comments?: Post[];
 
   @Column({ default: false })
   is_highlight: boolean;
