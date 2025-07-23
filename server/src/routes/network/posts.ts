@@ -239,4 +239,47 @@ postsRouter.delete("/:id", async (req, res) => {
   }
 });
 
+postsRouter.patch("/like/:id", async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      res.status(401).json({
+        status: 401,
+        message: "Login required to like a post",
+      });
+      return;
+    }
+
+    const postRepository = pg.getRepository(Post);
+    const userRepository = pg.getRepository(User);
+
+    const author = await userRepository.findOne({
+      where: { id: req.user.id },
+      relations: ["likedPosts"],
+    });
+    const post = await postRepository.findOneBy({ id: req.params.id });
+
+    if (post && author) {
+      const hasLiked = author.likedPosts.some((p) => p.id === post.id);
+
+      if (hasLiked) {
+        author.likedPosts = author.likedPosts.filter((p) => p.id !== post.id);
+      } else {
+        author.likedPosts.push(post);
+      }
+
+      await userRepository.save(author);
+
+      res.status(200).json({
+        status: 200,
+        message: hasLiked
+          ? "Post successfully unliked"
+          : "Post successfully liked",
+        body: post,
+      });
+    }
+  } catch (err) {
+    res.json(err);
+  }
+});
+
 export default postsRouter;
