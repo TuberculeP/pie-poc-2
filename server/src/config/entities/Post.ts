@@ -6,6 +6,7 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
+  JoinTable,
 } from "typeorm";
 import { User } from "./User";
 import { Tag } from "./Tag";
@@ -34,6 +35,7 @@ export class Post {
   isActive: boolean;
 
   @ManyToMany(() => Tag, (tag) => tag.posts)
+  @JoinTable()
   tags: Tag[];
 
   @OneToMany(() => Post, (post) => post.id, { nullable: true })
