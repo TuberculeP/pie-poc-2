@@ -33,7 +33,7 @@ const userStats = computed(() => {
   const highlightPosts = posts.filter((p) => p.is_highlight).length;
   const totalComments = posts.reduce(
     (sum, post) => sum + (post.comments?.length || 0),
-    0
+    0,
   );
 
   return {
@@ -62,12 +62,12 @@ const loadUserPosts = async () => {
           post.author &&
           post.author.id &&
           user.value?.id &&
-          post.author.id === user.value.id
+          post.author.id === user.value.id,
       )
       .sort(
         (a, b) =>
           new Date(b.createdAt || "").getTime() -
-          new Date(a.createdAt || "").getTime()
+          new Date(a.createdAt || "").getTime(),
       );
   } catch (err) {
     console.error("Erreur lors du chargement des posts:", err);
@@ -104,7 +104,7 @@ const saveEdit = async () => {
 
     // Mettre à jour le post dans la liste locale
     const index = userPosts.value.findIndex(
-      (p) => p.id === editingPost.value?.id
+      (p) => p.id === editingPost.value?.id,
     );
     if (index !== -1) {
       userPosts.value[index] = {
