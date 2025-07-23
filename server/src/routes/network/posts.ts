@@ -2,6 +2,7 @@ import { Router } from "express";
 import pg from "../../config/db.config";
 import { Post } from "../../config/entities/Post";
 import { User } from "../../config/entities/User";
+import { Tag } from "../../config/entities/Tag";
 
 const postsRouter = Router();
 
@@ -23,16 +24,22 @@ postsRouter.post("/", async (req, res) => {
         status: 422,
         message: "Missing data",
       });
-      return;
     }
 
     const userRepository = pg.getRepository(User);
     const author = await userRepository.findOneBy({ id: req.user.id });
 
+    let tagsArray = [];
+    const tagRepository = pg.getRepository(Tag);
+    for (let tagId of tags) {
+      let tag = await tagRepository.findOneBy({ id: tagId });
+      if (tag) tagsArray.push(tag);
+    }
+
     let payload: any = {
       author: author,
       body: body,
-      tags: tags,
+      tags: tagsArray,
       is_highlight: is_highlight,
       pinned_by_user: pinned_by_user,
     };
@@ -56,7 +63,7 @@ postsRouter.get("/", async (_, res) => {
     const postRepository = pg.getRepository(Post);
     let allPosts = await postRepository.find({
       order: { createdAt: "DESC" },
-      relations: ["author"],
+      relations: ["author", "tags"],
     });
 
     res.status(200).json({
@@ -75,7 +82,7 @@ postsRouter.get("/:id", async (req, res) => {
     const postRepository = pg.getRepository(Post);
     let post = await postRepository.findOne({
       where: { id: req.params.id },
-      relations: ["author"],
+      relations: ["author", "tags"],
     });
 
     if (!post) {
@@ -108,7 +115,8 @@ postsRouter.patch("/:id", async (req, res) => {
     }
 
     const postRepository = pg.getRepository(Post);
-    const updates = req.body;
+    const { tags } = req.body;
+    let updates = req.body;
 
     const post = await postRepository.findOne({
       where: { id: req.params.id },
@@ -121,6 +129,17 @@ postsRouter.patch("/:id", async (req, res) => {
         message: "Not the author of the post",
       });
       return;
+    }
+
+    if (tags && tags.length > 0) {
+      const tagRepository = pg.getRepository(Tag);
+      let newTagsArray = [];
+      for (let tagId of tags) {
+        let tag = await tagRepository.findOneBy({ id: tagId });
+        newTagsArray.push(tag);
+      }
+
+      updates.tags = newTagsArray;
     }
 
     if (post) {
@@ -156,7 +175,7 @@ postsRouter.delete("/:id", async (req, res) => {
     const postRepository = pg.getRepository(Post);
     const post = await postRepository.findOne({
       where: { id: req.params.id },
-      relations: ["author"],
+      relations: ["author", "tags"],
     });
 
     if (post && post.author.id !== req.user.id) {
@@ -168,10 +187,7 @@ postsRouter.delete("/:id", async (req, res) => {
     }
 
     if (post) {
-      /*await postRepository.remove(post)*/
-      await postRepository.query(`DELETE FROM post WHERE id = ?`, [
-        req.params.id,
-      ]);
+      await postRepository.delete(req.params.id);
 
       res.status(204).json({
         status: 204,
