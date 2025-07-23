@@ -229,7 +229,7 @@ const goToAuthorProfile = () => {};
     @click="goToPostDetail"
   >
     <div class="post-header">
-      <div class="author" @click="goToAuthorProfile">
+      <div class="author" @click.stop="goToAuthorProfile">
         {{
           post.author
             ? `${post.author.firstName} ${post.author.lastName}` ||
@@ -240,7 +240,7 @@ const goToAuthorProfile = () => {};
       <div class="date">{{ formatDate(post.createdAt) }}</div>
 
       <!-- Boutons d'administration (visibles seulement pour les admins) -->
-      <div v-if="isAdmin" class="admin-controls">
+      <div v-if="isAdmin" class="admin-controls" @click.stop>
         <button
           @click="toggleHighlight"
           class="highlight-button"
@@ -259,7 +259,7 @@ const goToAuthorProfile = () => {};
     <div class="post-content">
       {{ post.body }}
     </div>
-    <div class="post-footer">
+    <div class="post-footer" @click.stop>
       <!-- Bouton Like avec icône de cœur -->
       <button
         class="like-button"
@@ -309,7 +309,7 @@ const goToAuthorProfile = () => {};
     </div>
 
     <!-- Section des commentaires -->
-    <div v-if="showComments || showCommentForm" class="comments-section">
+    <div v-if="showComments || showCommentForm" class="comments-section" @click.stop>
       <!-- Formulaire d'ajout de commentaire -->
       <div
         v-if="showCommentForm && authStore.isAuthenticated"
