@@ -1,11 +1,13 @@
 <template>
   <header class="main_header" id="header">
-    <a href="#header" class="logo">logo</a>
+    <a href="/" class="logo">
+      <img src="../../assets/logo/logo_background_yellow.svg" alt="Logo" />
+    </a>
     <div class="toggle"></div>
     <ul>
       <li><a href="#">Produit</a></li>
       <li><a href="#">Galerie</a></li>
-      <li><a href="#">Blog</a></li>
+      <li><a href="/blog">Blog</a></li>
       <li><a href="#">À propos</a></li>
       <li><a href="#">Support</a></li>
     </ul>
@@ -32,17 +34,17 @@ header {
   align-items: center;
   transition: 0.5s;
 }
-header .logo {
+/* header .logo {
   color: #fff;
   font-size: 24px;
-  text-transform: uppercase; /* MAJUSCULE */
+  text-transform: uppercase; 
   text-decoration: none;
   font-weight: 600;
   letter-spacing: 2px;
-}
+} */
 header .logo img {
-  width: 25px;
-  display: none;
+  width: 120px;
+  /* display: none; */
 }
 @media screen and (max-width: 570px) {
   header .logo {
@@ -76,7 +78,7 @@ header ul li a:hover {
 
 header.sticky {
   background-color: #fff;
-  padding: 20px 100px;
+  padding: 8px 96px;
 }
 header.sticky .logo {
   color: #000;
