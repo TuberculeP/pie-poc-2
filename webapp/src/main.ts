@@ -7,6 +7,7 @@ import { createPinia } from "pinia";
 import "./styles/reset.css";
 import "./styles/colors.css";
 import "./styles/base.css";
+import "./styles/blog.css";
 
 const pinia = createPinia();
 
