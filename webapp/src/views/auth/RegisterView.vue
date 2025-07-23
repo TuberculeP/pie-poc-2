@@ -2,13 +2,13 @@
   <div class="register-container">
     <form class="form-container" @submit.prevent="submitForm">
       <h2>Inscription</h2>
-      
+
       <div class="form-group">
         <label for="email">Email</label>
-        <input 
+        <input
           id="email"
-          type="email" 
-          v-model="form.email" 
+          type="email"
+          v-model="form.email"
           placeholder="Entrez votre email"
           required
         />
@@ -46,11 +46,9 @@
           required
         />
       </div>
-      
-      <button type="submit">
-        Créer mon compte
-      </button>
-      
+
+      <button type="submit">Créer mon compte</button>
+
       <div class="form-footer">
         <router-link :to="{ name: 'app-login' }" class="login-link">
           Déjà inscrit ? Se connecter
@@ -137,7 +135,7 @@ async function submitForm() {
     padding: 24px;
     margin: 16px;
   }
-  
+
   .register-container {
     min-height: 70vh;
   }
