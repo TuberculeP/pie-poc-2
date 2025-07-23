@@ -342,4 +342,3 @@ header.sticky .profile-link:hover {
   }
 }
 </style>
-
