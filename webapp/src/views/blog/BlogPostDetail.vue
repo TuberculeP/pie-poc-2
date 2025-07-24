@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { getPostById, type Post } from "../../services/posts";
+import { getPostById } from "../../services/posts";
 import BlogPost from "../../components/blog/BlogPost.vue";
 import BaseButton from "../../components/ui/BaseButton.vue";
 import LandingHeader from "../../components/landing/LandingHeader.vue";
 import LandingFooter from "../../components/landing/LandingFooter.vue";
 import LandingLayout from "../../layouts/LandingLayout.vue";
+import type { Post } from "../../lib/utils/types";
 
 const route = useRoute();
 const router = useRouter();
