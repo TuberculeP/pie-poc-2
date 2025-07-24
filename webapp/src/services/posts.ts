@@ -64,3 +64,15 @@ export const updatePost = async (
 export const deletePost = async (id: number): Promise<void> => {
   await apiClient.delete(`/posts/${id}`);
 };
+
+export const likePost = async (id: string): Promise<Post> => {
+  const { data, error } = await apiClient.patch<{ body: Post }>(
+    `/posts/like/${id}`
+  );
+  if (!data || error) {
+    console.error("Error liking post:", error);
+    throw new Error("Failed to like post");
+  } else {
+    return data.body;
+  }
+};

@@ -8,6 +8,7 @@ import {
   createPost,
   type Post,
   type CreatePostData,
+  likePost,
 } from "../../services/posts";
 import { useAuthStore } from "../../stores/authStore";
 import BaseButton from "../ui/BaseButton.vue";
@@ -38,7 +39,7 @@ const commentError = ref<string | null>(null);
 
 // État pour le système de like
 const isLiked = ref(false);
-const likeCount = ref(0);
+const likeCount = ref<number>(props.post.like || 0);
 const isLiking = ref(false);
 
 // Vérifier si l'utilisateur est admin
@@ -156,6 +157,7 @@ const toggleLike = async () => {
     likeCount.value += isLiked.value ? 1 : -1;
 
     // TODO: Implémenter l'appel API pour les likes
+    await likePost(props.post.id);
     // Pour l'instant, simulation
     await new Promise((resolve) => setTimeout(resolve, 300));
   } catch (error) {
@@ -252,7 +254,7 @@ const goToAuthorProfile = () => {};
           ★
         </button>
         <button @click="handleDelete" class="delete-button" title="Supprimer">
-          ×
+          <i class="fas fa-trash-alt"></i>
         </button>
       </div>
     </div>
@@ -274,7 +276,7 @@ const goToAuthorProfile = () => {};
         "
       >
         <div class="heart-icon" :class="{ liked: isLiked, liking: isLiking }">
-          ♥
+          <i class="fas fa-heart"></i>
         </div>
         <span class="like-count" v-if="likeCount > 0">{{ likeCount }}</span>
       </button>
