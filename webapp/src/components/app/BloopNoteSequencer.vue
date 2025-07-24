@@ -96,6 +96,25 @@
     <div class="controls">
       <button @click="clearAll" class="btn btn-danger">Effacer tout</button>
 
+      <!-- Contrôles de simulation clavier -->
+      <div class="keyboard-controls">
+        <button
+          @click="toggleKeyboardSimulation"
+          class="btn"
+          :class="enableKeyboardSimulation ? 'btn-success' : 'btn-secondary'"
+        >
+          ⌨️ {{ enableKeyboardSimulation ? "KEYS ON" : "KEYS OFF" }}
+        </button>
+      </div>
+
+      <!-- Contrôles de fichiers -->
+      <div class="file-controls">
+        <button @click="saveSequence" class="btn btn-success">
+          💾 Sauvegarder
+        </button>
+        <button @click="loadSequence" class="btn btn-info">📁 Charger</button>
+      </div>
+
       <!-- Contrôles de lecture -->
       <div class="playback-controls">
         <button
@@ -132,12 +151,23 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, onUnmounted } from "vue";
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted, defineEmits } from "vue";
 import { GridLayout, GridItem } from "grid-layout-plus";
+import type { MidiNote, NoteName } from "../../lib/utils/types";
+import { useMIDIStore } from "../../stores/MIDIStore";
+
+// Événements émis par le composant
+const emit = defineEmits<{
+  noteStart: [note: MidiNote, noteName: NoteName, position: number];
+  noteEnd: [note: MidiNote, noteName: NoteName, position: number];
+}>();
+
+// Store pour la simulation clavier/événements
+const midiStore = useMIDIStore();
 
 // Configuration des notes (piano keys)
-const notes = [
+const notes: NoteName[] = [
   "C6",
   "B5",
   "A#5",
@@ -177,34 +207,41 @@ const notes = [
 ];
 
 // Configuration de la grille
-const cols = 64; // 16 mesures x 4 beats
-const rowHeight = 20;
-const measureWidth = 256; // Largeur fixe pour les mesures
+const cols: number = 64; // 16 mesures x 4 beats
+const rowHeight: number = 20;
+const measureWidth: number = 256; // Largeur fixe pour les mesures
 
 // État des notes MIDI
-const layout = ref([
+const layout = ref<MidiNote[]>([
   // Quelques notes d'exemple pour tester
   { i: "note-demo-1", x: 0, y: 5, w: 1, h: 1 },
   { i: "note-demo-2", x: 4, y: 8, w: 2, h: 1 },
   { i: "note-demo-3", x: 8, y: 12, w: 1, h: 1 },
 ]);
-const nextNoteId = ref(4);
-const tempo = ref(120);
+const nextNoteId = ref<number>(4);
+const tempo = ref<number>(120);
 
 // État de lecture amélioré pour plus de fluidité
-const isPlaying = ref(false);
-const currentPosition = ref(0); // Position actuelle en colonnes (entier)
-const precisePosition = ref(0); // Position précise pour animation fluide (float)
-const playbackStartTime = ref(0);
-const playbackAnimationId = ref(null);
-const activeNotes = ref(new Set()); // Notes actuellement en train de jouer
-const lastNoteCheckPosition = ref(-1); // Dernière position où on a vérifié les notes
+const isPlaying = ref<boolean>(false);
+const currentPosition = ref<number>(0); // Position actuelle en colonnes (entier)
+const precisePosition = ref<number>(0); // Position précise pour animation fluide (float)
+const playbackStartTime = ref<number>(0);
+const playbackAnimationId = ref<number | null>(null);
+const activeNotes = ref<Set<string>>(new Set()); // Notes actuellement en train de jouer
+const lastNoteCheckPosition = ref<number>(-1); // Dernière position où on a vérifié les notes
+
+// État simulation clavier
+const enableKeyboardSimulation = ref<boolean>(true); // Simulation clavier activée par défaut
 
 // Contrôle clavier avec event listener natif
-const handleKeyDown = (event) => {
+const handleKeyDown = (event: KeyboardEvent): void => {
   if (event.code === "Space" && !event.repeat) {
     event.preventDefault();
-    togglePlayback();
+    if (isPlaying.value) {
+      stopPlayback(); // Reset au lieu de pause
+    } else {
+      startPlayback();
+    }
   }
 };
 
@@ -217,8 +254,8 @@ onUnmounted(() => {
 });
 
 // Mesures pour l'header
-const measures = computed(() => {
-  const result = [];
+const measures = computed<number[]>(() => {
+  const result: number[] = [];
   for (let i = 1; i <= cols / 4; i++) {
     result.push(i);
   }
@@ -226,11 +263,11 @@ const measures = computed(() => {
 });
 
 // Fonctions utilitaires
-const isBlackKey = (note) => {
+const isBlackKey = (note: NoteName): boolean => {
   return note.includes("#");
 };
 
-const getNoteClass = (item) => {
+const getNoteClass = (item: MidiNote) => {
   const note = getNoteFromY(item.y);
   return {
     "note-black": isBlackKey(note),
@@ -238,24 +275,24 @@ const getNoteClass = (item) => {
   };
 };
 
-const getNoteFromY = (yPosition) => {
+const getNoteFromY = (yPosition: number): NoteName => {
   return notes[yPosition] || "C4";
 };
 
 // Fonctions d'interaction
-const playNote = (note) => {
+const playNote = (note: NoteName): void => {
   // TODO: Intégrer votre synthé ou Web Audio API
   // eslint-disable-next-line no-console
   console.info(`Jouer note: ${note}`);
 };
 
-const addNoteAtClick = (event) => {
+const addNoteAtClick = (event: MouseEvent): void => {
   // Vérifier que c'est bien un double-clic sur une zone vide
-  if (event.target.closest(".midi-note")) {
+  if ((event.target as Element).closest(".midi-note")) {
     return; // Ne pas créer de note si on clique sur une note existante
   }
 
-  const gridElement = event.currentTarget;
+  const gridElement = event.currentTarget as HTMLElement;
   const rect = gridElement.getBoundingClientRect();
 
   // Calculer la position relative au conteneur grid-layout-plus
@@ -278,7 +315,7 @@ const addNoteAtClick = (event) => {
 
   // Vérifier les limites
   if (x >= 0 && x < cols && y >= 0 && y < notes.length) {
-    const newNote = {
+    const newNote: MidiNote = {
       i: `note-${nextNoteId.value++}`,
       x,
       y,
@@ -300,24 +337,24 @@ const addNoteAtClick = (event) => {
   }
 };
 
-const onContainerResized = () => {
+const onContainerResized = (): void => {
   // Gérer les redimensionnements si nécessaire
 };
 
-const deleteNote = (noteId) => {
+const deleteNote = (noteId: string): void => {
   const index = layout.value.findIndex((note) => note.i === noteId);
   if (index !== -1) {
     layout.value.splice(index, 1);
   }
 };
 
-const clearAll = () => {
+const clearAll = (): void => {
   stopPlayback();
   layout.value = [];
 };
 
 // Fonctions de lecture
-const togglePlayback = () => {
+const togglePlayback = (): void => {
   if (isPlaying.value) {
     pausePlayback();
   } else {
@@ -325,12 +362,12 @@ const togglePlayback = () => {
   }
 };
 
-const startPlayback = () => {
+const startPlayback = (): void => {
   isPlaying.value = true;
   playbackStartTime.value = performance.now();
   lastNoteCheckPosition.value = Math.floor(currentPosition.value) - 1;
 
-  const animate = (timestamp) => {
+  const animate = (timestamp: number): void => {
     if (!isPlaying.value) return;
 
     // Calculer la position basée sur le temps écoulé et le BPM
@@ -369,7 +406,7 @@ const startPlayback = () => {
   playbackAnimationId.value = requestAnimationFrame(animate);
 };
 
-const pausePlayback = () => {
+const pausePlayback = (): void => {
   isPlaying.value = false;
   if (playbackAnimationId.value) {
     cancelAnimationFrame(playbackAnimationId.value);
@@ -380,13 +417,18 @@ const pausePlayback = () => {
   currentPosition.value = Math.floor(precisePosition.value);
 };
 
-const stopPlayback = () => {
+const stopPlayback = (): void => {
   // Arrêter toutes les notes actuellement en cours
   activeNotes.value.forEach((noteId) => {
     const note = layout.value.find((n) => n.i === noteId);
     if (note) {
       const noteName = getNoteFromY(note.y);
-      onNoteEnd(note, noteName, currentPosition.value);
+      emit("noteEnd", note, noteName, currentPosition.value);
+
+      // Simuler relâchement clavier si activé
+      if (enableKeyboardSimulation.value) {
+        midiStore.simulateKeyRelease(noteName);
+      }
     }
   });
 
@@ -398,7 +440,7 @@ const stopPlayback = () => {
   precisePosition.value = 0;
 };
 
-const updateTempo = () => {
+const updateTempo = (): void => {
   // Si on est en train de jouer, redémarrer avec le nouveau tempo
   if (isPlaying.value) {
     pausePlayback();
@@ -406,7 +448,7 @@ const updateTempo = () => {
   }
 };
 
-const playNotesAtPosition = (position) => {
+const playNotesAtPosition = (position: number): void => {
   // 1. Démarrer les nouvelles notes à cette position
   const notesToStart = layout.value.filter((note) => note.x === position);
 
@@ -416,8 +458,14 @@ const playNotesAtPosition = (position) => {
     // Marquer la note comme active
     activeNotes.value.add(note.i);
 
-    // Événement : Note commence
-    onNoteStart(note, noteName, position);
+    // Événement : Note commence (pour les instruments internes)
+    emit("noteStart", note, noteName, position);
+    _markNoteAsPlaying(note.i, true);
+
+    // Simuler appui clavier si activé (pour instruments qui écoutent le clavier)
+    if (enableKeyboardSimulation.value) {
+      midiStore.simulateKeyPress(noteName);
+    }
 
     // eslint-disable-next-line no-console
     console.info(`🎵 Start: ${noteName} (${note.i}) at position ${position}`);
@@ -435,8 +483,14 @@ const playNotesAtPosition = (position) => {
     // Retirer la note des notes actives
     activeNotes.value.delete(note.i);
 
-    // Événement : Note se termine
-    onNoteEnd(note, noteName, position);
+    // Événement : Note se termine (pour les instruments internes)
+    emit("noteEnd", note, noteName, position);
+    _markNoteAsPlaying(note.i, false);
+
+    // Simuler relâchement clavier si activé
+    if (enableKeyboardSimulation.value) {
+      midiStore.simulateKeyRelease(noteName);
+    }
 
     // eslint-disable-next-line no-console
     console.info(`🎵 End: ${noteName} (${note.i}) at position ${position}`);
@@ -444,52 +498,9 @@ const playNotesAtPosition = (position) => {
 };
 
 // Événements de notes
-const onNoteStart = (note, noteName, position) => {
-  // TODO: Actions à effectuer quand une note commence
-  // Exemples :
-  // - Jouer le son via synthé
-  // - Changer la couleur de la note
-  // - Déclencher des effets visuels
-  // - Envoyer des données MIDI
-
-  // eslint-disable-next-line no-console
-  console.log(`🚀 Note START Event:`, {
-    noteId: note.i,
-    noteName,
-    position,
-    duration: note.w,
-    velocity: 100, // Vous pouvez ajouter une propriété velocity aux notes
-  });
-
-  // Jouer la note
-  playNote(noteName);
-
-  // Exemple : Marquer visuellement la note comme active
-  markNoteAsPlaying(note.i, true);
-};
-
-const onNoteEnd = (note, noteName, position) => {
-  // TODO: Actions à effectuer quand une note se termine
-  // Exemples :
-  // - Arrêter le son
-  // - Remettre la couleur normale
-  // - Déclencher des effets de fin
-  // - Envoyer note off MIDI
-
-  // eslint-disable-next-line no-console
-  console.log(`🛑 Note END Event:`, {
-    noteId: note.i,
-    noteName,
-    position,
-    duration: note.w,
-  });
-
-  // Exemple : Retirer le marquage visuel
-  markNoteAsPlaying(note.i, false);
-};
 
 // Fonction utilitaire pour marquer visuellement les notes en cours de lecture
-const markNoteAsPlaying = (noteId, isPlaying) => {
+const _markNoteAsPlaying = (noteId: string, isPlaying: boolean): void => {
   // Cette fonction peut être utilisée pour changer l'apparence des notes
   // pendant qu'elles jouent (changement de couleur, animation, etc.)
 
@@ -509,8 +520,96 @@ const markNoteAsPlaying = (noteId, isPlaying) => {
   }
 };
 
-const onLayoutUpdated = (newLayout) => {
+const onLayoutUpdated = (newLayout: MidiNote[]): void => {
   layout.value = newLayout;
+};
+
+// Fonctions de sauvegarde et chargement
+const saveSequence = (): void => {
+  const sequenceData = {
+    layout: layout.value,
+    tempo: tempo.value,
+    cols,
+    timestamp: new Date().toISOString(),
+    version: "1.0",
+  };
+
+  const dataStr = JSON.stringify(sequenceData, null, 2);
+  const dataBlob = new Blob([dataStr], { type: "application/json" });
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(dataBlob);
+  link.download = `sequence-${new Date().toISOString().split("T")[0]}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+};
+
+const loadSequence = (): void => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json";
+
+  input.onchange = (event: Event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      try {
+        const content = e.target?.result as string;
+        const sequenceData = JSON.parse(content);
+
+        // Validation basique
+        if (!sequenceData.layout || !Array.isArray(sequenceData.layout)) {
+          throw new Error("Format de fichier invalide");
+        }
+
+        // Arrêter la lecture si en cours
+        if (isPlaying.value) {
+          stopPlayback();
+        }
+
+        // Charger les données
+        layout.value = sequenceData.layout;
+        if (sequenceData.tempo) {
+          tempo.value = sequenceData.tempo;
+        }
+
+        // eslint-disable-next-line no-console
+        console.log("Séquence chargée avec succès:", sequenceData);
+
+        // Optionnel : mettre à jour nextNoteId pour éviter les conflits
+        const maxId = Math.max(
+          0,
+          ...layout.value
+            .map((note) => parseInt(note.i.replace(/\D/g, "")))
+            .filter((id) => !isNaN(id)),
+        );
+        nextNoteId.value = maxId + 1;
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Erreur lors du chargement:", error);
+        alert("Erreur lors du chargement du fichier. Vérifiez le format JSON.");
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
+  document.body.appendChild(input);
+  input.click();
+  document.body.removeChild(input);
+};
+
+// Fonctions MIDI
+const toggleKeyboardSimulation = (): void => {
+  enableKeyboardSimulation.value = !enableKeyboardSimulation.value;
+  // eslint-disable-next-line no-console
+  console.log(
+    `Keyboard Simulation: ${enableKeyboardSimulation.value ? "Enabled" : "Disabled"}`,
+  );
 };
 </script>
 
@@ -717,6 +816,33 @@ const onLayoutUpdated = (newLayout) => {
   align-items: center;
 }
 
+.file-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.midi-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.midi-channel-select {
+  padding: 8px 12px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background-color: #333;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.midi-channel-select:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
 .btn {
   padding: 8px 16px;
   border: none;
@@ -762,6 +888,26 @@ const onLayoutUpdated = (newLayout) => {
 
 .btn-pause:hover {
   background-color: #ff9500 !important;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+.btn-info {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.btn-info:hover {
+  background-color: #138496;
+  transform: translateY(-1px);
 }
 
 .position-display {
