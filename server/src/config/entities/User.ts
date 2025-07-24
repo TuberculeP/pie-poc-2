@@ -7,6 +7,7 @@ import {
   ManyToOne,
   OneToOne,
   CreateDateColumn,
+  JoinTable,
 } from "typeorm";
 import { Post } from "./Post";
 import { Subscription } from "./Subscription";
@@ -41,10 +42,11 @@ export class User {
   @ManyToMany(() => User, (user) => user.following)
   followers: User[];
 
-  @ManyToOne(() => Post, (post) => post.author)
+  @OneToMany(() => Post, (post) => post.author)
   posts: Post[];
 
   @ManyToMany(() => Post, (post) => post.likedBy)
+  @JoinTable()
   likedPosts: Post[];
 
   // Subscription
