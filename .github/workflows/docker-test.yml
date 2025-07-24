@@ -26,6 +26,23 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.local.yml up --build -d
           docker network inspect bridge | grep express-vue-app || docker network connect bridge express-vue-app
 
+      - name: Wait for app to be healthy
+        run: |
+          for i in {1..30}; do
+            STATUS=$(docker inspect --format='{{json .State.Health.Status}}' express-vue-app)
+            if [ "$STATUS" == "\"healthy\"" ]; then
+              echo "App is healthy!"
+              exit 0
+            elif [ "$STATUS" == "\"unhealthy\"" ]; then
+              echo "App healthcheck failed!"
+              exit 1
+            fi
+            echo "Waiting for app to be healthy..."
+            sleep 5
+          done
+          echo "Timeout waiting for app to be healthy"
+          exit 1
+
       - name: Test application health
         run: |
           curl -f http://localhost:3000 || exit 1
