@@ -26,3 +26,17 @@ export type User = {
   receivedMessages: Record<string, any>[];
   createdAt: Date;
 };
+
+export interface Post {
+  id?: number;
+  author: User;
+  body: string;
+  tags?: string[];
+  comment_of?: number | null;
+  comments?: Post[];
+  is_highlight?: boolean;
+  highlight_on_tag?: boolean;
+  pinned_by_user?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
