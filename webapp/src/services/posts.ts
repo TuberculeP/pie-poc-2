@@ -29,8 +29,6 @@ export const createPost = async (payload: CreatePostData): Promise<Post> => {
     "/posts",
     payload
   );
-  console.log("Creating post with payload:", payload);
-
   if (!data || error) {
     console.error("Error creating post:", error);
     throw new Error("Failed to create post");
