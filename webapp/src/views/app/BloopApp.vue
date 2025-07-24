@@ -80,8 +80,17 @@ const onNoteEnd = (
       <p>App loading current state : {{ loadPercentage }}%</p>
       <button @click="loadAll">Start app</button>
       <div v-if="isLoaded">
-        <div v-for="({ name }, i) in instruments" :key="`insttab-${i}`">
-          <button @click="currentInstrument = name">{{ name }}</button>
+        <!-- Sélecteur d'instruments en onglets -->
+        <div class="instrument-tabs">
+          <button
+            v-for="({ name }, i) in instruments"
+            :key="`insttab-${i}`"
+            @click="currentInstrument = name"
+            class="instrument-tab"
+            :class="{ active: currentInstrument === name }"
+          >
+            {{ name }}
+          </button>
         </div>
         <component
           ref="currentInstrumentRef"
@@ -97,9 +106,47 @@ const onNoteEnd = (
 </template>
 
 <style scoped>
-button {
-  &.active {
-    background-color: red;
-  }
+/* Onglets d'instruments */
+.instrument-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--color-border-secondary);
+  margin-bottom: 20px;
+  background-color: var(--color-bg-primary-dark);
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.instrument-tab {
+  background: transparent;
+  border: none;
+  padding: 12px 24px;
+  color: var(--color-white);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+  position: relative;
+}
+
+.instrument-tab:hover {
+  background-color: var(--color-primary-hover);
+  color: var(--color-white);
+}
+
+.instrument-tab.active {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border-bottom-color: var(--color-accent);
+}
+
+.instrument-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-accent);
 }
 </style>

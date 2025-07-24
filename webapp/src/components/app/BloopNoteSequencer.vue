@@ -4,12 +4,7 @@
     <div class="header-section">
       <div class="note-labels-header"></div>
       <div class="timeline-header">
-        <div
-          v-for="measure in measures"
-          :key="measure"
-          class="measure-marker"
-          :style="{ width: `${measureWidth}px` }"
-        >
+        <div v-for="measure in measures" :key="measure" class="measure-marker">
           {{ measure }}
         </div>
       </div>
@@ -18,7 +13,7 @@
     <!-- Corps principal -->
     <div class="main-section">
       <!-- Labels des notes (piano keys) -->
-      <div class="note-labels">
+      <div ref="noteLabelsRef" class="note-labels">
         <div
           v-for="note in notes"
           :key="note"
@@ -31,7 +26,11 @@
       </div>
 
       <!-- Grille MIDI -->
-      <div class="grid-container">
+      <div
+        ref="gridContainerRef"
+        class="grid-container"
+        @scroll="syncVerticalScroll"
+      >
         <GridLayout
           :layout="layout"
           :col-num="cols"
@@ -64,6 +63,13 @@
           >
             <span class="note-content">{{ getNoteFromY(item.y) }}</span>
           </GridItem>
+
+          <!-- Barre de progression de lecture -->
+          <div
+            v-if="isPlaying || currentPosition > 0"
+            class="playback-cursor"
+            :style="{ left: `${(precisePosition / cols) * 1280}px` }"
+          ></div>
         </GridLayout>
 
         <!-- Grille de fond - derrière le grid-layout -->
@@ -78,17 +84,10 @@
               v-for="col in cols"
               :key="`${row}-${col}`"
               class="grid-cell"
-              :class="{ 'beat-marker': col % 4 === 1 }"
+              :class="{ 'beat-marker': (col - 1) % 4 === 0 }"
             ></div>
           </div>
         </div>
-
-        <!-- Barre de progression de lecture -->
-        <div
-          v-if="isPlaying || currentPosition > 0"
-          class="playback-cursor"
-          :style="{ left: `${(precisePosition / cols) * 100}%` }"
-        ></div>
       </div>
     </div>
 
@@ -207,9 +206,8 @@ const notes: NoteName[] = [
 ];
 
 // Configuration de la grille
-const cols: number = 64; // 16 mesures x 4 beats
+const cols: number = 64; // 16 mesures x 4 beats (remis à la taille originale)
 const rowHeight: number = 20;
-const measureWidth: number = 256; // Largeur fixe pour les mesures
 
 // État des notes MIDI
 const layout = ref<MidiNote[]>([
@@ -232,6 +230,18 @@ const lastNoteCheckPosition = ref<number>(-1); // Dernière position où on a v�
 
 // État simulation clavier
 const enableKeyboardSimulation = ref<boolean>(true); // Simulation clavier activée par défaut
+
+// Références pour synchroniser les scrolls
+const noteLabelsRef = ref<HTMLElement | null>(null);
+const gridContainerRef = ref<HTMLElement | null>(null);
+
+// Synchroniser le scroll vertical entre les labels et la grille
+const syncVerticalScroll = (event: Event): void => {
+  const target = event.target as HTMLElement;
+  if (target === gridContainerRef.value && noteLabelsRef.value) {
+    noteLabelsRef.value.scrollTop = target.scrollTop;
+  }
+};
 
 // Contrôle clavier avec event listener natif
 const handleKeyDown = (event: KeyboardEvent): void => {
@@ -618,7 +628,7 @@ const toggleKeyboardSimulation = (): void => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #1a1a1a;
+  background-color: var(--color-bg-primary-dark);
   font-family: "Arial", sans-serif;
 }
 
@@ -640,9 +650,14 @@ const toggleKeyboardSimulation = (): void => {
   background-color: #2a2a2a;
   color: white;
   height: 40px;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .measure-marker {
+  flex: 0 0 auto;
+  min-width: 80px; /* Largeur fixe pour chaque mesure */
+  width: 80px;
   border-right: 1px solid #555;
   display: flex;
   align-items: center;
@@ -655,13 +670,14 @@ const toggleKeyboardSimulation = (): void => {
   display: flex;
   flex: 1;
   overflow: hidden;
+  max-height: 70vh; /* Limiter la hauteur pour éviter le scroll global */
 }
 
 .note-labels {
   width: 80px;
   background-color: #333;
   border-right: 2px solid #444;
-  overflow: hidden;
+  overflow: hidden; /* Pas de scroll indépendant */
 }
 
 .note-label {
@@ -694,20 +710,21 @@ const toggleKeyboardSimulation = (): void => {
   flex: 1;
   position: relative;
   overflow: auto;
-  background-color: #1a1a1a;
+  background-color: var(--color-bg-primary-dark);
+  max-width: 100%;
 }
 
 .midi-grid {
   position: relative;
   z-index: 10;
-  width: 100%;
+  width: 1280px; /* Largeur fixe pour 16 mesures (80px * 16) */
   height: 100%;
   min-height: 720px; /* 36 notes * 20px de hauteur */
 }
 
 .midi-note {
-  background-color: #4a9eff;
-  border: 1px solid #2d5aa0;
+  background-color: var(--color-primary);
+  border: 1px solid var(--color-primary-hover);
   border-radius: 3px;
   cursor: move;
   display: flex;
@@ -718,39 +735,39 @@ const toggleKeyboardSimulation = (): void => {
 }
 
 .midi-note:hover {
-  background-color: #5bb3ff;
+  background-color: var(--color-primary-hover);
   transform: scale(1.02);
 }
 
 .midi-note.note-black {
-  background-color: #ff6b4a;
-  border-color: #cc472e;
+  background-color: var(--color-accent);
+  border-color: var(--color-accent-hover);
 }
 
 .midi-note.note-black:hover {
-  background-color: #ff7a5c;
+  background-color: var(--color-accent-hover);
 }
 
 .midi-note.playing {
-  background-color: #2ed573 !important;
-  border-color: #20bf6b !important;
-  box-shadow: 0 0 15px rgba(46, 213, 115, 0.6) !important;
+  background-color: var(--color-validate) !important;
+  border-color: var(--color-validate-hover) !important;
+  box-shadow: 0 0 15px rgba(96, 189, 97, 0.6) !important;
   animation: noteGlow 0.5s ease-in-out infinite alternate;
 }
 
 @keyframes noteGlow {
   from {
-    box-shadow: 0 0 15px rgba(46, 213, 115, 0.6);
+    box-shadow: 0 0 15px rgba(96, 189, 97, 0.6);
   }
   to {
-    box-shadow: 0 0 25px rgba(46, 213, 115, 0.9);
+    box-shadow: 0 0 25px rgba(96, 189, 97, 0.9);
   }
 }
 
 .note-content {
   font-size: 10px;
   font-weight: bold;
-  color: white;
+  color: var(--color-white);
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 
@@ -763,6 +780,7 @@ const toggleKeyboardSimulation = (): void => {
   z-index: 1;
   pointer-events: none;
   height: 720px; /* Même hauteur que midi-grid */
+  width: 1280px; /* Même largeur que midi-grid */
 }
 
 .grid-row {
@@ -777,16 +795,24 @@ const toggleKeyboardSimulation = (): void => {
 }
 
 .grid-row:not(.black-key-row) {
-  background-color: #1a1a1a;
+  background-color: var(--color-bg-primary-dark);
 }
 
 .grid-cell {
   flex: 1;
-  border-right: 1px solid #2a2a2a;
+  border-left: 1px solid #2a2a2a;
   pointer-events: none;
 }
 
 .grid-cell.beat-marker {
+  border-left: 1px solid #555;
+}
+
+.grid-cell.beat-marker:first-of-type {
+  border: none;
+}
+
+.grid-cell:last-of-type {
   border-right: 1px solid #555;
 }
 
@@ -795,10 +821,11 @@ const toggleKeyboardSimulation = (): void => {
   top: 0;
   bottom: 0;
   width: 2px;
-  background-color: #ff4757;
-  z-index: 15;
+  background-color: var(--color-error);
+  z-index: 20; /* Plus haut que les notes (z-index: 15) */
   pointer-events: none;
-  box-shadow: 0 0 8px rgba(255, 71, 87, 0.6);
+  box-shadow: 0 0 8px rgba(238, 53, 53, 0.6);
+  height: 720px; /* Hauteur exacte de la grille */
 }
 
 .controls {
@@ -822,7 +849,7 @@ const toggleKeyboardSimulation = (): void => {
   align-items: center;
 }
 
-.midi-controls {
+.keyboard-controls {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -840,7 +867,7 @@ const toggleKeyboardSimulation = (): void => {
 
 .midi-channel-select:focus {
   outline: none;
-  border-color: #4a9eff;
+  border-color: var(--color-primary);
 }
 
 .btn {
@@ -853,60 +880,60 @@ const toggleKeyboardSimulation = (): void => {
 }
 
 .btn-primary {
-  background-color: #4a9eff;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-white);
 }
 
 .btn-primary:hover {
-  background-color: #5bb3ff;
+  background-color: var(--color-primary-hover);
   transform: translateY(-1px);
 }
 
 .btn-danger {
-  background-color: #ff4757;
-  color: white;
+  background-color: var(--color-error);
+  color: var(--color-white);
 }
 
 .btn-danger:hover {
-  background-color: #ff6b7a;
+  background-color: var(--color-error-hover);
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background-color: #57606f;
-  color: white;
+  background-color: var(--color-secondary);
+  color: var(--color-white);
 }
 
 .btn-secondary:hover {
-  background-color: #747d8c;
+  background-color: var(--color-secondary-hover);
   transform: translateY(-1px);
 }
 
 .btn-pause {
-  background-color: #ffa502 !important;
+  background-color: var(--color-warning-active) !important;
 }
 
 .btn-pause:hover {
-  background-color: #ff9500 !important;
+  background-color: var(--color-warning-hover) !important;
 }
 
 .btn-success {
-  background-color: #28a745;
-  color: white;
+  background-color: var(--color-validate);
+  color: var(--color-white);
 }
 
 .btn-success:hover {
-  background-color: #218838;
+  background-color: var(--color-validate-hover);
   transform: translateY(-1px);
 }
 
 .btn-info {
-  background-color: #17a2b8;
-  color: white;
+  background-color: var(--color-success);
+  color: var(--color-white);
 }
 
 .btn-info:hover {
-  background-color: #138496;
+  background-color: var(--color-success-hover);
   transform: translateY(-1px);
 }
 
@@ -937,7 +964,7 @@ const toggleKeyboardSimulation = (): void => {
 
 .tempo-slider {
   width: 120px;
-  accent-color: #4a9eff;
+  accent-color: var(--color-primary);
 }
 
 /* Responsive */
