@@ -1,6 +1,9 @@
 import { Router } from "express";
 import pg from "../config/db.config";
 import { Foo } from "../config/entities/Foo";
+import authRouter from "./auth";
+import postsRouter from "./network/posts";
+import tagsRouter from "./network/tags";
 
 const router = Router();
 
@@ -12,5 +15,9 @@ router.get("/", (_, res) => {
     foos,
   });
 });
+
+router.use("/auth", authRouter);
+router.use("/posts", postsRouter);
+router.use("/tags", tagsRouter);
 
 export default router;

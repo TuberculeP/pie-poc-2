@@ -143,7 +143,7 @@ const soundfont = computed(
   () =>
     new Soundfont(new AudioContext(), {
       instrument: selectedSoundfont.value,
-    })
+    }),
 );
 
 watch(soundfont, (_, old) => {
@@ -167,11 +167,11 @@ onMounted(async () => {
   selectedInput.addListener("noteoff", (e) => {
     const midiNote = e.note.identifier;
     const noteToRemove = currentNotes.value.find(
-      ({ note }) => note === midiNote
+      ({ note }) => note === midiNote,
     );
     noteToRemove?.stopFn();
     currentNotes.value = currentNotes.value.filter(
-      (n) => n.note !== noteToRemove?.note
+      (n) => n.note !== noteToRemove?.note,
     );
   });
 });

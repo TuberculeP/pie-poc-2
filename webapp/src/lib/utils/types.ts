@@ -9,3 +9,34 @@ export type Note = {
   color: string;
   scale: string;
 };
+
+export type User = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  isActive: boolean;
+  role: string;
+  following: User[];
+  followers: Record<string, any>[];
+  posts: Record<string, any>[];
+  likedPosts: Record<string, any>[];
+  subscription: Record<string, any>;
+  sentMessages: Record<string, any>[];
+  receivedMessages: Record<string, any>[];
+  createdAt: Date;
+};
+
+export interface Post {
+  id?: number;
+  author: User;
+  body: string;
+  tags?: string[];
+  comment_of?: number | null;
+  comments?: Post[];
+  is_highlight?: boolean;
+  highlight_on_tag?: boolean;
+  pinned_by_user?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
