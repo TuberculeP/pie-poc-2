@@ -1,27 +1,6 @@
 // services/posts.ts
-import axios from "axios";
-
-// Configuration d'axios pour inclure les cookies de session
-axios.defaults.withCredentials = true;
-
-export interface Post {
-  author: {
-    id: string;
-    firstName?: string; // Ajout d'un champ name pour l'auteur
-    lastName?: string; // Champ lastname pour compatibilité
-    email: string;
-  };
-  id?: number;
-  body: string;
-  tags?: string[];
-  comment_of?: number | null;
-  comments?: Post[];
-  is_highlight?: boolean;
-  highlight_on_tag?: boolean;
-  pinned_by_user?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
+import apiClient from "../lib/utils/apiClient";
+import type { Post } from "../lib/utils/types";
 
 export interface CreatePostData {
   body: string;
@@ -30,48 +9,58 @@ export interface CreatePostData {
   is_highlight?: boolean;
 }
 
-const API_URL = "http://localhost:3000/api/posts";
-
 export const getAllPosts = async (): Promise<Post[]> => {
-  try {
-    const response = await axios.get(API_URL);
-    console.log("Response from API:", response.data); // Debug log
+  const { data, error } = await apiClient.get<{ body: Post[] }>("/posts");
 
-    // Vérifier la structure de la réponse
-    if (
-      response.data &&
-      response.data.body &&
-      Array.isArray(response.data.body)
-    ) {
-      return response.data.body;
-    } else {
-      console.warn("Unexpected API response structure:", response.data);
-      return [];
-    }
-  } catch (error) {
+  if (!data || error) {
     console.error("Error fetching posts:", error);
-    throw error;
+    return [];
+  } else {
+    return data.body;
   }
 };
 
 export const getPostById = async (id: string): Promise<Post> => {
-  const response = await axios.get(`${API_URL}/${id}`);
-  return response.data.body;
+  const { data, error } = await apiClient.get<{ body: Post }>(`/posts/${id}`);
+  if (!data || error) {
+    console.error("Error fetching posts:", error);
+    throw new Error("Post not found");
+  } else {
+    return data.body;
+  }
 };
 
-export const createPost = async (data: CreatePostData): Promise<Post> => {
-  const response = await axios.post(API_URL, data);
-  return response.data.body;
+export const createPost = async (
+  payload: Pick<Post, "body" | "tags" | "comment_of" | "is_highlight">
+): Promise<Post> => {
+  const { data, error } = await apiClient.post<{ body: Post }>(
+    "/posts",
+    payload
+  );
+  if (!data || error) {
+    console.error("Error creating post:", error);
+    throw new Error("Failed to create post");
+  } else {
+    return data.body;
+  }
 };
 
 export const updatePost = async (
   id: string,
-  data: Partial<Post>
+  payload: Partial<Post>
 ): Promise<Post> => {
-  const response = await axios.patch(`${API_URL}/${id}`, data);
-  return response.data.body;
+  const { data, error } = await apiClient.patch<{ body: Post }>(
+    `/posts/${id}`,
+    payload
+  );
+  if (!data || error) {
+    console.error("Error updating post:", error);
+    throw new Error("Failed to update post");
+  } else {
+    return data.body;
+  }
 };
 
 export const deletePost = async (id: number): Promise<void> => {
-  await axios.delete(`${API_URL}/${id}`);
+  await apiClient.delete(`/posts/${id}`);
 };
