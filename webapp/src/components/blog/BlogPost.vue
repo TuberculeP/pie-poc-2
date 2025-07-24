@@ -35,8 +35,8 @@ const isSubmittingComment = ref(false);
 const commentError = ref<string | null>(null);
 
 // État pour le système de like
-const isLiked = ref(false);
-const likeCount = ref<number>(props.post.like || 0);
+const isLiked = ref(props.post.isLikedByMe || false);
+const likeCount = ref<number>(props.post.likesCount || 0);
 const isLiking = ref(false);
 
 // Vérifier si l'utilisateur est admin
@@ -141,14 +141,24 @@ const toggleLike = async () => {
   if (isLiking.value) return;
 
   try {
-    isLiking.value = true;
+    if (isLiked.value) {
+      console.log("Retirer le like");
 
+      isLiked.value = false;
+      likeCount.value -= 1;
+    } else {
+      console.log("Ajouter le like");
+
+      isLiked.value = true;
+      likeCount.value += 1;
+    }
+    /* 
     // Animation immédiate pour une meilleure UX
     isLiked.value = !isLiked.value;
-    likeCount.value += isLiked.value ? 1 : -1;
+    likeCount.value += isLiked.value ? 1 : -1; */
 
-    // TODO: Implémenter l'appel API pour les likes
     await likePost(props.post.id);
+
     // Pour l'instant, simulation
     await new Promise((resolve) => setTimeout(resolve, 300));
   } catch (error) {
