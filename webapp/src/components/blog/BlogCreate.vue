@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, defineEmits } from "vue";
-import { createPost, type CreatePostData } from "../../services/posts";
+import { createPost } from "../../services/posts";
+import type { CreatePostData } from "../../lib/utils/types";
 
 const emit = defineEmits<{
   postCreated: [];
