@@ -17,7 +17,8 @@
           <h1 class="hero-title">
             <span class="title-highlight">BLOOP</span>
             <span class="title-main"
-              >Creez et profitez d'une expérience musicale entre amis optimale</span
+              >Creez et profitez d'une expérience musicale entre amis
+              optimale</span
             >
           </h1>
           <p class="hero-description">
@@ -819,13 +820,13 @@ export default {
 
 /* Responsive */
 
-@media (min-width: 1170px){
-  .title-highlight{
+@media (min-width: 1170px) {
+  .title-highlight {
     display: none;
   }
 }
 
-@media (max-width: 909px){
+@media (max-width: 909px) {
   .hero-container {
     grid-template-columns: 1fr;
     gap: 2rem;
@@ -843,14 +844,13 @@ export default {
   .hero-stats {
     justify-content: center;
   }
-  
-  .hero-visual{
+
+  .hero-visual {
     display: none;
   }
 }
 
 @media (max-width: 768px) {
-
   .pricing-card,
   .pricing-card.popular {
     display: flex;
