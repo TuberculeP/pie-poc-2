@@ -89,12 +89,12 @@ const handleSubmit = async () => {
       </div>
 
       <div class="form-group">
-        <label for="tags">Tags (séparés par des virgules)</label>
+        <label for="tags">Ajouter des Tags</label>
         <input
           id="tags"
           v-model="form.tags"
           type="text"
-          placeholder="javascript, vue, développement"
+          placeholder="Electro, LoFi, Synthwave"
         />
       </div>
 
