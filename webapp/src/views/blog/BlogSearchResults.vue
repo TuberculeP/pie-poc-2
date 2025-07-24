@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { getAllPosts } from "../../services/posts";
+import { getAllPosts, type Post } from "../../services/posts";
 import BlogPost from "../../components/blog/BlogPost.vue";
 import BaseButton from "../../components/ui/BaseButton.vue";
-import type { Post } from "../../lib/utils/types";
 
 const route = useRoute();
 const router = useRouter();
@@ -120,7 +119,9 @@ onMounted(() => {
       </div>
 
       <div v-else-if="!searchStats.hasResults" class="no-results">
-        <div class="empty-icon">😔</div>
+        <div class="empty-icon">
+          <i class="fas fa-search"></i>
+        </div>
         <h3>Aucun résultat trouvé</h3>
         <p>
           Aucun post ne correspond à votre recherche "<strong>{{
