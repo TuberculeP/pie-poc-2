@@ -309,7 +309,11 @@ const goToAuthorProfile = () => {};
     </div>
 
     <!-- Section des commentaires -->
-    <div v-if="showComments || showCommentForm" class="comments-section" @click.stop>
+    <div
+      v-if="showComments || showCommentForm"
+      class="comments-section"
+      @click.stop
+    >
       <!-- Formulaire d'ajout de commentaire -->
       <div
         v-if="showCommentForm && authStore.isAuthenticated"
