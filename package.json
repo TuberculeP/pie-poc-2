@@ -20,6 +20,7 @@
     "grid-layout-plus": "^1.1.0",
     "jest": "^29.7.0",
     "lodash": "^4.17.21",
+    "lucide-vue-next": "^0.525.0",
     "pg": "^8.13.0",
     "pinia": "^3.0.2",
     "reflect-metadata": "^0.2.2",

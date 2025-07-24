@@ -16,7 +16,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
   },
   "include": ["**/*.ts", "**/*.vue"],
   "exclude": ["node_modules"],
