@@ -17,7 +17,7 @@
           <h1 class="hero-title">
             <span class="title-highlight">BLOOP</span>
             <span class="title-main"
-              >Compose, mixe, crée – sans rien installer</span
+              >Creez et profitez d'une expérience musicale entre amis optimale</span
             >
           </h1>
           <p class="hero-description">
@@ -162,7 +162,7 @@
         <div class="pricing-grid">
           <div class="pricing-card">
             <div class="pricing-header">
-              <h3>Freenium</h3>
+              <h3>Freemium</h3>
               <div class="price">
                 <span class="currency">€</span>
                 <span class="amount">0</span>
@@ -204,7 +204,7 @@
 
           <div class="pricing-card">
             <div class="pricing-header">
-              <h3>Prenium</h3>
+              <h3>Premium</h3>
               <div class="price">
                 <span class="currency">€</span>
                 <span class="amount">14.99</span>
@@ -608,7 +608,7 @@ export default {
   justify-content: center;
   margin: 0 auto 1rem;
   font-size: 1.5rem;
-  color: #fff;
+  color: var(--color-black);
 }
 
 .feature-card h3 {
@@ -629,6 +629,7 @@ export default {
 
 .pricing-grid {
   display: grid;
+  /* border: red solid 1px; */
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
   max-width: 1000px;
@@ -663,7 +664,7 @@ export default {
   left: 50%;
   transform: translateX(-50%);
   background: #ffd269;
-  color: #fff;
+  color: var(--color-black);
   padding: 0.5rem 1rem;
   border-radius: 20px;
   font-size: 0.9rem;
@@ -817,18 +818,18 @@ export default {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+
+@media (min-width: 1170px){
+  .title-highlight{
+    display: none;
+  }
+}
+
+@media (max-width: 909px){
   .hero-container {
     grid-template-columns: 1fr;
     gap: 2rem;
     text-align: center;
-  }
-
-  .pricing-card,
-  .pricing-card.popular {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
   }
 
   .hero-title {
@@ -841,6 +842,20 @@ export default {
 
   .hero-stats {
     justify-content: center;
+  }
+  
+  .hero-visual{
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .pricing-card,
+  .pricing-card.popular {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .community-content {
