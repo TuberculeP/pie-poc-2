@@ -23,7 +23,7 @@ const authStore = useAuthStore();
 
 // État pour gérer l'affichage des commentaires
 const showComments = ref(false);
-const comments = ref<Post[]>(props.post.comments || []);
+const comments = ref<Post[]>([]);
 
 const loadingComments = ref(false);
 const errorComments = ref<string | null>(null);
@@ -42,6 +42,11 @@ const isLiking = ref(false);
 // Vérifier si l'utilisateur est admin
 const isAdmin = computed(() => {
   return authStore.user?.role === "admin";
+});
+
+// Compter le nombre de commentaires (pour l'affichage)
+const commentsCount = computed(() => {
+  return comments.value.length;
 });
 
 const form = ref({
@@ -75,11 +80,6 @@ const toggleComments = async () => {
     await fetchComments();
   }
 };
-
-// Compter le nombre de commentaires (pour l'affichage)
-const commentsCount = computed(() => {
-  return comments.value.length;
-});
 
 // Fonction pour basculer l'affichage du formulaire de commentaire
 const toggleCommentForm = () => {
@@ -209,6 +209,7 @@ const goToPostDetail = () => {
 };
 
 const goToAuthorProfile = () => {};
+fetchComments();
 </script>
 <template>
   <div
