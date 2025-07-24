@@ -38,7 +38,6 @@ services:
         condition: service_healthy
       cache:
         condition: service_healthy
-
 volumes:
   postgres_data:
   redis_data:
