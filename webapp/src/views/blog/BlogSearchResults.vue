@@ -25,7 +25,7 @@ const filteredPosts = computed(() => {
 
   const query = searchQuery.value.toLowerCase().trim();
   return allPosts.value.filter((post) =>
-    post.body.toLowerCase().includes(query)
+    post.body.toLowerCase().includes(query),
   );
 });
 
@@ -69,7 +69,7 @@ watch(
   (newQuery) => {
     searchQuery.value = (newQuery as string) || "";
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 onMounted(() => {
