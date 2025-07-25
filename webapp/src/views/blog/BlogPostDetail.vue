@@ -20,7 +20,7 @@ const error = ref<string | null>(null);
 const postId = ref<string>(
   Array.isArray(route.params.id)
     ? route.params.id[0]
-    : (route.params.id as string)
+    : (route.params.id as string),
 );
 
 // Charger le post

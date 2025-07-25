@@ -31,11 +31,11 @@ export const getPostById = async (id: string): Promise<Post> => {
 };
 
 export const createPost = async (
-  payload: Pick<Post, "body" | "tags" | "comment_of" | "is_highlight">
+  payload: Pick<Post, "body" | "tags" | "comment_of" | "is_highlight">,
 ): Promise<Post> => {
   const { data, error } = await apiClient.post<{ body: Post }>(
     "/posts",
-    payload
+    payload,
   );
   if (!data || error) {
     console.error("Error creating post:", error);
@@ -47,11 +47,11 @@ export const createPost = async (
 
 export const updatePost = async (
   id: string,
-  payload: Partial<Post>
+  payload: Partial<Post>,
 ): Promise<Post> => {
   const { data, error } = await apiClient.patch<{ body: Post }>(
     `/posts/${id}`,
-    payload
+    payload,
   );
   if (!data || error) {
     console.error("Error updating post:", error);
