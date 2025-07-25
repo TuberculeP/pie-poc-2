@@ -76,7 +76,7 @@ postsRouter.post("/", async (req, res) => {
   }
 });
 
-postsRouter.get("/", async (_, res) => {
+postsRouter.get("/", async (req, res) => {
   try {
     const postRepository = pg.getRepository(Post);
     let allPosts = await postRepository.find({
@@ -85,18 +85,26 @@ postsRouter.get("/", async (_, res) => {
       relations: ["author", "tags", "comments", "likedBy"],
     });
 
-    const postsWithLikeCount = allPosts.map((post) => {
-      const { likedBy, ...rest } = post;
+    const postsWithCounts = allPosts.map((post) => {
+      const { likedBy, comments, ...rest } = post;
+      let isLikedByMe = false;
+
+      if (req.isAuthenticated()) {
+        isLikedByMe = post?.likedBy?.some((user) => user.id === req.user.id);
+      }
+
       return {
         ...rest,
-        like: likedBy?.length || 0,
+        likesCount: likedBy?.length ?? 0,
+        commentsCount: comments?.length ?? 0,
+        isLikedByMe: isLikedByMe,
       };
     });
 
     res.status(200).json({
       status: 200,
       message: "Posts successfully retrieved",
-      body: postsWithLikeCount,
+      body: postsWithCounts,
     });
     return;
   } catch (err) {

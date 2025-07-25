@@ -95,7 +95,7 @@ const onNoteEnd = (
         <component
           ref="currentInstrumentRef"
           :is="
-            instruments.find((inst) => inst.name === currentInstrument)
+            instruments.find((inst: any) => inst.name === currentInstrument)
               ?.component
           "
         />
