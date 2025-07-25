@@ -27,6 +27,7 @@ import BlogApp from "./views/blog/BlogApp.vue";
 import BlogSearchResults from "./views/blog/BlogSearchResults.vue";
 import BlogPostDetail from "./views/blog/BlogPostDetail.vue";
 import ProfileView from "./views/profil/ProfileView.vue";
+import BloopTestNotes from "./views/test/BloopTestNotes.vue";
 
 const routes = [
   { path: "/", component: LandingIndex, name: "landing-main" },
@@ -34,6 +35,7 @@ const routes = [
   { path: "/login", component: LoginView, name: "app-login" },
   { path: "/register", component: RegisterView, name: "app-register" },
   { path: "/blog", component: BlogApp, name: "app-blog" },
+  { path: "/test", component: BloopTestNotes, name: "app-test" },
   {
     path: "/blog/search",
     component: BlogSearchResults,

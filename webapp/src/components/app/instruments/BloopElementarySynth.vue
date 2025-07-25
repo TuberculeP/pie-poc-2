@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, onBeforeUnmount } from "vue";
 import { useElementaryStore } from "../../../stores/elementaryStore";
 import { el } from "@elemaudio/core";
-import { WebMidi } from "webmidi";
+import { useMIDIStore } from "../../../stores/MIDIStore";
 import { ref } from "vue";
 import { watch } from "vue";
 import { reactive } from "vue";
@@ -10,6 +10,7 @@ import { computed } from "vue";
 import BloopPotard from "../BloopPotard.vue";
 
 const elementaryStore = useElementaryStore();
+const midiStore = useMIDIStore();
 
 type Voice = {
   gate: number;
@@ -56,41 +57,64 @@ watch(computedVoices, () => {
   elementaryStore.getCore().render(out, out);
 });
 
-onMounted(async () => {
-  await WebMidi.enable();
-  console.log(
-    "midi enabled",
-    WebMidi.inputs.map((i) => i.name),
-  );
+// Fonctions de cleanup pour désenregistrer les callbacks
+let unregisterNoteOn: (() => void) | null = null;
+let unregisterNoteOff: (() => void) | null = null;
 
-  const selectedInput = WebMidi.inputs[0];
-  selectedInput.addListener("noteon", (e) => {
-    const midiNote = e.note.number;
-    const key = "v" + midiNote;
-    const freq = computeFrequency(midiNote);
+onMounted(() => {
+  // S'abonner aux événements de notes du MIDIStore (clavier + séquenceur)
+  unregisterNoteOn = midiStore.onNotePlayed((note, _key) => {
+    const midiNoteNumber = midiNoteToNumber(note.scale);
+    const key = "v" + midiNoteNumber;
+    const freq = computeFrequency(midiNoteNumber);
     voices.value = voices.value
       .filter((voice: any) => voice.key !== key)
       .concat({ gate: 1, freq, key })
       .slice(-8);
   });
 
-  selectedInput.addListener("noteoff", (e) => {
-    const midiNote = e.note.number;
-    const key = "v" + midiNote;
+  unregisterNoteOff = midiStore.onNoteStopped((note, _key) => {
+    const midiNoteNumber = midiNoteToNumber(note.scale);
+    const key = "v" + midiNoteNumber;
     voices.value = voices.value.map((voice: any) =>
       voice.key === key ? { ...voice, gate: 0 } : voice,
     );
   });
-
-  //   const voices = [
-  //     { gate: 1.0, freq: 440, key: "v1" },
-  //     { gate: 1.0, freq: 880, key: "v2" },
-  //     { gate: 1.0, freq: 330, key: "v3" },
-  //     { gate: 1.0, freq: 220, key: "v4" },
-  //   ];
-
-  //
 });
+
+onBeforeUnmount(() => {
+  // Nettoyer les callbacks pour éviter les fuites mémoire
+  if (unregisterNoteOn) {
+    unregisterNoteOn();
+  }
+  if (unregisterNoteOff) {
+    unregisterNoteOff();
+  }
+});
+
+// Fonction pour convertir le nom de note en numéro MIDI
+const midiNoteToNumber = (noteName: string): number => {
+  const noteToNumber: Record<string, number> = {
+    C: 0,
+    "C#": 1,
+    D: 2,
+    "D#": 3,
+    E: 4,
+    F: 5,
+    "F#": 6,
+    G: 7,
+    "G#": 8,
+    A: 9,
+    "A#": 10,
+    B: 11,
+  };
+
+  const match = noteName.match(/^([A-G]#?)(\d+)$/);
+  if (!match) return 60; // C4 par défaut
+
+  const [, note, octave] = match;
+  return (parseInt(octave) + 1) * 12 + noteToNumber[note];
+};
 </script>
 
 <template>
@@ -105,7 +129,6 @@ onMounted(async () => {
     <p>Release ({{ adsr.release }}s)</p>
     <BloopPotard :max="3" v-model="adsr.release" :precision="1" />
   </div>
-  <pre>{{ voices }}</pre>
 </template>
 
 <style scoped>
