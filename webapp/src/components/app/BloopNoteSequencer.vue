@@ -47,6 +47,9 @@
           @container-resized="onContainerResized"
           class="midi-grid"
           @dblclick="addNoteAtClick"
+          @mousedown="startSelection"
+          @mousemove="updateSelection"
+          @mouseup="endSelection"
         >
           <GridItem
             v-for="item in layout"
@@ -58,11 +61,28 @@
             :i="item.i"
             :data-id="item.i"
             class="midi-note"
-            :class="getNoteClass(item)"
+            :class="[
+              getNoteClass(item),
+              { selected: selectedNotes.has(item.i) },
+            ]"
             @contextmenu.prevent="deleteNote(item.i)"
+            @click="handleNoteClick($event, item)"
+            @mousedown="handleNoteMouseDown($event, item)"
           >
             <span class="note-content">{{ getNoteFromY(item.y) }}</span>
           </GridItem>
+
+          <!-- Rectangle de sélection -->
+          <div
+            v-if="selectionRect"
+            class="selection-rectangle"
+            :style="{
+              left: `${selectionRect.x}px`,
+              top: `${selectionRect.y}px`,
+              width: `${selectionRect.width}px`,
+              height: `${selectionRect.height}px`,
+            }"
+          ></div>
 
           <!-- Barre de progression de lecture -->
           <div
@@ -94,6 +114,28 @@
     <!-- Contrôles -->
     <div class="controls">
       <button @click="clearAll" class="btn btn-danger">Effacer tout</button>
+
+      <!-- Contrôles de sélection -->
+      <div class="selection-controls">
+        <button
+          v-if="selectedNotes.size > 0"
+          @click="deleteSelectedNotes"
+          class="btn btn-warning"
+        >
+          🗑️ Supprimer sélection ({{ selectedNotes.size }})
+        </button>
+        <button
+          v-if="selectedNotes.size > 0"
+          @click="clearSelection"
+          class="btn btn-secondary"
+        >
+          ✖️ Désélectionner
+        </button>
+        <div v-if="selectedNotes.size === 0" class="selection-help">
+          💡 Glissez pour sélectionner une zone, ou Ctrl+clic pour sélectionner
+          plusieurs notes
+        </div>
+      </div>
 
       <!-- Contrôles de simulation clavier -->
       <div class="keyboard-controls">
@@ -231,6 +273,25 @@ const lastNoteCheckPosition = ref<number>(-1); // Dernière position où on a v�
 // État simulation clavier
 const enableKeyboardSimulation = ref<boolean>(true); // Simulation clavier activée par défaut
 
+// État de sélection multiple
+const selectedNotes = ref<Set<string>>(new Set()); // Notes sélectionnées
+const isSelecting = ref<boolean>(false); // Mode sélection en cours
+const selectionStart = ref<{ x: number; y: number } | null>(null); // Point de départ de la sélection
+const selectionEnd = ref<{ x: number; y: number } | null>(null); // Point de fin de la sélection
+const selectionRect = ref<{
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+} | null>(null); // Rectangle de sélection visible
+
+// État de déplacement groupé
+const isDraggingGroup = ref<boolean>(false); // Déplacement de groupe en cours
+const dragStartPositions = ref<Map<string, { x: number; y: number }>>(
+  new Map(),
+); // Positions initiales des notes
+const draggedNoteId = ref<string | null>(null); // ID de la note qui initie le drag
+
 // Références pour synchroniser les scrolls
 const noteLabelsRef = ref<HTMLElement | null>(null);
 const gridContainerRef = ref<HTMLElement | null>(null);
@@ -252,15 +313,41 @@ const handleKeyDown = (event: KeyboardEvent): void => {
     } else {
       startPlayback();
     }
+  } else if (event.code === "Delete" || event.code === "Backspace") {
+    event.preventDefault();
+    if (selectedNotes.value.size > 0) {
+      deleteSelectedNotes();
+    }
+  } else if (event.code === "Escape") {
+    event.preventDefault();
+    clearSelection();
+  } else if ((event.ctrlKey || event.metaKey) && event.code === "KeyA") {
+    event.preventDefault();
+    // Sélectionner toutes les notes
+    selectedNotes.value.clear();
+    layout.value.forEach((note) => {
+      selectedNotes.value.add(note.i);
+    });
+  }
+};
+
+const handleGlobalMouseUp = (): void => {
+  // Nettoyer l'état de déplacement groupé quand on relâche la souris
+  if (isDraggingGroup.value) {
+    isDraggingGroup.value = false;
+    draggedNoteId.value = null;
+    dragStartPositions.value.clear();
   }
 };
 
 onMounted(() => {
   document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("mouseup", handleGlobalMouseUp);
 });
 
 onUnmounted(() => {
   document.removeEventListener("keydown", handleKeyDown);
+  document.removeEventListener("mouseup", handleGlobalMouseUp);
 });
 
 // Mesures pour l'header
@@ -287,6 +374,147 @@ const getNoteClass = (item: MidiNote) => {
 
 const getNoteFromY = (yPosition: number): NoteName => {
   return notes[yPosition] || "C4";
+};
+
+// Fonctions de sélection multiple
+const startSelection = (event: MouseEvent): void => {
+  // Ne pas démarrer la sélection si on clique sur une note ou si c'est un double-clic
+  if ((event.target as Element).closest(".midi-note") || event.detail === 2) {
+    return;
+  }
+
+  const gridElement = event.currentTarget as HTMLElement;
+  const rect = gridElement.getBoundingClientRect();
+
+  selectionStart.value = {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top,
+  };
+
+  isSelecting.value = true;
+
+  // Vider la sélection si pas de Ctrl
+  if (!event.ctrlKey && !event.metaKey) {
+    selectedNotes.value.clear();
+  }
+};
+
+const updateSelection = (event: MouseEvent): void => {
+  if (!isSelecting.value || !selectionStart.value) return;
+
+  const gridElement = event.currentTarget as HTMLElement;
+  const rect = gridElement.getBoundingClientRect();
+
+  selectionEnd.value = {
+    x: event.clientX - rect.left,
+    y: event.clientY - rect.top,
+  };
+
+  // Calculer le rectangle de sélection
+  const startX = Math.min(selectionStart.value.x, selectionEnd.value.x);
+  const startY = Math.min(selectionStart.value.y, selectionEnd.value.y);
+  const endX = Math.max(selectionStart.value.x, selectionEnd.value.x);
+  const endY = Math.max(selectionStart.value.y, selectionEnd.value.y);
+
+  selectionRect.value = {
+    x: startX,
+    y: startY,
+    width: endX - startX,
+    height: endY - startY,
+  };
+};
+
+const endSelection = (event: MouseEvent): void => {
+  if (!isSelecting.value || !selectionStart.value || !selectionEnd.value) {
+    isSelecting.value = false;
+    selectionRect.value = null;
+    return;
+  }
+
+  // Calculer les notes dans la zone de sélection
+  const cellWidth = 1280 / cols; // Largeur d'une cellule
+  const startCol = Math.floor(
+    Math.min(selectionStart.value.x, selectionEnd.value.x) / cellWidth,
+  );
+  const endCol = Math.floor(
+    Math.max(selectionStart.value.x, selectionEnd.value.x) / cellWidth,
+  );
+  const startRow = Math.floor(
+    Math.min(selectionStart.value.y, selectionEnd.value.y) / rowHeight,
+  );
+  const endRow = Math.floor(
+    Math.max(selectionStart.value.y, selectionEnd.value.y) / rowHeight,
+  );
+
+  // Sélectionner les notes dans la zone
+  layout.value.forEach((note) => {
+    if (
+      note.x >= startCol &&
+      note.x <= endCol &&
+      note.y >= startRow &&
+      note.y <= endRow
+    ) {
+      selectedNotes.value.add(note.i);
+    }
+  });
+
+  // Nettoyer
+  isSelecting.value = false;
+  selectionRect.value = null;
+  selectionStart.value = null;
+  selectionEnd.value = null;
+};
+
+const handleNoteClick = (event: MouseEvent, note: MidiNote): void => {
+  event.stopPropagation();
+
+  if (event.ctrlKey || event.metaKey) {
+    // Multi-sélection avec Ctrl
+    if (selectedNotes.value.has(note.i)) {
+      selectedNotes.value.delete(note.i);
+    } else {
+      selectedNotes.value.add(note.i);
+    }
+  } else {
+    // Sélection simple
+    selectedNotes.value.clear();
+    selectedNotes.value.add(note.i);
+  }
+};
+
+const handleNoteMouseDown = (_event: MouseEvent, note: MidiNote): void => {
+  // Si on commence à draguer une note sélectionnée avec d'autres, préparer le déplacement groupé
+  if (selectedNotes.value.has(note.i) && selectedNotes.value.size > 1) {
+    isDraggingGroup.value = true;
+    draggedNoteId.value = note.i;
+
+    // Sauvegarder les positions initiales de toutes les notes sélectionnées
+    dragStartPositions.value.clear();
+    selectedNotes.value.forEach((noteId) => {
+      const foundNote = layout.value.find((n) => n.i === noteId);
+      if (foundNote) {
+        dragStartPositions.value.set(noteId, {
+          x: foundNote.x,
+          y: foundNote.y,
+        });
+      }
+    });
+  } else {
+    // Déplacement simple d'une seule note
+    isDraggingGroup.value = false;
+    draggedNoteId.value = null;
+  }
+};
+
+const clearSelection = (): void => {
+  selectedNotes.value.clear();
+};
+
+const deleteSelectedNotes = (): void => {
+  selectedNotes.value.forEach((noteId) => {
+    deleteNote(noteId);
+  });
+  selectedNotes.value.clear();
 };
 
 // Fonctions d'interaction
@@ -361,6 +589,7 @@ const deleteNote = (noteId: string): void => {
 const clearAll = (): void => {
   stopPlayback();
   layout.value = [];
+  selectedNotes.value.clear();
 };
 
 // Fonctions de lecture
@@ -531,6 +760,36 @@ const _markNoteAsPlaying = (noteId: string, isPlaying: boolean): void => {
 };
 
 const onLayoutUpdated = (newLayout: MidiNote[]): void => {
+  // Si on est en train de déplacer un groupe
+  if (isDraggingGroup.value && draggedNoteId.value) {
+    const draggedNote = newLayout.find(
+      (note) => note.i === draggedNoteId.value,
+    );
+    const originalPosition = dragStartPositions.value.get(draggedNoteId.value!);
+
+    if (draggedNote && originalPosition) {
+      // Calculer le décalage
+      const deltaX = draggedNote.x - originalPosition.x;
+      const deltaY = draggedNote.y - originalPosition.y;
+
+      // Appliquer le même décalage à toutes les notes sélectionnées
+      selectedNotes.value.forEach((noteId) => {
+        if (noteId !== draggedNoteId.value) {
+          const note = newLayout.find((n) => n.i === noteId);
+          const startPos = dragStartPositions.value.get(noteId);
+
+          if (note && startPos) {
+            note.x = Math.max(0, Math.min(cols - 1, startPos.x + deltaX));
+            note.y = Math.max(
+              0,
+              Math.min(notes.length - 1, startPos.y + deltaY),
+            );
+          }
+        }
+      });
+    }
+  }
+
   layout.value = newLayout;
 };
 
@@ -748,6 +1007,25 @@ const toggleKeyboardSimulation = (): void => {
   background-color: var(--color-accent-hover);
 }
 
+.midi-note.selected {
+  background-color: var(--color-warning) !important;
+  border-color: var(--color-warning-hover) !important;
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.5) !important;
+}
+
+.midi-note.note-black.selected {
+  background-color: var(--color-warning-active) !important;
+  border-color: var(--color-warning-hover) !important;
+}
+
+.selection-rectangle {
+  position: absolute;
+  border: 2px dashed var(--color-primary);
+  background-color: rgba(51, 122, 183, 0.1);
+  pointer-events: none;
+  z-index: 15;
+}
+
 .midi-note.playing {
   background-color: var(--color-validate) !important;
   border-color: var(--color-validate-hover) !important;
@@ -847,6 +1125,28 @@ const toggleKeyboardSimulation = (): void => {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.selection-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.selection-help {
+  font-size: 12px;
+  color: var(--color-secondary);
+  font-style: italic;
+}
+
+.btn-warning {
+  background-color: var(--color-warning);
+  color: var(--color-black);
+}
+
+.btn-warning:hover {
+  background-color: var(--color-warning-hover);
+  transform: translateY(-1px);
 }
 
 .keyboard-controls {
