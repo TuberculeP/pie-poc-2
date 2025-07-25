@@ -2,14 +2,10 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../../stores/authStore";
-import {
-  getAllPosts,
-  updatePost,
-  deletePost,
-  type Post,
-} from "../../services/posts";
+import { getAllPosts, updatePost, deletePost } from "../../services/posts";
 import BlogPost from "../../components/blog/BlogPost.vue";
 import BaseButton from "../../components/ui/BaseButton.vue";
+import type { Post } from "../../lib/utils/types";
 
 const router = useRouter();
 const authStore = useAuthStore();
