@@ -151,7 +151,21 @@
       <!-- Contrôles de fichiers -->
       <div class="file-controls">
         <button @click="saveSequence" class="btn btn-success">
-          💾 Sauvegarder
+          💾 Sauvegarder Local
+        </button>
+        <button
+          @click="saveOnline"
+          class="btn btn-primary"
+          :disabled="projectStore.isSaving"
+          :class="{ 'btn-warning': projectStore.hasUnsavedChanges }"
+        >
+          {{
+            projectStore.isSaving
+              ? "💫 Sauvegarde..."
+              : projectStore.hasUnsavedChanges
+                ? "☁️ Sauvegarder*"
+                : "☁️ Sauvegardé"
+          }}
         </button>
         <button @click="loadSequence" class="btn btn-info">📁 Charger</button>
       </div>
@@ -193,10 +207,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, defineEmits } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  defineEmits,
+  defineProps,
+  watch,
+} from "vue";
 import { GridLayout, GridItem } from "grid-layout-plus";
 import type { MidiNote, NoteName } from "../../lib/utils/types";
 import { useMIDIStore } from "../../stores/MIDIStore";
+import { useProjectStore } from "../../stores/projectStore";
+
+// Props
+interface Props {
+  projectId?: string;
+}
+
+const props = defineProps<Props>();
 
 // Événements émis par le composant
 const emit = defineEmits<{
@@ -204,8 +234,9 @@ const emit = defineEmits<{
   noteEnd: [note: MidiNote, noteName: NoteName, position: number];
 }>();
 
-// Store pour la simulation clavier/événements
+// Stores
 const midiStore = useMIDIStore();
+const projectStore = useProjectStore();
 
 // Configuration des notes (piano keys)
 const notes: NoteName[] = [
@@ -880,6 +911,83 @@ const toggleKeyboardSimulation = (): void => {
     `Keyboard Simulation: ${enableKeyboardSimulation.value ? "Enabled" : "Disabled"}`,
   );
 };
+
+// Fonction de sauvegarde en ligne
+const saveOnline = async (): Promise<void> => {
+  const result = await projectStore.saveProjectOnline(
+    layout.value,
+    tempo.value,
+    cols,
+    notes,
+    enableKeyboardSimulation.value,
+  );
+
+  if (result.success) {
+    const action = projectStore.currentProjectId ? "mis à jour" : "créé";
+    alert(`✅ Projet ${action} en ligne avec succès!`);
+
+    // Si c'est un nouveau projet, mettre à jour l'URL avec le projectId
+    if (result.projectId && !projectStore.currentProjectId) {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set("projectId", result.projectId);
+      window.history.replaceState({}, "", newUrl);
+    }
+  } else {
+    alert(`❌ ${result.error}`);
+  }
+};
+
+// Charger un projet depuis l'URL
+const loadProjectFromUrl = async (): Promise<void> => {
+  if (!props.projectId) return;
+
+  const result = await projectStore.loadProjectToSequencer(
+    props.projectId,
+    layout,
+    tempo,
+    enableKeyboardSimulation,
+    nextNoteId,
+    cols,
+  );
+
+  if (!result.success) {
+    alert(`❌ ${result.error}`);
+  }
+};
+
+// Watcher pour charger le projet quand l'ID change
+watch(() => props.projectId, loadProjectFromUrl, { immediate: true });
+
+// Watcher pour détecter les changements dans le séquenceur
+watch(
+  [layout, tempo, enableKeyboardSimulation],
+  () => {
+    projectStore.checkForChanges(
+      layout.value,
+      tempo.value,
+      cols,
+      enableKeyboardSimulation.value,
+    );
+  },
+  { deep: true },
+);
+
+// Protection contre la fermeture de page avec changements non sauvegardés
+onMounted(() => {
+  const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+    if (projectStore.hasUnsavedChanges) {
+      event.preventDefault();
+      event.returnValue = "Vous avez des modifications non sauvegardées.";
+      return event.returnValue;
+    }
+  };
+
+  window.addEventListener("beforeunload", handleBeforeUnload);
+
+  onUnmounted(() => {
+    window.removeEventListener("beforeunload", handleBeforeUnload);
+  });
+});
 </script>
 
 <style scoped>
