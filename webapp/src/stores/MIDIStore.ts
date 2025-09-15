@@ -3,10 +3,6 @@ import { computed, onMounted, ref } from "vue";
 import type { Note } from "../lib/utils/types";
 
 export const useMIDIStore = defineStore("midiStore", () => {
-  const midiAccess = ref<MIDIAccess | null>(null);
-  const midiInputs = ref<MIDIInput[]>([]);
-  const midiOutputs = ref<MIDIOutput[]>([]);
-
   const keyboardConfiguration = ref("azerty");
 
   const keyToNoteMap: Record<string, Record<string, Note>> = {
@@ -56,22 +52,30 @@ export const useMIDIStore = defineStore("midiStore", () => {
 
   const pressedKeys = ref<Record<string, boolean>>({});
 
-  const initializeMIDI = async () => {
-    try {
-      midiAccess.value = await navigator.requestMIDIAccess();
-      midiInputs.value = Array.from(midiAccess.value.inputs.values());
-      midiOutputs.value = Array.from(midiAccess.value.outputs.values());
-    } catch (error) {
-      console.error("Failed to access MIDI devices:", error);
-    }
-  };
-
   const onNotePlayedCallbackList = ref<((...args: any) => void)[]>([]);
   const onNoteStoppedCallbackList = ref<((...args: any) => void)[]>([]);
-  const onNotePlayedCallbackRegistrer = (callback: (...args: any) => void) =>
+
+  const onNotePlayedCallbackRegistrer = (callback: (...args: any) => void) => {
     onNotePlayedCallbackList.value.push(callback);
-  const onNoteStoppedCallbackRegistrer = (callback: (...args: any) => void) =>
+    // Retourner une fonction pour unregister le callback
+    return () => {
+      const index = onNotePlayedCallbackList.value.indexOf(callback);
+      if (index > -1) {
+        onNotePlayedCallbackList.value.splice(index, 1);
+      }
+    };
+  };
+
+  const onNoteStoppedCallbackRegistrer = (callback: (...args: any) => void) => {
     onNoteStoppedCallbackList.value.push(callback);
+    // Retourner une fonction pour unregister le callback
+    return () => {
+      const index = onNoteStoppedCallbackList.value.indexOf(callback);
+      if (index > -1) {
+        onNoteStoppedCallbackList.value.splice(index, 1);
+      }
+    };
+  };
 
   onMounted(() => {
     window.addEventListener("keydown", (event) => {
@@ -99,6 +103,37 @@ export const useMIDIStore = defineStore("midiStore", () => {
     });
   });
 
+  // Fonctions pour simuler les événements clavier (pour le séquenceur)
+  const simulateKeyPress = (noteName: string): void => {
+    // Trouver la touche qui correspond à cette note
+    const keyEntry = Object.entries(currentKeyToNoteMap.value).find(
+      ([, noteData]) => noteData.scale === noteName,
+    );
+
+    if (keyEntry) {
+      const [key, noteData] = keyEntry;
+      // Toujours émettre l'événement pour permettre les notes multiples/consécutives
+      onNotePlayedCallbackList.value.forEach((callback) =>
+        callback(noteData, key),
+      );
+    }
+  };
+
+  const simulateKeyRelease = (noteName: string): void => {
+    // Trouver la touche qui correspond à cette note
+    const keyEntry = Object.entries(currentKeyToNoteMap.value).find(
+      ([, noteData]) => noteData.scale === noteName,
+    );
+
+    if (keyEntry) {
+      const [key, noteData] = keyEntry;
+      // Toujours émettre l'événement pour permettre l'arrêt des notes multiples
+      onNoteStoppedCallbackList.value.forEach((callback) =>
+        callback(noteData, key),
+      );
+    }
+  };
+
   return {
     // general
     onNotePlayed: onNotePlayedCallbackRegistrer,
@@ -106,10 +141,8 @@ export const useMIDIStore = defineStore("midiStore", () => {
     // keyboard
     keyboardConfiguration,
     currentKeyToNoteMap,
-    // midi
-    midiAccess,
-    midiInputs,
-    midiOutputs,
-    initializeMIDI,
+    // simulation clavier pour séquenceur
+    simulateKeyPress,
+    simulateKeyRelease,
   };
 });

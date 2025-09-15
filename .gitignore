@@ -45,3 +45,5 @@ logs
 
 *.sqlite
 *.db
+
+/public/uploads/**
