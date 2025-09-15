@@ -8,6 +8,7 @@ import "./styles/reset.css";
 import "./styles/colors.css";
 import "./styles/base.css";
 import "./styles/blog.css";
+import "./styles/tailwind.css";
 
 const pinia = createPinia();
 

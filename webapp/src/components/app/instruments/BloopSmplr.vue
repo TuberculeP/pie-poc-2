@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
-import { WebMidi } from "webmidi";
+import { onMounted, onBeforeUnmount } from "vue";
 import { ref, computed } from "vue";
 import { Soundfont } from "smplr";
 import { watch } from "vue";
+import { useMIDIStore } from "../../../stores/MIDIStore";
 
-const currentNotes = ref<{ note: string; stopFn: () => void }[]>([]);
+const currentNotes = ref<{ note: string; stopFn: () => void; id: number }[]>(
+  [],
+);
+
+// Store MIDI pour écouter les événements clavier/séquenceur
+const midiStore = useMIDIStore();
+
+// Fonctions de cleanup pour désenregistrer les callbacks
+let unregisterNoteOn: (() => void) | null = null;
+let unregisterNoteOff: (() => void) | null = null;
 
 const soundfontList = [
   "accordion",
@@ -151,29 +160,45 @@ watch(soundfont, (_, old) => {
   currentNotes.value = [];
 });
 
-onMounted(async () => {
-  await WebMidi.enable();
-
-  const selectedInput = WebMidi.inputs[0];
-  selectedInput.addListener("noteon", (e) => {
-    const midiNote = e.note.identifier;
+onMounted(() => {
+  // S'abonner aux événements de notes du MIDIStore (clavier + séquenceur)
+  unregisterNoteOn = midiStore.onNotePlayed((note, _key) => {
+    // Convertir la note en format MIDI (ex: "C4" → "C4")
+    const midiNote = note.scale; // note.scale contient "C4", "D4", etc.
     const stopFn = soundfont.value.start({ note: midiNote });
-    currentNotes.value.push({
+
+    // Ajouter un ID unique pour différencier les instances multiples de la même note
+    const noteInstance = {
       note: midiNote,
       stopFn,
-    });
+      id: Date.now() + Math.random(), // ID unique pour chaque instance
+    };
+
+    currentNotes.value.push(noteInstance);
   });
 
-  selectedInput.addListener("noteoff", (e) => {
-    const midiNote = e.note.identifier;
-    const noteToRemove = currentNotes.value.find(
-      ({ note }) => note === midiNote,
-    );
-    noteToRemove?.stopFn();
-    currentNotes.value = currentNotes.value.filter(
-      (n) => n.note !== noteToRemove?.note,
-    );
+  unregisterNoteOff = midiStore.onNoteStopped((note, _key) => {
+    const midiNote = note.scale;
+
+    // Trouver la première instance de cette note (FIFO - First In, First Out)
+    const noteIndex = currentNotes.value.findIndex((n) => n.note === midiNote);
+
+    if (noteIndex !== -1) {
+      const noteToRemove = currentNotes.value[noteIndex];
+      noteToRemove.stopFn();
+      currentNotes.value.splice(noteIndex, 1);
+    }
   });
+});
+
+onBeforeUnmount(() => {
+  // Nettoyer les callbacks pour éviter les fuites mémoire
+  if (unregisterNoteOn) {
+    unregisterNoteOn();
+  }
+  if (unregisterNoteOff) {
+    unregisterNoteOff();
+  }
 });
 </script>
 
@@ -184,7 +209,6 @@ onMounted(async () => {
       {{ item }}
     </option>
   </select>
-  <pre>{{ currentNotes }}</pre>
 </template>
 
 <style scoped>
