@@ -20,4 +20,6 @@ router.use("/auth", authRouter);
 router.use("/posts", postsRouter);
 router.use("/tags", tagsRouter);
 
+router.use("/auth", authRouter);
+
 export default router;

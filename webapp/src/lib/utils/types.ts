@@ -64,10 +64,17 @@ export interface Post {
   body: string;
   tags?: string[];
   comment_of?: number | null;
+  comment_of_post_id?: number | null;
   comments?: Post[];
   is_highlight?: boolean;
   highlight_on_tag?: boolean;
   pinned_by_user?: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+export interface CreatePostData {
+  body: string;
+  tags?: string[];
+  comment_of_post_id?: string | null;
+  is_highlight?: boolean;
 }

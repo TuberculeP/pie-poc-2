@@ -26,10 +26,11 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
 const userStats = computed(() => {
   const posts = userPosts.value;
   const totalPosts = posts.length;
-  const highlightPosts = posts.filter((p) => p.is_highlight).length;
+  const highlightPosts = posts.filter((p: Post) => p.is_highlight).length;
   const totalComments = posts.reduce(
-    (sum, post) => sum + (post.comments?.length || 0),
-    0,
+
+    (sum: number, post: Post) => sum + (post.comments?.length || 0),
+    0
   );
 
   return {
@@ -100,7 +101,8 @@ const saveEdit = async () => {
 
     // Mettre à jour le post dans la liste locale
     const index = userPosts.value.findIndex(
-      (p) => p.id === editingPost.value?.id,
+      (p: Post) => p.id === editingPost.value?.id
+
     );
     if (index !== -1) {
       userPosts.value[index] = {
@@ -122,7 +124,7 @@ const handleDeletePost = async (postId: number) => {
 
   try {
     await deletePost(postId);
-    userPosts.value = userPosts.value.filter((p) => p.id !== postId);
+    userPosts.value = userPosts.value.filter((p: Post) => p.id !== postId);
   } catch (err) {
     console.error("Erreur lors de la suppression:", err);
     error.value = "Erreur lors de la suppression du post";
@@ -252,7 +254,8 @@ onMounted(() => {
 
             <div class="post-actions">
               <BaseButton variant="ghost" size="small" @click="startEdit(post)">
-                ✏️ Modifier
+                <i class="fas fa-pencil-alt"></i>
+                <span>Modifier</span>
               </BaseButton>
               <BaseButton
                 variant="ghost"
@@ -260,7 +263,8 @@ onMounted(() => {
                 color="danger"
                 @click="handleDeletePost(post.id!)"
               >
-                🗑️ Supprimer
+                <i class="fas fa-trash-alt"></i>
+                <span> Supprimer </span>
               </BaseButton>
             </div>
           </div>
@@ -304,7 +308,7 @@ onMounted(() => {
   justify-content: center;
   font-size: 2rem;
   font-weight: 700;
-  color: white;
+  color: var(--color-black);
 }
 
 .profile-details {
@@ -445,6 +449,10 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+
+  span {
+    margin-left: 0.25rem;
+  }
 }
 
 /* Mode d'édition */

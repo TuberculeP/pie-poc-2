@@ -57,7 +57,7 @@ const handleKeyPress = (event: KeyboardEvent) => {
           :disabled="!searchQuery.trim() || isSearching"
           class="search-button"
         >
-          <span v-if="!isSearching">🔍</span>
+          <span v-if="!isSearching"> <i class="fas fa-search" /></span>
           Rechercher
         </BaseButton>
       </div>
