@@ -926,8 +926,8 @@ const saveOnline = async (): Promise<void> => {
     const action = projectStore.currentProjectId ? "mis à jour" : "créé";
     alert(`✅ Projet ${action} en ligne avec succès!`);
 
-    // Si c'est un nouveau projet, mettre à jour l'URL avec le projectId
-    if (result.projectId && !projectStore.currentProjectId) {
+    // Mettre à jour l'URL avec le projectId (nouveau projet ou projet existant)
+    if (result.projectId) {
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set("projectId", result.projectId);
       window.history.replaceState({}, "", newUrl);
