@@ -10,6 +10,37 @@ export type Note = {
   scale: string;
 };
 
+// Types pour le séquenceur de notes MIDI
+export interface MidiNote {
+  i: string; // ID unique de la note
+  x: number; // Position horizontale (temps/position dans la séquence)
+  y: number; // Position verticale (hauteur de note/pitch)
+  w: number; // Largeur (durée de la note)
+  h: number; // Hauteur (toujours 1 pour les notes MIDI)
+}
+
+export type NoteName = string; // Type pour les noms de notes comme "C4", "A#5", etc.
+
+export interface NoteEvent {
+  noteId: string;
+  noteName: NoteName;
+  position: number;
+  duration: number;
+  velocity?: number;
+}
+
+// Types pour les événements du séquenceur
+export type NoteStartHandler = (
+  note: MidiNote,
+  noteName: NoteName,
+  position: number,
+) => void;
+export type NoteEndHandler = (
+  note: MidiNote,
+  noteName: NoteName,
+  position: number,
+) => void;
+
 export type User = {
   id: string;
   email: string;
