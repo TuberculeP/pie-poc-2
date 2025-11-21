@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import apiClient from "../lib/utils/apiClient";
-import type { MidiNote, NoteName } from "../lib/utils/types";
+import type { MidiNote, NoteName, SequencerProject } from "../lib/utils/types";
 
 export const useProjectStore = defineStore("project", () => {
   const isSaving = ref(false);
@@ -9,11 +9,9 @@ export const useProjectStore = defineStore("project", () => {
   const hasUnsavedChanges = ref(false); // Changements non sauvegardés
   const lastSavedState = ref<string | null>(null); // Hash de la dernière sauvegarde
 
-  // Structure JSON complète du projet musical
+  // Structure JSON complète du projet musical (avec support multi-séquences)
   const generateProjectData = (
-    layout: MidiNote[],
-    tempo: number,
-    cols: number,
+    sequencerProject: SequencerProject,
     notes: NoteName[],
     enableKeyboardSimulation: boolean,
   ) => {
@@ -21,14 +19,14 @@ export const useProjectStore = defineStore("project", () => {
       project: {
         metadata: {
           id: crypto.randomUUID(),
-          name: "Mon Projet Musical",
+          name: sequencerProject.projectName,
           description: "Projet créé avec BloopNoteSequencer",
-          version: "2.0.0",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          version: sequencerProject.version,
+          created_at: sequencerProject.createdAt.toISOString(),
+          updated_at: sequencerProject.updatedAt.toISOString(),
           created_by: "user-placeholder",
-          tags: ["sequencer", "demo"],
-          bpm: tempo,
+          tags: ["sequencer", "multi-sequence"],
+          bpm: sequencerProject.sequences[0]?.tempo || 120,
           key: "C",
           scale: "major",
           time_signature: {
@@ -37,7 +35,7 @@ export const useProjectStore = defineStore("project", () => {
           },
           sample_rate: 44100,
           bit_depth: 24,
-          duration_bars: cols / 4,
+          duration_bars: (sequencerProject.sequences[0]?.cols || 64) / 4,
         },
 
         timeline: {
@@ -45,7 +43,7 @@ export const useProjectStore = defineStore("project", () => {
             snap_to_grid: true,
             grid_resolution: "1/16",
             loop_start: 0,
-            loop_end: cols,
+            loop_end: sequencerProject.sequences[0]?.cols || 64,
             punch_in: null,
             punch_out: null,
           },
@@ -65,64 +63,62 @@ export const useProjectStore = defineStore("project", () => {
           },
         },
 
-        tracks: [
-          {
-            id: "track-sequencer",
-            name: "Séquenceur Principal",
-            type: "instrument",
-            color: "#66b3ff",
-            position: 0,
-            enabled: true,
-            solo: false,
-            mute: false,
-            record_armed: false,
+        tracks: sequencerProject.sequences.map((sequence, index) => ({
+          id: `track-${sequence.id}`,
+          name: sequence.name,
+          type: "instrument",
+          color: `hsl(${(index * 60) % 360}, 60%, 50%)`,
+          position: index,
+          enabled: true,
+          solo: false,
+          mute: false,
+          record_armed: false,
 
-            routing: {
-              input: {
-                source: "none",
-                channel: null,
-                stereo_link: true,
-              },
-              output: {
-                destination: "master",
-                channel: "1-2",
-                pre_fader_sends: [],
-                post_fader_sends: [],
-              },
+          routing: {
+            input: {
+              source: "none",
+              channel: null,
+              stereo_link: true,
             },
-
-            mixer: {
-              volume: {
-                value: -6.0,
-                automation: { enabled: false, points: [] },
-              },
-              pan: {
-                value: 0.0,
-                law: "-3dB",
-                automation: { enabled: false, points: [] },
-              },
+            output: {
+              destination: "master",
+              channel: "1-2",
+              pre_fader_sends: [],
+              post_fader_sends: [],
             },
-
-            effects: [],
-
-            clips: [
-              {
-                id: "clip-sequencer",
-                name: "Séquence MIDI",
-                start_position: 0,
-                end_position: cols,
-                midi: {
-                  notes: layout.map((note) => ({
-                    ...note,
-                    velocity: 100,
-                    note: notes[note.y] || "C4",
-                  })),
-                  cc_automation: [],
-                },
-              },
-            ],
           },
-        ],
+
+          mixer: {
+            volume: {
+              value: -6.0,
+              automation: { enabled: false, points: [] },
+            },
+            pan: {
+              value: 0.0,
+              law: "-3dB",
+              automation: { enabled: false, points: [] },
+            },
+          },
+
+          effects: [],
+
+          clips: [
+            {
+              id: `clip-${sequence.id}`,
+              name: `Séquence ${sequence.name}`,
+              start_position: 0,
+              end_position: sequence.cols,
+              midi: {
+                notes: sequence.layout.map((note) => ({
+                  ...note,
+                  velocity: 100,
+                  note: notes[note.y] || "C4",
+                })),
+                cc_automation: [],
+              },
+            },
+          ],
+        })),
 
         folders: [],
         buses: [],
@@ -140,14 +136,10 @@ export const useProjectStore = defineStore("project", () => {
         },
 
         current_state: {
-          sequencer: {
-            layout,
-            tempo,
-            cols,
-            notes_config: notes,
-            active_instrument: "Basic",
-            keyboard_simulation: enableKeyboardSimulation,
-          },
+          sequencer: sequencerProject,
+          notes_config: notes,
+          active_instrument: "Basic",
+          keyboard_simulation: enableKeyboardSimulation,
         },
       },
     };
@@ -155,9 +147,7 @@ export const useProjectStore = defineStore("project", () => {
 
   // Sauvegarder un projet en ligne (CREATE ou UPDATE selon le contexte)
   const saveProjectOnline = async (
-    layout: MidiNote[],
-    tempo: number,
-    cols: number,
+    sequencerProject: SequencerProject,
     notes: NoteName[],
     enableKeyboardSimulation: boolean,
   ): Promise<{ success: boolean; error?: string; projectId?: string }> => {
@@ -169,9 +159,7 @@ export const useProjectStore = defineStore("project", () => {
 
     try {
       const projectData = generateProjectData(
-        layout,
-        tempo,
-        cols,
+        sequencerProject,
         notes,
         enableKeyboardSimulation,
       );
@@ -185,7 +173,7 @@ export const useProjectStore = defineStore("project", () => {
         result = await apiClient.put<{ body: any }>(
           `/app/projects/${currentProjectId.value}`,
           {
-            name: "Mon Projet Musical",
+            name: sequencerProject.projectName,
             description: "Projet créé avec BloopNoteSequencer",
             data: projectData,
           },
@@ -213,9 +201,7 @@ export const useProjectStore = defineStore("project", () => {
       // Marquer comme sauvegardé et sauvegarder l'état actuel
       hasUnsavedChanges.value = false;
       lastSavedState.value = JSON.stringify({
-        layout,
-        tempo,
-        cols,
+        sequencerProject,
         enableKeyboardSimulation,
       });
 
@@ -289,11 +275,9 @@ export const useProjectStore = defineStore("project", () => {
   // Charger un projet et appliquer ses données au séquenceur
   const loadProjectToSequencer = async (
     projectId: string,
-    layout: any,
-    tempo: any,
+    sequencerStore: any,
     enableKeyboardSimulation: any,
     nextNoteId: any,
-    cols: number,
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       const result = await getProject(projectId);
@@ -303,16 +287,17 @@ export const useProjectStore = defineStore("project", () => {
         const sequencerState = projectData?.project?.current_state?.sequencer;
 
         if (sequencerState) {
-          // Charger les données du séquenceur
-          layout.value = sequencerState.layout || [];
-          tempo.value = sequencerState.tempo || 120;
+          // Charger le projet complet avec toutes les séquences
+          sequencerStore.loadProjectData(sequencerState);
+          
           enableKeyboardSimulation.value =
-            sequencerState.keyboard_simulation ?? true;
+            projectData?.project?.current_state?.keyboard_simulation ?? true;
 
           // Mettre à jour nextNoteId pour éviter les conflits
+          const allNotes = sequencerState.sequences?.flatMap((seq: any) => seq.layout) || [];
           const maxId = Math.max(
             0,
-            ...layout.value
+            ...allNotes
               .map((note: any) => parseInt(note.i.replace(/\D/g, "")))
               .filter((id: number) => !isNaN(id)),
           );
@@ -324,9 +309,7 @@ export const useProjectStore = defineStore("project", () => {
           // Marquer comme sauvegardé et sauvegarder l'état chargé
           hasUnsavedChanges.value = false;
           lastSavedState.value = JSON.stringify({
-            layout: layout.value,
-            tempo: tempo.value,
-            cols,
+            sequencerProject: sequencerState,
             enableKeyboardSimulation: enableKeyboardSimulation.value,
           });
 
@@ -359,21 +342,17 @@ export const useProjectStore = defineStore("project", () => {
 
   // Fonction pour détecter les changements
   const checkForChanges = (
-    layout: MidiNote[],
-    tempo: number,
-    cols: number,
+    sequencerProject: SequencerProject,
     enableKeyboardSimulation: boolean,
   ) => {
     const currentState = JSON.stringify({
-      layout,
-      tempo,
-      cols,
+      sequencerProject,
       enableKeyboardSimulation,
     });
 
     if (lastSavedState.value && currentState !== lastSavedState.value) {
       hasUnsavedChanges.value = true;
-    } else if (!lastSavedState.value && (layout.length > 0 || tempo !== 120)) {
+    } else if (!lastSavedState.value && sequencerProject.sequences.some(seq => seq.layout.length > 0)) {
       // Nouveau projet avec des modifications par rapport à l'état initial
       hasUnsavedChanges.value = true;
     }
