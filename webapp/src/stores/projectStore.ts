@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import apiClient from "../lib/utils/apiClient";
-import type { MidiNote, NoteName, SequencerProject } from "../lib/utils/types";
+import type { NoteName, SequencerProject } from "../lib/utils/types";
 
 export const useProjectStore = defineStore("project", () => {
   const isSaving = ref(false);
@@ -289,12 +289,13 @@ export const useProjectStore = defineStore("project", () => {
         if (sequencerState) {
           // Charger le projet complet avec toutes les séquences
           sequencerStore.loadProjectData(sequencerState);
-          
+
           enableKeyboardSimulation.value =
             projectData?.project?.current_state?.keyboard_simulation ?? true;
 
           // Mettre à jour nextNoteId pour éviter les conflits
-          const allNotes = sequencerState.sequences?.flatMap((seq: any) => seq.layout) || [];
+          const allNotes =
+            sequencerState.sequences?.flatMap((seq: any) => seq.layout) || [];
           const maxId = Math.max(
             0,
             ...allNotes
@@ -352,7 +353,10 @@ export const useProjectStore = defineStore("project", () => {
 
     if (lastSavedState.value && currentState !== lastSavedState.value) {
       hasUnsavedChanges.value = true;
-    } else if (!lastSavedState.value && sequencerProject.sequences.some(seq => seq.layout.length > 0)) {
+    } else if (
+      !lastSavedState.value &&
+      sequencerProject.sequences.some((seq) => seq.layout.length > 0)
+    ) {
       // Nouveau projet avec des modifications par rapport à l'état initial
       hasUnsavedChanges.value = true;
     }
