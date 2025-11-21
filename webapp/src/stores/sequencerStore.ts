@@ -271,9 +271,15 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
   };
 
   // Détecter si c'est un projet avec l'ancien système de notes
-  const isLegacyNoteSystem = (sequences: any[]): boolean => {
-    // Vérifier si des notes ont des coordonnées Y > 35 (ancien système avait 36 notes max)
-    return sequences.some(seq => 
+  const isLegacyNoteSystem = (version: string | undefined, sequences: any[]): boolean => {
+    // Si la version est explicitement "2.0", c'est le nouveau système
+    if (version === "2.0") {
+      return false;
+    }
+
+    // Si la version est absente ou différente, vérifier avec les coordonnées Y
+    // Ancien système avait 36 notes max (y de 0 à 35)
+    return sequences.some(seq =>
       seq.layout?.some((note: any) => note.y >= 36)
     ) === false && sequences.some(seq => seq.layout?.length > 0);
   };
@@ -322,7 +328,7 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     };
 
     // Détecter si c'est un projet avec l'ancien système de notes
-    const needsMigration = isLegacyNoteSystem(newProject.sequences);
+    const needsMigration = isLegacyNoteSystem(data.version, newProject.sequences);
 
     // Convertir les dates des séquences et s'assurer que les IDs des notes sont uniques
     newProject.sequences.forEach(seq => {

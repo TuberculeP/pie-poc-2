@@ -823,29 +823,9 @@ const updateTempo = (): void => {
 };
 
 const playNotesAtPosition = (position: number): void => {
-  // 1. Démarrer les nouvelles notes à cette position
-  const notesToStart = layout.value.filter((note) => note.x === position);
-
-  notesToStart.forEach((note) => {
-    const noteName = getNoteFromY(note.y);
-
-    // Marquer la note comme active
-    activeNotes.value.add(note.i);
-
-    // Événement : Note commence (pour les instruments internes)
-    emit("noteStart", note, noteName, position);
-    _markNoteAsPlaying(note.i, true);
-
-    // Simuler appui clavier si activé (pour instruments qui écoutent le clavier)
-    if (enableKeyboardSimulation.value) {
-      midiStore.simulateKeyPress(noteName);
-    }
-
-    // eslint-disable-next-line no-console
-    console.info(`🎵 Start: ${noteName} (${note.i}) at position ${position}`);
-  });
-
-  // 2. Arrêter les notes qui se terminent à cette position
+  // 1. D'ABORD arrêter les notes qui se terminent à cette position
+  // IMPORTANT: On doit arrêter les notes AVANT d'en démarrer de nouvelles
+  // pour éviter un bug où deux notes identiques consécutives s'arrêtent mal
   const notesToStop = layout.value.filter((note) => {
     const endPosition = note.x + note.w;
     return endPosition === position && activeNotes.value.has(note.i);
@@ -868,6 +848,28 @@ const playNotesAtPosition = (position: number): void => {
 
     // eslint-disable-next-line no-console
     console.info(`🎵 End: ${noteName} (${note.i}) at position ${position}`);
+  });
+
+  // 2. ENSUITE démarrer les nouvelles notes à cette position
+  const notesToStart = layout.value.filter((note) => note.x === position);
+
+  notesToStart.forEach((note) => {
+    const noteName = getNoteFromY(note.y);
+
+    // Marquer la note comme active
+    activeNotes.value.add(note.i);
+
+    // Événement : Note commence (pour les instruments internes)
+    emit("noteStart", note, noteName, position);
+    _markNoteAsPlaying(note.i, true);
+
+    // Simuler appui clavier si activé (pour instruments qui écoutent le clavier)
+    if (enableKeyboardSimulation.value) {
+      midiStore.simulateKeyPress(noteName);
+    }
+
+    // eslint-disable-next-line no-console
+    console.info(`🎵 Start: ${noteName} (${note.i}) at position ${position}`);
   });
 };
 
