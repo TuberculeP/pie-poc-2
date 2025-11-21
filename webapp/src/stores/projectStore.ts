@@ -181,7 +181,7 @@ export const useProjectStore = defineStore("project", () => {
       } else {
         // CREATE : Nouveau projet
         result = await apiClient.post<{ body: any }>("/app/projects", {
-          name: "Mon Projet Musical",
+          name: sequencerProject.projectName,
           description: "Projet créé avec BloopNoteSequencer",
           data: projectData,
         });
