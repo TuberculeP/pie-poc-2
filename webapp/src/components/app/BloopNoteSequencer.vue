@@ -105,7 +105,7 @@
               :key="`${row}-${col}`"
               class="grid-cell"
               :class="{ 'beat-marker': (col - 1) % 4 === 0 }"
-            ></div>
+            />
           </div>
         </div>
       </div>
@@ -189,11 +189,19 @@
         >
       </div>
     </div>
+
+    <!-- Mixage -->
+    <div class="controls">
+      <div class="tempo-control">
+        <label>Reverb: {{ Math.round(delay * 100) }}%</label>
+        <input type="range" min="0" max="1" step="0.01" v-model="delay" />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, defineEmits } from "vue";
+import { ref, computed, onMounted, onUnmounted, defineEmits, watch } from "vue";
 import { GridLayout, GridItem } from "grid-layout-plus";
 import type { MidiNote, NoteName } from "../../lib/utils/types";
 import { useMIDIStore } from "../../stores/MIDIStore";
@@ -206,6 +214,21 @@ const emit = defineEmits<{
 
 // Store pour la simulation clavier/événements
 const midiStore = useMIDIStore();
+
+// Audio global
+const audioCtx = new (window.AudioContext ||
+  (window as any).webkitAudioContext)();
+
+const delay = ref(0.8);
+
+// Gain global (master delay)
+const masterGain = audioCtx.createGain();
+masterGain.gain.value = delay.value;
+masterGain.connect(audioCtx.destination);
+
+watch(delay, (newVal) => {
+  masterGain.gain.setValueAtTime(newVal, audioCtx.currentTime);
+});
 
 // Configuration des notes (piano keys)
 const notes: NoteName[] = [
@@ -308,11 +331,7 @@ const syncVerticalScroll = (event: Event): void => {
 const handleKeyDown = (event: KeyboardEvent): void => {
   if (event.code === "Space" && !event.repeat) {
     event.preventDefault();
-    if (isPlaying.value) {
-      stopPlayback(); // Reset au lieu de pause
-    } else {
-      startPlayback();
-    }
+    togglePlayback();
   } else if (event.code === "Delete" || event.code === "Backspace") {
     event.preventDefault();
     if (selectedNotes.value.size > 0) {
@@ -376,6 +395,50 @@ const getNoteFromY = (yPosition: number): NoteName => {
   return notes[yPosition] || "C4";
 };
 
+// Note to frequency
+const midiNoteToFrequency = (note: NoteName): number => {
+  const map: Record<string, number> = {
+    C3: 130.81,
+    "C#3": 138.59,
+    D3: 146.83,
+    "D#3": 155.56,
+    E3: 164.81,
+    F3: 174.61,
+    "F#3": 185,
+    G3: 196,
+    "G#3": 207.65,
+    A3: 220,
+    "A#3": 233.08,
+    B3: 246.94,
+    C4: 261.63,
+    "C#4": 277.18,
+    D4: 293.66,
+    "D#4": 311.13,
+    E4: 329.63,
+    F4: 349.23,
+    "F#4": 369.99,
+    G4: 392,
+    "G#4": 415.3,
+    A4: 440,
+    "A#4": 466.16,
+    B4: 493.88,
+    C5: 523.25,
+    "C#5": 554.37,
+    D5: 587.33,
+    "D#5": 622.25,
+    E5: 659.25,
+    F5: 698.46,
+    "F#5": 739.99,
+    G5: 783.99,
+    "G#5": 830.61,
+    A5: 880,
+    "A#5": 932.33,
+    B5: 987.77,
+    C6: 1046.5,
+  };
+  return map[note] || 440;
+};
+
 // Fonctions de sélection multiple
 const startSelection = (event: MouseEvent): void => {
   // Ne pas démarrer la sélection si on clique sur une note ou si c'est un double-clic
@@ -424,7 +487,7 @@ const updateSelection = (event: MouseEvent): void => {
   };
 };
 
-const endSelection = (event: MouseEvent): void => {
+const endSelection = (): void => {
   if (!isSelecting.value || !selectionStart.value || !selectionEnd.value) {
     isSelecting.value = false;
     selectionRect.value = null;
@@ -519,9 +582,15 @@ const deleteSelectedNotes = (): void => {
 
 // Fonctions d'interaction
 const playNote = (note: NoteName): void => {
-  // TODO: Intégrer votre synthé ou Web Audio API
-  // eslint-disable-next-line no-console
-  console.info(`Jouer note: ${note}`);
+  const oscillator = audioCtx.createOscillator();
+
+  oscillator.type = "sine";
+  oscillator.frequency.value = midiNoteToFrequency(note);
+
+  oscillator.connect(masterGain);
+  masterGain.connect(audioCtx.destination);
+  oscillator.start();
+  oscillator.stop(audioCtx.currentTime + 0.5);
 };
 
 const addNoteAtClick = (event: MouseEvent): void => {
@@ -693,6 +762,9 @@ const playNotesAtPosition = (position: number): void => {
 
   notesToStart.forEach((note) => {
     const noteName = getNoteFromY(note.y);
+
+    // Play audio
+    playNote(noteName);
 
     // Marquer la note comme active
     activeNotes.value.add(note.i);
