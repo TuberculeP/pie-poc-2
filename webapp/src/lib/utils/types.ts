@@ -116,3 +116,9 @@ export interface CreatePostData {
   comment_of_post_id?: string | null;
   is_highlight?: boolean;
 }
+export interface CreatePostData {
+  body: string;
+  tags?: string[];
+  comment_of_post_id?: string | null;
+  is_highlight?: boolean;
+}

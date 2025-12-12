@@ -24,4 +24,6 @@ router.use("/tags", tagsRouter);
 router.use("/messages", messagesRouter);
 router.use("/app", appRouter);
 
+router.use("/auth", authRouter);
+
 export default router;
