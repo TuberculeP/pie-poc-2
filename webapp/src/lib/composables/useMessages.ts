@@ -1,0 +1,274 @@
+import { ref } from "vue";
+import { useAuthStore } from "../../stores/authStore";
+import {
+  getConversations,
+  getConversationMessages,
+  getUsers,
+  sendMessage as sendMessageAPI,
+  type Conversation,
+  type DirectMessage,
+  type MessageUser,
+} from "../../services/messages";
+import {
+  onSocketConnected,
+  onSocketEvent,
+  getSocket,
+} from "../utils/websocket";
+
+/**
+ * Composable pour gérer la logique des messages
+ */
+export function useMessages() {
+  const authStore = useAuthStore();
+  const socket = getSocket();
+
+  // État
+  const conversations = ref<Conversation[]>([]);
+  const currentMessages = ref<DirectMessage[]>([]);
+  const selectedUser = ref<MessageUser | null>(null);
+  const allUsers = ref<MessageUser[]>([]);
+  const showNewConversation = ref(false);
+  const userSearch = ref("");
+  const isTyping = ref(false);
+  const typingUser = ref<string | null>(null);
+  const newMessageText = ref("");
+  const loading = ref(true);
+  const loadingMessages = ref(false);
+  const sending = ref(false);
+
+  // Subscriptions
+  let unsubscribeNewMessage: (() => void) | null = null;
+  let unsubscribeSent: (() => void) | null = null;
+  let unsubscribeTyping: (() => void) | null = null;
+  let typingTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  // Charger les conversations
+  const loadConversations = async () => {
+    try {
+      loading.value = true;
+      conversations.value = await getConversations();
+    } catch (error) {
+      console.error("Erreur chargement conversations:", error);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  // Charger les utilisateurs
+  const loadUsers = async () => {
+    allUsers.value = await getUsers();
+  };
+
+  // Sélectionner ou fermer une conversation
+  const selectConversation = async (user: MessageUser) => {
+    if (selectedUser.value?.id === user.id) {
+      selectedUser.value = null;
+      currentMessages.value = [];
+      return;
+    }
+
+    selectedUser.value = user;
+    showNewConversation.value = false;
+    loadingMessages.value = true;
+
+    try {
+      currentMessages.value = await getConversationMessages(user.id);
+    } catch (error) {
+      console.error("Erreur chargement messages:", error);
+    } finally {
+      loadingMessages.value = false;
+    }
+  };
+
+  // Démarrer une nouvelle conversation
+  const startNewConversation = (user: MessageUser) => {
+    selectedUser.value = user;
+    currentMessages.value = [];
+    showNewConversation.value = false;
+    userSearch.value = "";
+  };
+
+  // Envoyer un message
+  const handleSendMessage = async () => {
+    if (!selectedUser.value || !newMessageText.value.trim()) return;
+
+    sending.value = true;
+    const messageBody = newMessageText.value.trim();
+
+    try {
+      if (socket.connected) {
+        socket.emit("messages:send", {
+          senderId: authStore.user?.id,
+          receiverId: selectedUser.value.id,
+          body: messageBody,
+        });
+      } else {
+        const message = await sendMessageAPI(
+          selectedUser.value.id,
+          messageBody
+        );
+        if (message && currentMessages.value) {
+          currentMessages.value.push(message);
+          await loadConversations();
+        }
+      }
+
+      newMessageText.value = "";
+      stopTyping();
+    } catch (error) {
+      console.error("Erreur envoi message:", error);
+    } finally {
+      sending.value = false;
+    }
+  };
+
+  // Arrêter l'indicateur de frappe
+  const stopTyping = () => {
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      typingTimeout = null;
+    }
+    if (socket.connected && selectedUser.value) {
+      socket.emit("messages:typing", {
+        senderId: authStore.user?.id,
+        receiverId: selectedUser.value.id,
+        isTyping: false,
+      });
+    }
+  };
+
+  // Gérer l'indicateur de frappe
+  const handleTyping = () => {
+    if (!selectedUser.value || !socket.connected) return;
+
+    socket.emit("messages:typing", {
+      senderId: authStore.user?.id,
+      receiverId: selectedUser.value.id,
+      isTyping: true,
+    });
+
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    typingTimeout = setTimeout(stopTyping, 2000);
+  };
+
+  // Initialiser les WebSockets
+  const initWebSocket = () => {
+    onSocketConnected(() => {
+      if (authStore.user?.id) {
+        socket.emit("messages:register", { userId: authStore.user.id });
+      }
+    });
+
+    unsubscribeNewMessage = onSocketEvent(
+      "messages:new",
+      (message: DirectMessage) => {
+        if (
+          selectedUser.value?.id === message.sender.id &&
+          currentMessages.value
+        ) {
+          currentMessages.value.push(message);
+        }
+        loadConversations();
+      }
+    );
+
+    unsubscribeSent = onSocketEvent(
+      "messages:sent",
+      (message: DirectMessage) => {
+        if (
+          selectedUser.value?.id === message.receiver.id &&
+          currentMessages.value
+        ) {
+          currentMessages.value.push(message);
+        }
+        loadConversations();
+      }
+    );
+
+    unsubscribeTyping = onSocketEvent(
+      "messages:typing",
+      (data: { senderId: string; isTyping: boolean }) => {
+        if (selectedUser.value?.id === data.senderId) {
+          isTyping.value = data.isTyping;
+          typingUser.value = data.isTyping
+            ? selectedUser.value?.firstName || null
+            : null;
+        }
+      }
+    );
+  };
+
+  // Vérifier si un destinataire a été passé depuis le blog
+  const checkRecipientFromBlog = async () => {
+    const recipientData = sessionStorage.getItem("messageRecipient");
+    if (recipientData) {
+      try {
+        const recipient = JSON.parse(recipientData) as MessageUser;
+        sessionStorage.removeItem("messageRecipient");
+
+        selectedUser.value = recipient;
+        currentMessages.value = [];
+
+        loadingMessages.value = true;
+        try {
+          currentMessages.value = await getConversationMessages(recipient.id);
+        } catch (error) {
+          console.error("Erreur chargement messages:", error);
+        } finally {
+          loadingMessages.value = false;
+        }
+      } catch (e) {
+        console.error("Erreur parsing recipient:", e);
+      }
+    }
+  };
+
+  // Nettoyage
+  const cleanup = () => {
+    if (unsubscribeNewMessage) unsubscribeNewMessage();
+    if (unsubscribeSent) unsubscribeSent();
+    if (unsubscribeTyping) unsubscribeTyping();
+
+    if (socket.connected && authStore.user?.id) {
+      socket.emit("messages:unregister", { userId: authStore.user.id });
+    }
+
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+  };
+
+  // Initialisation
+  const init = () => {
+    loadConversations();
+    loadUsers();
+    initWebSocket();
+    checkRecipientFromBlog();
+  };
+
+  return {
+    // State
+    conversations,
+    currentMessages,
+    selectedUser,
+    allUsers,
+    showNewConversation,
+    userSearch,
+    isTyping,
+    typingUser,
+    newMessageText,
+    loading,
+    loadingMessages,
+    sending,
+    // Methods
+    selectConversation,
+    startNewConversation,
+    handleSendMessage,
+    handleTyping,
+    init,
+    cleanup,
+  };
+}

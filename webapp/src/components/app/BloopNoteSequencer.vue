@@ -1,7 +1,9 @@
 <template>
   <div class="piano-roll-container">
+    <!-- Gestion des séquences -->
+    <BloopSequenceTabs />
     <!-- Header avec les mesures -->
-    <div class="header-section">
+    <div v-if="sequencerStore.activeSequence" class="header-section">
       <div class="note-labels-header"></div>
       <div class="timeline-header">
         <div v-for="measure in measures" :key="measure" class="measure-marker">
@@ -11,17 +13,24 @@
     </div>
 
     <!-- Corps principal -->
-    <div class="main-section">
+    <div v-if="sequencerStore.activeSequence" class="main-section">
       <!-- Labels des notes (piano keys) -->
       <div ref="noteLabelsRef" class="note-labels">
         <div
           v-for="note in notes"
           :key="note"
           class="note-label"
-          :class="{ 'black-key': isBlackKey(note) }"
+          :class="{
+            'black-key': isBlackKey(note),
+            'octave-start': isOctaveStart(note),
+          }"
           @click="playNote(note)"
+          :title="`Note ${note} (Octave ${getOctaveNumber(note)})`"
         >
-          {{ note }}
+          <span class="note-name">{{ note }}</span>
+          <span v-if="isOctaveStart(note)" class="octave-number">{{
+            getOctaveNumber(note)
+          }}</span>
         </div>
       </div>
 
@@ -98,7 +107,10 @@
             v-for="row in notes.length"
             :key="row"
             class="grid-row"
-            :class="{ 'black-key-row': isBlackKey(notes[row - 1]) }"
+            :class="{
+              'black-key-row': isBlackKey(notes[row - 1]),
+              'octave-start-row': isOctaveStart(notes[row - 1]),
+            }"
           >
             <div
               v-for="col in cols"
@@ -111,8 +123,14 @@
       </div>
     </div>
 
+    <!-- Message si pas de séquence active -->
+    <div v-if="!sequencerStore.activeSequence" class="no-sequence-message">
+      <h3>Aucune séquence active</h3>
+      <p>Créez une nouvelle séquence pour commencer à composer.</p>
+    </div>
+
     <!-- Contrôles -->
-    <div class="controls">
+    <div v-if="sequencerStore.activeSequence" class="controls">
       <button @click="clearAll" class="btn btn-danger">Effacer tout</button>
 
       <!-- Contrôles de sélection -->
@@ -148,12 +166,22 @@
         </button>
       </div>
 
-      <!-- Contrôles de fichiers -->
+      <!-- Contrôles de sauvegarde en ligne -->
       <div class="file-controls">
-        <button @click="saveSequence" class="btn btn-success">
-          💾 Sauvegarder
+        <button
+          @click="saveOnline"
+          class="btn btn-primary"
+          :disabled="projectStore.isSaving"
+          :class="{ 'btn-warning': projectStore.hasUnsavedChanges }"
+        >
+          {{
+            projectStore.isSaving
+              ? "💫 Sauvegarde..."
+              : projectStore.hasUnsavedChanges
+                ? "☁️ Sauvegarder*"
+                : "☁️ Sauvegardé"
+          }}
         </button>
-        <button @click="loadSequence" class="btn btn-info">📁 Charger</button>
       </div>
 
       <!-- Contrôles de lecture -->
@@ -193,10 +221,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, defineEmits } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  defineEmits,
+  defineProps,
+  watch,
+} from "vue";
 import { GridLayout, GridItem } from "grid-layout-plus";
 import type { MidiNote, NoteName } from "../../lib/utils/types";
 import { useMIDIStore } from "../../stores/MIDIStore";
+import { useProjectStore } from "../../stores/projectStore";
+import { useSequencerStore } from "../../stores/sequencerStore";
+import BloopSequenceTabs from "./BloopSequenceTabs.vue";
+
+// Props
+interface Props {
+  projectId?: string;
+}
+
+const props = defineProps<Props>();
 
 // Événements émis par le composant
 const emit = defineEmits<{
@@ -204,12 +250,42 @@ const emit = defineEmits<{
   noteEnd: [note: MidiNote, noteName: NoteName, position: number];
 }>();
 
-// Store pour la simulation clavier/événements
+// Stores
 const midiStore = useMIDIStore();
+const projectStore = useProjectStore();
+const sequencerStore = useSequencerStore();
 
-// Configuration des notes (piano keys)
+// Configuration étendue des notes (piano 88 touches : A0 à C8)
 const notes: NoteName[] = [
+  // Octave 8
+  "C8",
+  // Octave 7
+  "B7",
+  "A#7",
+  "A7",
+  "G#7",
+  "G7",
+  "F#7",
+  "F7",
+  "E7",
+  "D#7",
+  "D7",
+  "C#7",
+  "C7",
+  // Octave 6
+  "B6",
+  "A#6",
+  "A6",
+  "G#6",
+  "G6",
+  "F#6",
+  "F6",
+  "E6",
+  "D#6",
+  "D6",
+  "C#6",
   "C6",
+  // Octave 5
   "B5",
   "A#5",
   "A5",
@@ -222,6 +298,7 @@ const notes: NoteName[] = [
   "D5",
   "C#5",
   "C5",
+  // Octave 4 (Do central)
   "B4",
   "A#4",
   "A4",
@@ -234,6 +311,7 @@ const notes: NoteName[] = [
   "D4",
   "C#4",
   "C4",
+  // Octave 3
   "B3",
   "A#3",
   "A3",
@@ -245,21 +323,61 @@ const notes: NoteName[] = [
   "D#3",
   "D3",
   "C#3",
+  "C3",
+  // Octave 2
+  "B2",
+  "A#2",
+  "A2",
+  "G#2",
+  "G2",
+  "F#2",
+  "F2",
+  "E2",
+  "D#2",
+  "D2",
+  "C#2",
+  "C2",
+  // Octave 1
+  "B1",
+  "A#1",
+  "A1",
+  "G#1",
+  "G1",
+  "F#1",
+  "F1",
+  "E1",
+  "D#1",
+  "D1",
+  "C#1",
+  "C1",
+  // Octave 0 (notes les plus graves)
+  "B0",
+  "A#0",
+  "A0",
 ];
 
 // Configuration de la grille
-const cols: number = 64; // 16 mesures x 4 beats (remis à la taille originale)
-const rowHeight: number = 20;
+const rowHeight: number = 18; // Réduit légèrement pour que tout tienne mieux
 
-// État des notes MIDI
-const layout = ref<MidiNote[]>([
-  // Quelques notes d'exemple pour tester
-  { i: "note-demo-1", x: 0, y: 5, w: 1, h: 1 },
-  { i: "note-demo-2", x: 4, y: 8, w: 2, h: 1 },
-  { i: "note-demo-3", x: 8, y: 12, w: 1, h: 1 },
-]);
-const nextNoteId = ref<number>(4);
-const tempo = ref<number>(120);
+// État des notes MIDI (maintenant géré par le store)
+const layout = computed({
+  get: () => sequencerStore.layout,
+  set: (newLayout: MidiNote[]) => {
+    sequencerStore.layout = newLayout;
+  },
+});
+
+const tempo = computed({
+  get: () => sequencerStore.tempo,
+  set: (newTempo: number) => {
+    sequencerStore.tempo = newTempo;
+  },
+});
+
+const cols = computed(() => sequencerStore.cols);
+
+// Compteur pour les nouveaux IDs (local au composant)
+const nextNoteId = ref<number>(1000);
 
 // État de lecture amélioré pour plus de fluidité
 const isPlaying = ref<boolean>(false);
@@ -341,6 +459,9 @@ const handleGlobalMouseUp = (): void => {
 };
 
 onMounted(() => {
+  // Initialiser le store du séquenceur
+  sequencerStore.initialize();
+
   document.addEventListener("keydown", handleKeyDown);
   document.addEventListener("mouseup", handleGlobalMouseUp);
 });
@@ -353,7 +474,7 @@ onUnmounted(() => {
 // Mesures pour l'header
 const measures = computed<number[]>(() => {
   const result: number[] = [];
-  for (let i = 1; i <= cols / 4; i++) {
+  for (let i = 1; i <= cols.value / 4; i++) {
     result.push(i);
   }
   return result;
@@ -362,6 +483,17 @@ const measures = computed<number[]>(() => {
 // Fonctions utilitaires
 const isBlackKey = (note: NoteName): boolean => {
   return note.includes("#");
+};
+
+// Fonction pour déterminer si c'est le début d'une octave (note C)
+const isOctaveStart = (note: NoteName): boolean => {
+  return note.startsWith("C") && !note.includes("#");
+};
+
+// Fonction pour obtenir le numéro d'octave d'une note
+const getOctaveNumber = (note: NoteName): number => {
+  const match = note.match(/(\d+)$/);
+  return match ? parseInt(match[1]) : 4;
 };
 
 const getNoteClass = (item: MidiNote) => {
@@ -424,7 +556,7 @@ const updateSelection = (event: MouseEvent): void => {
   };
 };
 
-const endSelection = (event: MouseEvent): void => {
+const endSelection = (_event: MouseEvent): void => {
   if (!isSelecting.value || !selectionStart.value || !selectionEnd.value) {
     isSelecting.value = false;
     selectionRect.value = null;
@@ -432,7 +564,7 @@ const endSelection = (event: MouseEvent): void => {
   }
 
   // Calculer les notes dans la zone de sélection
-  const cellWidth = 1280 / cols; // Largeur d'une cellule
+  const cellWidth = 1280 / cols.value; // Largeur d'une cellule
   const startCol = Math.floor(
     Math.min(selectionStart.value.x, selectionEnd.value.x) / cellWidth,
   );
@@ -538,7 +670,7 @@ const addNoteAtClick = (event: MouseEvent): void => {
   const relativeY = event.clientY - rect.top;
 
   // Convertir en coordonnées de grille
-  const cellWidth = rect.width / cols;
+  const cellWidth = rect.width / cols.value;
   const x = Math.floor(relativeX / cellWidth);
   const y = Math.floor(relativeY / rowHeight);
 
@@ -552,9 +684,12 @@ const addNoteAtClick = (event: MouseEvent): void => {
   console.log(`Position calculée: x=${x}, y=${y}, cellWidth=${cellWidth}`);
 
   // Vérifier les limites
-  if (x >= 0 && x < cols && y >= 0 && y < notes.length) {
+  if (x >= 0 && x < cols.value && y >= 0 && y < notes.length) {
+    const activeSeq = sequencerStore.activeSequence;
+    if (!activeSeq) return;
+
     const newNote: MidiNote = {
-      i: `note-${nextNoteId.value++}`,
+      i: sequencerStore.generateNoteId(activeSeq.id),
       x,
       y,
       w: 1,
@@ -569,7 +704,7 @@ const addNoteAtClick = (event: MouseEvent): void => {
     console.log("Position hors limites:", {
       x,
       y,
-      maxX: cols,
+      maxX: cols.value,
       maxY: notes.length,
     });
   }
@@ -626,7 +761,7 @@ const startPlayback = (): void => {
         pos <= newIntegerPosition;
         pos++
       ) {
-        if (pos < cols) {
+        if (pos < cols.value) {
           playNotesAtPosition(pos);
         }
       }
@@ -634,7 +769,7 @@ const startPlayback = (): void => {
     }
 
     // Arrêter à la fin
-    if (precisePosition.value >= cols) {
+    if (precisePosition.value >= cols.value) {
       stopPlayback();
       return;
     }
@@ -688,29 +823,9 @@ const updateTempo = (): void => {
 };
 
 const playNotesAtPosition = (position: number): void => {
-  // 1. Démarrer les nouvelles notes à cette position
-  const notesToStart = layout.value.filter((note) => note.x === position);
-
-  notesToStart.forEach((note) => {
-    const noteName = getNoteFromY(note.y);
-
-    // Marquer la note comme active
-    activeNotes.value.add(note.i);
-
-    // Événement : Note commence (pour les instruments internes)
-    emit("noteStart", note, noteName, position);
-    _markNoteAsPlaying(note.i, true);
-
-    // Simuler appui clavier si activé (pour instruments qui écoutent le clavier)
-    if (enableKeyboardSimulation.value) {
-      midiStore.simulateKeyPress(noteName);
-    }
-
-    // eslint-disable-next-line no-console
-    console.info(`🎵 Start: ${noteName} (${note.i}) at position ${position}`);
-  });
-
-  // 2. Arrêter les notes qui se terminent à cette position
+  // 1. D'ABORD arrêter les notes qui se terminent à cette position
+  // IMPORTANT: On doit arrêter les notes AVANT d'en démarrer de nouvelles
+  // pour éviter un bug où deux notes identiques consécutives s'arrêtent mal
   const notesToStop = layout.value.filter((note) => {
     const endPosition = note.x + note.w;
     return endPosition === position && activeNotes.value.has(note.i);
@@ -733,6 +848,28 @@ const playNotesAtPosition = (position: number): void => {
 
     // eslint-disable-next-line no-console
     console.info(`🎵 End: ${noteName} (${note.i}) at position ${position}`);
+  });
+
+  // 2. ENSUITE démarrer les nouvelles notes à cette position
+  const notesToStart = layout.value.filter((note) => note.x === position);
+
+  notesToStart.forEach((note) => {
+    const noteName = getNoteFromY(note.y);
+
+    // Marquer la note comme active
+    activeNotes.value.add(note.i);
+
+    // Événement : Note commence (pour les instruments internes)
+    emit("noteStart", note, noteName, position);
+    _markNoteAsPlaying(note.i, true);
+
+    // Simuler appui clavier si activé (pour instruments qui écoutent le clavier)
+    if (enableKeyboardSimulation.value) {
+      midiStore.simulateKeyPress(noteName);
+    }
+
+    // eslint-disable-next-line no-console
+    console.info(`🎵 Start: ${noteName} (${note.i}) at position ${position}`);
   });
 };
 
@@ -779,7 +916,7 @@ const onLayoutUpdated = (newLayout: MidiNote[]): void => {
           const startPos = dragStartPositions.value.get(noteId);
 
           if (note && startPos) {
-            note.x = Math.max(0, Math.min(cols - 1, startPos.x + deltaX));
+            note.x = Math.max(0, Math.min(cols.value - 1, startPos.x + deltaX));
             note.y = Math.max(
               0,
               Math.min(notes.length - 1, startPos.y + deltaY),
@@ -793,84 +930,8 @@ const onLayoutUpdated = (newLayout: MidiNote[]): void => {
   layout.value = newLayout;
 };
 
-// Fonctions de sauvegarde et chargement
-const saveSequence = (): void => {
-  const sequenceData = {
-    layout: layout.value,
-    tempo: tempo.value,
-    cols,
-    timestamp: new Date().toISOString(),
-    version: "1.0",
-  };
-
-  const dataStr = JSON.stringify(sequenceData, null, 2);
-  const dataBlob = new Blob([dataStr], { type: "application/json" });
-
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(dataBlob);
-  link.download = `sequence-${new Date().toISOString().split("T")[0]}.json`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(link.href);
-};
-
-const loadSequence = (): void => {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = ".json";
-
-  input.onchange = (event: Event) => {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e: ProgressEvent<FileReader>) => {
-      try {
-        const content = e.target?.result as string;
-        const sequenceData = JSON.parse(content);
-
-        // Validation basique
-        if (!sequenceData.layout || !Array.isArray(sequenceData.layout)) {
-          throw new Error("Format de fichier invalide");
-        }
-
-        // Arrêter la lecture si en cours
-        if (isPlaying.value) {
-          stopPlayback();
-        }
-
-        // Charger les données
-        layout.value = sequenceData.layout;
-        if (sequenceData.tempo) {
-          tempo.value = sequenceData.tempo;
-        }
-
-        // eslint-disable-next-line no-console
-        console.log("Séquence chargée avec succès:", sequenceData);
-
-        // Optionnel : mettre à jour nextNoteId pour éviter les conflits
-        const maxId = Math.max(
-          0,
-          ...layout.value
-            .map((note) => parseInt(note.i.replace(/\D/g, "")))
-            .filter((id) => !isNaN(id)),
-        );
-        nextNoteId.value = maxId + 1;
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error("Erreur lors du chargement:", error);
-        alert("Erreur lors du chargement du fichier. Vérifiez le format JSON.");
-      }
-    };
-
-    reader.readAsText(file);
-  };
-
-  document.body.appendChild(input);
-  input.click();
-  document.body.removeChild(input);
-};
+// Anciennes fonctions de sauvegarde/chargement supprimées
+// Maintenant gérées par BloopSequenceTabs et useSequencerStore
 
 // Fonctions MIDI
 const toggleKeyboardSimulation = (): void => {
@@ -880,6 +941,82 @@ const toggleKeyboardSimulation = (): void => {
     `Keyboard Simulation: ${enableKeyboardSimulation.value ? "Enabled" : "Disabled"}`,
   );
 };
+
+// Fonction de sauvegarde en ligne
+const saveOnline = async (): Promise<void> => {
+  if (!sequencerStore.activeSequence) {
+    alert("❌ Aucune séquence active à sauvegarder");
+    return;
+  }
+
+  const result = await projectStore.saveProjectOnline(
+    sequencerStore.project,
+    notes,
+    enableKeyboardSimulation.value,
+  );
+
+  if (result.success) {
+    const action = projectStore.currentProjectId ? "mis à jour" : "créé";
+    alert(`✅ Projet ${action} en ligne avec succès!`);
+
+    // Mettre à jour l'URL avec le projectId (nouveau projet ou projet existant)
+    if (result.projectId) {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set("projectId", result.projectId);
+      window.history.replaceState({}, "", newUrl);
+    }
+  } else {
+    alert(`❌ ${result.error}`);
+  }
+};
+
+// Charger un projet depuis l'URL
+const loadProjectFromUrl = async (): Promise<void> => {
+  if (!props.projectId) return;
+
+  const result = await projectStore.loadProjectToSequencer(
+    props.projectId,
+    sequencerStore,
+    enableKeyboardSimulation,
+    nextNoteId,
+  );
+
+  if (!result.success) {
+    alert(`❌ ${result.error}`);
+  }
+};
+
+// Watcher pour charger le projet quand l'ID change
+watch(() => props.projectId, loadProjectFromUrl, { immediate: true });
+
+// Watcher pour détecter les changements dans le séquenceur
+watch(
+  [() => sequencerStore.project, enableKeyboardSimulation],
+  () => {
+    projectStore.checkForChanges(
+      sequencerStore.project,
+      enableKeyboardSimulation.value,
+    );
+  },
+  { deep: true },
+);
+
+// Protection contre la fermeture de page avec changements non sauvegardés
+onMounted(() => {
+  const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+    if (projectStore.hasUnsavedChanges) {
+      event.preventDefault();
+      event.returnValue = "Vous avez des modifications non sauvegardées.";
+      return event.returnValue;
+    }
+  };
+
+  window.addEventListener("beforeunload", handleBeforeUnload);
+
+  onUnmounted(() => {
+    window.removeEventListener("beforeunload", handleBeforeUnload);
+  });
+});
 </script>
 
 <style scoped>
@@ -889,6 +1026,29 @@ const toggleKeyboardSimulation = (): void => {
   height: 100vh;
   background-color: var(--color-bg-primary-dark);
   font-family: "Arial", sans-serif;
+}
+
+.no-sequence-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: #ccc;
+  text-align: center;
+  padding: 40px;
+}
+
+.no-sequence-message h3 {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: var(--color-primary);
+}
+
+.no-sequence-message p {
+  font-size: 16px;
+  margin: 0;
+  opacity: 0.8;
 }
 
 .header-section {
@@ -929,7 +1089,7 @@ const toggleKeyboardSimulation = (): void => {
   display: flex;
   flex: 1;
   overflow: hidden;
-  max-height: 70vh; /* Limiter la hauteur pour éviter le scroll global */
+  max-height: 65vh; /* Limiter la hauteur pour éviter le scroll global avec plus de notes */
 }
 
 .note-labels {
@@ -940,15 +1100,21 @@ const toggleKeyboardSimulation = (): void => {
 }
 
 .note-label {
-  height: 20px;
+  height: 18px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 10px;
+  justify-content: space-between;
+  padding: 0 4px;
+  font-size: 9px;
   font-weight: bold;
   border-bottom: 1px solid #444;
   cursor: pointer;
   transition: background-color 0.1s;
+  position: relative;
+}
+
+.note-label.octave-start {
+  border-top: 2px solid var(--color-primary);
 }
 
 .note-label:hover {
@@ -965,6 +1131,18 @@ const toggleKeyboardSimulation = (): void => {
   color: white;
 }
 
+.note-name {
+  flex: 1;
+  text-align: left;
+}
+
+.octave-number {
+  font-size: 8px;
+  opacity: 0.7;
+  color: var(--color-primary);
+  font-weight: normal;
+}
+
 .grid-container {
   flex: 1;
   position: relative;
@@ -978,7 +1156,7 @@ const toggleKeyboardSimulation = (): void => {
   z-index: 10;
   width: 1280px; /* Largeur fixe pour 16 mesures (80px * 16) */
   height: 100%;
-  min-height: 720px; /* 36 notes * 20px de hauteur */
+  min-height: 1566px; /* 87 notes * 18px de hauteur */
 }
 
 .midi-note {
@@ -1057,15 +1235,19 @@ const toggleKeyboardSimulation = (): void => {
   bottom: 0;
   z-index: 1;
   pointer-events: none;
-  height: 720px; /* Même hauteur que midi-grid */
+  height: 1566px; /* Même hauteur que midi-grid (87 notes * 18px) */
   width: 1280px; /* Même largeur que midi-grid */
 }
 
 .grid-row {
   display: flex;
-  height: 20px;
+  height: 18px;
   border-bottom: 1px solid #333;
   pointer-events: none;
+}
+
+.grid-row.octave-start-row {
+  border-top: 2px solid rgba(51, 122, 183, 0.3);
 }
 
 .grid-row.black-key-row {
@@ -1103,7 +1285,7 @@ const toggleKeyboardSimulation = (): void => {
   z-index: 20; /* Plus haut que les notes (z-index: 15) */
   pointer-events: none;
   box-shadow: 0 0 8px rgba(238, 53, 53, 0.6);
-  height: 720px; /* Hauteur exacte de la grille */
+  height: 1566px; /* Hauteur exacte de la grille (87 notes * 18px) */
 }
 
 .controls {

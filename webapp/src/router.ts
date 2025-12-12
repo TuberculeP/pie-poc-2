@@ -27,6 +27,7 @@ import BlogApp from "./views/blog/BlogApp.vue";
 import BlogSearchResults from "./views/blog/BlogSearchResults.vue";
 import BlogPostDetail from "./views/blog/BlogPostDetail.vue";
 import ProfileView from "./views/profil/ProfileView.vue";
+import MessagesView from "./views/messages/MessagesView.vue";
 
 const routes = [
   { path: "/", component: LandingIndex, name: "landing-main" },
@@ -45,10 +46,11 @@ const routes = [
     name: "blog-post-detail",
   },
   { path: "/profile", component: ProfileView, name: "profile" },
+  { path: "/messages", component: MessagesView, name: "messages" },
 ];
 
 const getGuardedRoutes = () => {
-  const guardedMatches = ["app", "blog", "settings", "profile"];
+  const guardedMatches = ["app", "blog", "settings", "profile", "messages"];
   return routes.map((route) => {
     if (guardedMatches.some((match) => route.path.includes(match))) {
       return {

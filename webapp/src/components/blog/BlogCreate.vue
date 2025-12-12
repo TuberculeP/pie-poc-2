@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, defineEmits } from "vue";
-import { createPost, type CreatePostData } from "../../services/posts";
+import { ref, computed, onMounted } from "vue";
+import { createPost } from "../../services/posts";
+import { getAllTags, defaultTags, type Tag } from "../../services/tags";
+import type { CreatePostData } from "../../lib/utils/types";
 
 const emit = defineEmits<{
   postCreated: [];
@@ -8,11 +10,97 @@ const emit = defineEmits<{
 
 const form = ref({
   body: "",
-  tags: "",
   is_highlight: false,
   highlight_on_tag: false,
   pinned_by_user: false,
 });
+
+// Gestion des tags
+const selectedTags = ref<string[]>([]);
+const tagInput = ref("");
+const showSuggestions = ref(false);
+const availableTags = ref<string[]>([...defaultTags]);
+
+// Charger les tags depuis le serveur au montage
+onMounted(async () => {
+  try {
+    const serverTags = await getAllTags();
+    const serverTagNames = serverTags.map((t: Tag) => t.name);
+    // Fusionner avec les tags par défaut sans doublons
+    availableTags.value = [
+      ...new Set([...defaultTags, ...serverTagNames]),
+    ].sort();
+  } catch (error) {
+    console.error("Erreur lors du chargement des tags:", error);
+  }
+});
+
+// État pour afficher tous les tags (double-clic)
+const showAllTags = ref(false);
+
+// Filtrer les suggestions basées sur l'input
+const filteredSuggestions = computed(() => {
+  // Si showAllTags est activé, afficher tous les tags non sélectionnés
+  if (showAllTags.value) {
+    return availableTags.value
+      .filter((tag) => !selectedTags.value.includes(tag))
+      .slice(0, 15); // Limiter à 15 suggestions pour le dropdown complet
+  }
+
+  if (!tagInput.value.trim()) return [];
+  const search = tagInput.value.toLowerCase();
+  return availableTags.value
+    .filter(
+      (tag) =>
+        tag.toLowerCase().includes(search) && !selectedTags.value.includes(tag)
+    )
+    .slice(0, 8); // Limiter à 8 suggestions
+});
+
+// Ajouter un tag
+const addTag = (tag: string) => {
+  const trimmedTag = tag.trim();
+  if (trimmedTag && !selectedTags.value.includes(trimmedTag)) {
+    selectedTags.value.push(trimmedTag);
+  }
+  tagInput.value = "";
+  showSuggestions.value = false;
+  showAllTags.value = false;
+};
+
+// Toggle pour afficher/masquer tous les tags
+const toggleShowAllTags = () => {
+  showAllTags.value = !showAllTags.value;
+};
+
+// Gérer le blur de l'input tags (avec délai pour permettre le clic sur les suggestions)
+const handleTagInputBlur = () => {
+  window.setTimeout(() => {
+    showSuggestions.value = false;
+  }, 200);
+};
+
+// Supprimer un tag
+const removeTag = (tag: string) => {
+  selectedTags.value = selectedTags.value.filter((t) => t !== tag);
+};
+
+// Gérer la touche Enter dans l'input
+const handleTagKeydown = (event: KeyboardEvent) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    if (tagInput.value.trim()) {
+      addTag(tagInput.value);
+    }
+  } else if (
+    event.key === "Backspace" &&
+    !tagInput.value &&
+    selectedTags.value.length > 0
+  ) {
+    // Supprimer le dernier tag si on appuie sur Backspace avec un input vide
+    selectedTags.value.pop();
+  }
+};
 
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -29,12 +117,7 @@ const handleSubmit = async () => {
 
     const postData: CreatePostData = {
       body: form.value.body.trim(),
-      tags: form.value.tags
-        ? form.value.tags
-            .split(",")
-            .map((tag) => tag.trim())
-            .filter((tag) => tag)
-        : [],
+      tags: selectedTags.value,
       is_highlight: form.value.is_highlight,
     };
 
@@ -43,11 +126,12 @@ const handleSubmit = async () => {
     // Réinitialiser le formulaire
     form.value = {
       body: "",
-      tags: "",
       is_highlight: false,
       highlight_on_tag: false,
       pinned_by_user: false,
     };
+    selectedTags.value = [];
+    tagInput.value = "";
 
     emit("postCreated");
   } catch (err) {
@@ -88,13 +172,60 @@ const handleSubmit = async () => {
       </div>
 
       <div class="form-group">
-        <label for="tags">Tags (séparés par des virgules)</label>
-        <input
-          id="tags"
-          v-model="form.tags"
-          type="text"
-          placeholder="javascript, vue, développement"
-        />
+        <label for="tags">Ajouter des Tags</label>
+        <div class="tags-input-container">
+          <!-- Tags sélectionnés -->
+          <div class="selected-tags">
+            <span v-for="tag in selectedTags" :key="tag" class="tag-badge">
+              {{ tag }}
+              <button type="button" class="tag-remove" @click="removeTag(tag)">
+                ×
+              </button>
+            </span>
+          </div>
+          <!-- Input avec autocomplétion -->
+          <div class="tag-input-wrapper">
+            <div class="tag-input-row">
+              <input
+                id="tags"
+                v-model="tagInput"
+                type="text"
+                placeholder="Rechercher un tag..."
+                @focus="showSuggestions = true"
+                @blur="handleTagInputBlur"
+                @keydown="handleTagKeydown"
+                @input="showAllTags = false"
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                class="show-tags-button"
+                @click="toggleShowAllTags"
+                :class="{ active: showAllTags }"
+              >
+                {{ showAllTags ? "Masquer" : "Voir les tags" }}
+              </button>
+            </div>
+            <!-- Liste des suggestions ou tous les tags -->
+            <ul
+              v-if="
+                (showSuggestions && filteredSuggestions.length > 0) ||
+                showAllTags
+              "
+              class="tag-suggestions"
+              :class="{ 'show-all': showAllTags }"
+            >
+              <li
+                v-for="suggestion in filteredSuggestions"
+                :key="suggestion"
+                @mousedown.prevent="addTag(suggestion)"
+                class="tag-suggestion-item"
+              >
+                {{ suggestion }}
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <button type="submit" :disabled="loading" class="submit-button">

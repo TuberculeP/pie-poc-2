@@ -33,13 +33,42 @@ export interface NoteEvent {
 export type NoteStartHandler = (
   note: MidiNote,
   noteName: NoteName,
-  position: number,
+  position: number
 ) => void;
 export type NoteEndHandler = (
   note: MidiNote,
   noteName: NoteName,
-  position: number,
+  position: number
 ) => void;
+
+// Types pour la gestion multi-séquences
+export interface Sequence {
+  id: string;
+  name: string;
+  layout: MidiNote[];
+  tempo: number;
+  cols: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SequencerProject {
+  sequences: Sequence[];
+  activeSequenceId: string | null;
+  projectName: string;
+  version: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Format de sauvegarde compatible avec l'ancien système
+export interface LegacySequenceData {
+  layout: MidiNote[];
+  tempo: number;
+  cols: number;
+  timestamp: string;
+  version: string;
+}
 
 export type User = {
   id: string;
@@ -58,16 +87,38 @@ export type User = {
   createdAt: Date;
 };
 
+export interface TagObject {
+  id: string;
+  name: string;
+  isActive?: boolean;
+  createdAt?: string;
+}
+
 export interface Post {
   id?: number;
   author: User;
   body: string;
-  tags?: string[];
+  tags?: (string | TagObject)[];
   comment_of?: number | null;
+  comment_of_post_id?: number | null;
   comments?: Post[];
   is_highlight?: boolean;
   highlight_on_tag?: boolean;
   pinned_by_user?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  isLikedByMe?: boolean;
+  likesCount?: number;
+}
+export interface CreatePostData {
+  body: string;
+  tags?: string[];
+  comment_of_post_id?: string | null;
+  is_highlight?: boolean;
+}
+export interface CreatePostData {
+  body: string;
+  tags?: string[];
+  comment_of_post_id?: string | null;
+  is_highlight?: boolean;
 }
