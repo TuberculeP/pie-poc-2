@@ -33,12 +33,12 @@ export interface NoteEvent {
 export type NoteStartHandler = (
   note: MidiNote,
   noteName: NoteName,
-  position: number,
+  position: number
 ) => void;
 export type NoteEndHandler = (
   note: MidiNote,
   noteName: NoteName,
-  position: number,
+  position: number
 ) => void;
 
 export type User = {
@@ -58,11 +58,18 @@ export type User = {
   createdAt: Date;
 };
 
+export interface TagObject {
+  id: string;
+  name: string;
+  isActive?: boolean;
+  createdAt?: string;
+}
+
 export interface Post {
   id?: number;
   author: User;
   body: string;
-  tags?: string[];
+  tags?: (string | TagObject)[];
   comment_of?: number | null;
   comment_of_post_id?: number | null;
   comments?: Post[];
@@ -71,6 +78,8 @@ export interface Post {
   pinned_by_user?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  isLikedByMe?: boolean;
+  likesCount?: number;
 }
 export interface CreatePostData {
   body: string;

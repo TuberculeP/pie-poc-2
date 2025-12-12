@@ -60,6 +60,39 @@ tagsRouter.get("/", async (_, res) => {
   }
 });
 
+// Route pour récupérer les tags les plus populaires (les plus utilisés)
+tagsRouter.get("/popular", async (_, res) => {
+  try {
+    const tagRepository = pg.getRepository(Tag);
+
+    // Récupérer les tags avec le nombre de posts associés
+    const popularTags = await tagRepository
+      .createQueryBuilder("tag")
+      .leftJoin("tag.posts", "post")
+      .select("tag.id", "id")
+      .addSelect("tag.name", "name")
+      .addSelect("COUNT(post.id)", "postCount")
+      .groupBy("tag.id")
+      .addGroupBy("tag.name")
+      .orderBy("COUNT(post.id)", "DESC")
+      .addOrderBy("tag.name", "ASC")
+      .limit(10)
+      .getRawMany();
+
+    res.status(200).json({
+      status: 200,
+      message: "Popular tags successfully retrieved",
+      body: popularTags,
+    });
+    return;
+  } catch (err) {
+    console.error("Error fetching popular tags:", err);
+    res
+      .status(500)
+      .json({ status: 500, message: "Error fetching popular tags" });
+  }
+});
+
 tagsRouter.get("/:id", async (req, res) => {
   try {
     const tagRepository = pg.getRepository(Tag);

@@ -36,7 +36,7 @@ const currentInstrumentRef = ref<any>(null);
 const onNoteStart = (
   note: MidiNote,
   noteName: NoteName,
-  position: number,
+  position: number
 ): void => {
   // eslint-disable-next-line no-console
   console.log(`🚀 Note START Event:`, {
@@ -56,7 +56,7 @@ const onNoteStart = (
 const onNoteEnd = (
   note: MidiNote,
   noteName: NoteName,
-  position: number,
+  position: number
 ): void => {
   // eslint-disable-next-line no-console
   console.log(`🛑 Note END Event:`, {

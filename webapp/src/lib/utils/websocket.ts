@@ -11,6 +11,8 @@ const socket = io({
   transports: ["websocket"],
 });
 
+export const getSocket = (): Socket => socket;
+
 export const onSocketConnected = (callback: (socket: Socket) => void) => {
   if (state.connected) {
     callback(socket);
@@ -21,7 +23,7 @@ export const onSocketConnected = (callback: (socket: Socket) => void) => {
 
 export const onSocketEvent = (
   event: string,
-  callback: (...args: any[]) => void,
+  callback: (...args: any[]) => void
 ) => {
   // one event can have multiple listeners
   if (!state._eventListeners[event]) {
@@ -31,7 +33,7 @@ export const onSocketEvent = (
   // return a function to remove the listener
   return () => {
     state._eventListeners[event] = state._eventListeners[event].filter(
-      (listener) => listener !== callback,
+      (listener) => listener !== callback
     );
   };
 };

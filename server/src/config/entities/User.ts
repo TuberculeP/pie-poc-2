@@ -4,7 +4,6 @@ import {
   Column,
   OneToMany,
   ManyToMany,
-  ManyToOne,
   OneToOne,
   CreateDateColumn,
   JoinTable,
@@ -53,10 +52,10 @@ export class User {
   @OneToOne(() => Subscription, (subscription) => subscription.users)
   subscription: Subscription;
 
-  @ManyToOne(() => DirectMessage, (directMessage) => directMessage.sender)
+  @OneToMany(() => DirectMessage, (directMessage) => directMessage.sender)
   sentMessages: DirectMessage[];
 
-  @ManyToOne(() => DirectMessage, (directMessage) => directMessage.receiver)
+  @OneToMany(() => DirectMessage, (directMessage) => directMessage.receiver)
   receivedMessages: DirectMessage[];
 
   @CreateDateColumn()

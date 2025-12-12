@@ -28,7 +28,6 @@ const userStats = computed(() => {
   const totalPosts = posts.length;
   const highlightPosts = posts.filter((p: Post) => p.is_highlight).length;
   const totalComments = posts.reduce(
-
     (sum: number, post: Post) => sum + (post.comments?.length || 0),
     0
   );
@@ -59,12 +58,12 @@ const loadUserPosts = async () => {
           post.author &&
           post.author.id &&
           user.value?.id &&
-          post.author.id === user.value.id,
+          post.author.id === user.value.id
       )
       .sort(
         (a, b) =>
           new Date(b.createdAt || "").getTime() -
-          new Date(a.createdAt || "").getTime(),
+          new Date(a.createdAt || "").getTime()
       );
   } catch (err) {
     console.error("Erreur lors du chargement des posts:", err);
@@ -102,7 +101,6 @@ const saveEdit = async () => {
     // Mettre à jour le post dans la liste locale
     const index = userPosts.value.findIndex(
       (p: Post) => p.id === editingPost.value?.id
-
     );
     if (index !== -1) {
       userPosts.value[index] = {
@@ -169,6 +167,13 @@ onMounted(() => {
       </div>
 
       <div class="profile-actions">
+        <BaseButton
+          variant="primary"
+          size="small"
+          @click="router.push('/messages')"
+        >
+          <i class="fas fa-envelope"></i> Mes Messages
+        </BaseButton>
         <BaseButton variant="ghost" size="small" @click="router.push('/blog')">
           ← Retour au blog
         </BaseButton>
@@ -313,6 +318,11 @@ onMounted(() => {
 
 .profile-details {
   flex: 1;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .profile-name {
