@@ -41,6 +41,35 @@ export type NoteEndHandler = (
   position: number
 ) => void;
 
+// Types pour la gestion multi-séquences
+export interface Sequence {
+  id: string;
+  name: string;
+  layout: MidiNote[];
+  tempo: number;
+  cols: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SequencerProject {
+  sequences: Sequence[];
+  activeSequenceId: string | null;
+  projectName: string;
+  version: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Format de sauvegarde compatible avec l'ancien système
+export interface LegacySequenceData {
+  layout: MidiNote[];
+  tempo: number;
+  cols: number;
+  timestamp: string;
+  version: string;
+}
+
 export type User = {
   id: string;
   email: string;

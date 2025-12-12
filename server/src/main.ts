@@ -23,9 +23,8 @@ const main = async () => {
   const server = createHttpServer(app);
   app
     .use(express.json())
-    .use(customSession())
     .use(cookieParser())
-    .use(express.json())
+    .use(customSession())
     .use(passport.initialize())
     .use(passport.session());
 
