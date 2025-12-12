@@ -24,6 +24,9 @@
           <router-link to="/profile" @click="closeProfileMenu"
             >Mon Profil</router-link
           >
+          <router-link to="/messages" @click="closeProfileMenu"
+            >Mes Messages</router-link
+          >
           <a href="#" @click.prevent="handleLogout">Déconnexion</a>
         </div>
       </li>
@@ -50,6 +53,10 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../../stores/authStore";
 import apiClient from "../../lib/utils/apiClient";
+
+const props = defineProps<{
+  sticky?: boolean;
+}>();
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -130,6 +137,11 @@ const checkAuth = async () => {
 const handleScroll = () => {
   const header = document.querySelector("header");
   if (header) {
+    // Si la prop sticky est activée, toujours sticky
+    if (props.sticky) {
+      header.classList.add("sticky");
+      return;
+    }
     if (window.innerWidth > 1170) {
       header.classList.toggle("sticky", window.scrollY > 0);
     } else {
@@ -144,7 +156,7 @@ const handleResize = () => {
     handleScroll();
   } else {
     const header = document.querySelector("header");
-    if (header) {
+    if (header && !props.sticky) {
       header.classList.remove("sticky");
     }
   }
@@ -162,6 +174,7 @@ const handleMenuClick = (event: MouseEvent) => {
 
 onMounted(() => {
   checkAuth();
+  handleScroll(); // Appliquer le sticky immédiatement si la prop est définie
   window.addEventListener("scroll", handleScroll);
   window.addEventListener("resize", handleResize);
   document.addEventListener("click", handleClickOutside);
@@ -304,7 +317,7 @@ header.sticky .toggle span {
   border-radius: 6px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
   z-index: 1000;
-  margin-top: 6px;
+
   min-width: 150px;
   display: flex;
   flex-direction: column;

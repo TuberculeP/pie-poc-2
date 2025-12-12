@@ -1,16 +1,10 @@
 // services/posts.ts
 import apiClient from "../lib/utils/apiClient";
-import type { Post } from "../lib/utils/types";
-
-export interface CreatePostData {
-  body: string;
-  tags?: string[];
-  comment_of?: number | null;
-  is_highlight?: boolean;
-}
+import type { Post, CreatePostData } from "../lib/utils/types";
 
 export const getAllPosts = async (): Promise<Post[]> => {
   const { data, error } = await apiClient.get<{ body: Post[] }>("/posts");
+  console.log("Fetching all posts:", data);
 
   if (!data || error) {
     console.error("Error fetching posts:", error);
@@ -30,9 +24,7 @@ export const getPostById = async (id: string): Promise<Post> => {
   }
 };
 
-export const createPost = async (
-  payload: Pick<Post, "body" | "tags" | "comment_of" | "is_highlight">,
-): Promise<Post> => {
+export const createPost = async (payload: CreatePostData): Promise<Post> => {
   const { data, error } = await apiClient.post<{ body: Post }>(
     "/posts",
     payload,
@@ -63,4 +55,16 @@ export const updatePost = async (
 
 export const deletePost = async (id: number): Promise<void> => {
   await apiClient.delete(`/posts/${id}`);
+};
+
+export const likePost = async (id: string): Promise<Post> => {
+  const { data, error } = await apiClient.patch<{ body: Post }>(
+    `/posts/like/${id}`,
+  );
+  if (!data || error) {
+    console.error("Error liking post:", error);
+    throw new Error("Failed to like post");
+  } else {
+    return data.body;
+  }
 };
