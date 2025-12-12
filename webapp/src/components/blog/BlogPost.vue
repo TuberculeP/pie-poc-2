@@ -248,7 +248,7 @@ const sendMessageToAuthor = () => {
         firstName: props.post.author.firstName,
         lastName: props.post.author.lastName,
         email: props.post.author.email,
-      })
+      }),
     );
     router.push("/messages");
   }

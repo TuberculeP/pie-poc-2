@@ -105,7 +105,7 @@ export function useMessages() {
       } else {
         const message = await sendMessageAPI(
           selectedUser.value.id,
-          messageBody
+          messageBody,
         );
         if (message && currentMessages.value) {
           currentMessages.value.push(message);
@@ -172,7 +172,7 @@ export function useMessages() {
           currentMessages.value.push(message);
         }
         loadConversations();
-      }
+      },
     );
 
     unsubscribeSent = onSocketEvent(
@@ -185,7 +185,7 @@ export function useMessages() {
           currentMessages.value.push(message);
         }
         loadConversations();
-      }
+      },
     );
 
     unsubscribeTyping = onSocketEvent(
@@ -197,7 +197,7 @@ export function useMessages() {
             ? selectedUser.value?.firstName || null
             : null;
         }
-      }
+      },
     );
   };
 

@@ -24,9 +24,7 @@ export const getPostById = async (id: string): Promise<Post> => {
   }
 };
 
-
 export const createPost = async (payload: CreatePostData): Promise<Post> => {
-
   const { data, error } = await apiClient.post<{ body: Post }>(
     "/posts",
     payload,
@@ -61,7 +59,7 @@ export const deletePost = async (id: number): Promise<void> => {
 
 export const likePost = async (id: string): Promise<Post> => {
   const { data, error } = await apiClient.patch<{ body: Post }>(
-    `/posts/like/${id}`
+    `/posts/like/${id}`,
   );
   if (!data || error) {
     console.error("Error liking post:", error);

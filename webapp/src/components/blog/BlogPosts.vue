@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed } from "vue";
 import BlogPost from "./BlogPost.vue";
 import { getAllPosts } from "../../services/posts";
 import type { Post } from "../../lib/utils/types";
@@ -56,8 +56,8 @@ const filteredPosts = computed(() => {
     return props.filterTags!.some((filterTag) =>
       post.tags!.some(
         (postTag) =>
-          getTagName(postTag).toLowerCase() === filterTag.toLowerCase()
-      )
+          getTagName(postTag).toLowerCase() === filterTag.toLowerCase(),
+      ),
     );
   });
 });

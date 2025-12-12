@@ -60,7 +60,7 @@ const viewProfile = (userId: string) => {
   // TODO: Naviguer vers la page de profil ou ouvrir une modal
   console.log(`Voir le profil de l'utilisateur ${userId}`);
   alert(
-    `Fonctionnalité à implémenter : voir le profil de l'utilisateur ${userId}`
+    `Fonctionnalité à implémenter : voir le profil de l'utilisateur ${userId}`,
   );
 };
 

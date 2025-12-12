@@ -39,7 +39,7 @@ watch(
   async () => {
     await nextTick();
     scrollToBottom();
-  }
+  },
 );
 
 defineExpose({ scrollToBottom });

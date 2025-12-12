@@ -28,7 +28,7 @@ const filteredUsers = computed(() => {
     (u) =>
       u.firstName.toLowerCase().includes(props.userSearch.toLowerCase()) ||
       u.lastName.toLowerCase().includes(props.userSearch.toLowerCase()) ||
-      u.email.toLowerCase().includes(props.userSearch.toLowerCase())
+      u.email.toLowerCase().includes(props.userSearch.toLowerCase()),
   );
 });
 

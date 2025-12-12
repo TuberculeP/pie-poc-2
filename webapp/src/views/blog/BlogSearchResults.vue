@@ -84,7 +84,7 @@ watch(
   (newQuery) => {
     searchQuery.value = (newQuery as string) || "";
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 onMounted(() => {

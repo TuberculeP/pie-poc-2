@@ -26,7 +26,7 @@ export const getAllTags = async (): Promise<Tag[]> => {
 
 export const getPopularTags = async (): Promise<PopularTag[]> => {
   const { data, error } = await apiClient.get<{ body: PopularTag[] }>(
-    "/tags/popular"
+    "/tags/popular",
   );
 
   if (!data || error) {

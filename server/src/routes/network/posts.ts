@@ -43,7 +43,7 @@ postsRouter.post("/", async (req, res) => {
         if (
           typeof tagInput === "string" &&
           tagInput.match(
-            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
           )
         ) {
           tag = await tagRepository.findOneBy({ id: tagInput });

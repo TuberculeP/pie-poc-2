@@ -103,7 +103,7 @@ messagesRouter.get("/conversation/:userId", async (req, res) => {
 
     // Marquer les messages reçus comme lus
     const unreadMessages = messages.filter(
-      (m) => m.receiver.id === currentUserId && !m.isRead
+      (m) => m.receiver.id === currentUserId && !m.isRead,
     );
     for (const msg of unreadMessages) {
       msg.isRead = true;

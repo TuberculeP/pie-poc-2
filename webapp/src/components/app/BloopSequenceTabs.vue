@@ -8,7 +8,9 @@
           v-for="sequence in sequencerStore.project.sequences"
           :key="sequence.id"
           class="tab"
-          :class="{ active: sequence.id === sequencerStore.project.activeSequenceId }"
+          :class="{
+            active: sequence.id === sequencerStore.project.activeSequenceId,
+          }"
           @click="selectSequence(sequence.id)"
           @contextmenu.prevent="showContextMenu($event, sequence)"
         >
@@ -24,7 +26,11 @@
         </div>
 
         <!-- Bouton ajouter nouvelle séquence -->
-        <button class="tab-add" @click="createNewSequence" title="Nouvelle séquence">
+        <button
+          class="tab-add"
+          @click="createNewSequence"
+          title="Nouvelle séquence"
+        >
           +
         </button>
       </div>
@@ -38,15 +44,31 @@
           @blur="updateProjectName"
           @keyup.enter="updateProjectName"
           placeholder="Nom du projet"
-          :title="projectStore.hasUnsavedChanges ? 'Projet modifié (non sauvegardé)' : 'Nom du projet'"
+          :title="
+            projectStore.hasUnsavedChanges
+              ? 'Projet modifié (non sauvegardé)'
+              : 'Nom du projet'
+          "
         />
-        <div class="save-status" v-if="projectStore.hasUnsavedChanges" title="Changements non sauvegardés">
+        <div
+          class="save-status"
+          v-if="projectStore.hasUnsavedChanges"
+          title="Changements non sauvegardés"
+        >
           ●
         </div>
-        <button @click="exportProject" class="btn btn-sm btn-success" title="Exporter le projet">
+        <button
+          @click="exportProject"
+          class="btn btn-sm btn-success"
+          title="Exporter le projet"
+        >
           💾 Exporter
         </button>
-        <button @click="importProject" class="btn btn-sm btn-info" title="Importer un projet">
+        <button
+          @click="importProject"
+          class="btn btn-sm btn-info"
+          title="Importer un projet"
+        >
           📁 Importer
         </button>
       </div>
@@ -59,10 +81,16 @@
       :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
       @click="hideContextMenu"
     >
-      <div class="context-item" @click="renameSequence(contextMenu.sequence?.id)">
+      <div
+        class="context-item"
+        @click="renameSequence(contextMenu.sequence?.id)"
+      >
         ✏️ Renommer
       </div>
-      <div class="context-item" @click="duplicateSequence(contextMenu.sequence?.id)">
+      <div
+        class="context-item"
+        @click="duplicateSequence(contextMenu.sequence?.id)"
+      >
         📋 Dupliquer
       </div>
       <div
@@ -87,8 +115,12 @@
           placeholder="Nom de la séquence"
         />
         <div class="modal-buttons">
-          <button @click="cancelRename" class="btn btn-secondary">Annuler</button>
-          <button @click="confirmRename" class="btn btn-primary">Confirmer</button>
+          <button @click="cancelRename" class="btn btn-secondary">
+            Annuler
+          </button>
+          <button @click="confirmRename" class="btn btn-primary">
+            Confirmer
+          </button>
         </div>
       </div>
     </div>
@@ -152,8 +184,10 @@ const createNewSequence = (): void => {
 // Supprimer une séquence
 const deleteSequence = (sequenceId: string | undefined): void => {
   if (!sequenceId) return;
-  
-  const sequence = sequencerStore.project.sequences.find(s => s.id === sequenceId);
+
+  const sequence = sequencerStore.project.sequences.find(
+    (s) => s.id === sequenceId,
+  );
   if (!sequence) return;
 
   if (sequencerStore.project.sequences.length === 1) {
@@ -161,7 +195,11 @@ const deleteSequence = (sequenceId: string | undefined): void => {
     return;
   }
 
-  if (confirm(`Êtes-vous sûr de vouloir supprimer la séquence "${sequence.name}" ?`)) {
+  if (
+    confirm(
+      `Êtes-vous sûr de vouloir supprimer la séquence "${sequence.name}" ?`,
+    )
+  ) {
     sequencerStore.deleteSequence(sequenceId);
   }
   hideContextMenu();
@@ -187,8 +225,10 @@ const hideContextMenu = (): void => {
 // Démarrer le renommage
 const renameSequence = (sequenceId: string | undefined): void => {
   if (!sequenceId) return;
-  
-  const sequence = sequencerStore.project.sequences.find(s => s.id === sequenceId);
+
+  const sequence = sequencerStore.project.sequences.find(
+    (s) => s.id === sequenceId,
+  );
   if (!sequence) return;
 
   renameModal.value = {
@@ -207,9 +247,13 @@ const renameSequence = (sequenceId: string | undefined): void => {
 
 // Confirmer le renommage
 const confirmRename = (): void => {
-  if (!renameModal.value.sequenceId || !renameModal.value.newName.trim()) return;
+  if (!renameModal.value.sequenceId || !renameModal.value.newName.trim())
+    return;
 
-  sequencerStore.renameSequence(renameModal.value.sequenceId, renameModal.value.newName.trim());
+  sequencerStore.renameSequence(
+    renameModal.value.sequenceId,
+    renameModal.value.newName.trim(),
+  );
   cancelRename();
 };
 
@@ -223,7 +267,7 @@ const cancelRename = (): void => {
 // Dupliquer une séquence
 const duplicateSequence = (sequenceId: string | undefined): void => {
   if (!sequenceId) return;
-  
+
   const newId = sequencerStore.duplicateSequence(sequenceId);
   if (newId) {
     sequencerStore.setActiveSequence(newId);
@@ -250,15 +294,19 @@ const importProject = async (): Promise<void> => {
     }
   }
 
-  if (sequencerStore.project.sequences.some(seq => seq.layout.length > 0)) {
-    if (!confirm("L'import va remplacer le projet actuel. Voulez-vous continuer ?")) {
+  if (sequencerStore.project.sequences.some((seq) => seq.layout.length > 0)) {
+    if (
+      !confirm(
+        "L'import va remplacer le projet actuel. Voulez-vous continuer ?",
+      )
+    ) {
       return;
     }
   }
 
   await sequencerStore.importProject();
   // Le nom se met à jour automatiquement via le computed
-  
+
   // Réinitialiser l'état du projectStore pour un nouveau projet
   projectStore.createNewProject();
 };

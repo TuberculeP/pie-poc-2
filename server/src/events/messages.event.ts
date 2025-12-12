@@ -105,7 +105,7 @@ const messagesEvents: EventGroup = {
           {
             senderId: data.conversationUserId,
             receiverId: data.currentUserId,
-          }
+          },
         )
         .execute();
 

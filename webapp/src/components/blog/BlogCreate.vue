@@ -52,7 +52,7 @@ const filteredSuggestions = computed(() => {
   return availableTags.value
     .filter(
       (tag) =>
-        tag.toLowerCase().includes(search) && !selectedTags.value.includes(tag)
+        tag.toLowerCase().includes(search) && !selectedTags.value.includes(tag),
     )
     .slice(0, 8); // Limiter à 8 suggestions
 });

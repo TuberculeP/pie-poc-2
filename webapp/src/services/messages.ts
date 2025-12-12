@@ -25,7 +25,7 @@ export interface Conversation {
 // Récupérer toutes les conversations
 export const getConversations = async (): Promise<Conversation[]> => {
   const { data, error } = await apiClient.get<{ body: Conversation[] }>(
-    "/messages/conversations"
+    "/messages/conversations",
   );
   if (!data || error) {
     console.error("Error fetching conversations:", error);
@@ -36,10 +36,10 @@ export const getConversations = async (): Promise<Conversation[]> => {
 
 // Récupérer les messages d'une conversation
 export const getConversationMessages = async (
-  userId: string
+  userId: string,
 ): Promise<DirectMessage[]> => {
   const { data, error } = await apiClient.get<{ body: DirectMessage[] }>(
-    `/messages/conversation/${userId}`
+    `/messages/conversation/${userId}`,
   );
   if (!data || error) {
     console.error("Error fetching messages:", error);
@@ -51,11 +51,11 @@ export const getConversationMessages = async (
 // Envoyer un message
 export const sendMessage = async (
   receiverId: string,
-  body: string
+  body: string,
 ): Promise<DirectMessage | null> => {
   const { data, error } = await apiClient.post<{ body: DirectMessage }>(
     "/messages",
-    { receiverId, body }
+    { receiverId, body },
   );
   if (!data || error) {
     console.error("Error sending message:", error);
@@ -73,7 +73,7 @@ export const deleteMessage = async (id: string): Promise<boolean> => {
 // Récupérer tous les utilisateurs
 export const getUsers = async (): Promise<MessageUser[]> => {
   const { data, error } = await apiClient.get<{ body: MessageUser[] }>(
-    "/messages/users"
+    "/messages/users",
   );
   if (!data || error) {
     console.error("Error fetching users:", error);

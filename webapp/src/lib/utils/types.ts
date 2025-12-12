@@ -33,12 +33,12 @@ export interface NoteEvent {
 export type NoteStartHandler = (
   note: MidiNote,
   noteName: NoteName,
-  position: number
+  position: number,
 ) => void;
 export type NoteEndHandler = (
   note: MidiNote,
   noteName: NoteName,
-  position: number
+  position: number,
 ) => void;
 
 // Types pour la gestion multi-séquences
@@ -109,12 +109,6 @@ export interface Post {
   updatedAt?: string;
   isLikedByMe?: boolean;
   likesCount?: number;
-}
-export interface CreatePostData {
-  body: string;
-  tags?: string[];
-  comment_of_post_id?: string | null;
-  is_highlight?: boolean;
 }
 export interface CreatePostData {
   body: string;
