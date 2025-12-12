@@ -31,11 +31,37 @@ postsRouter.post("/", async (req, res) => {
     const userRepository = pg.getRepository(User);
     const author = await userRepository.findOneBy({ id: req.user.id });
 
-    let tagsArray = [];
+    let tagsArray: Tag[] = [];
     const tagRepository = pg.getRepository(Tag);
-    for (let tagId of tags) {
-      let tag = await tagRepository.findOneBy({ id: tagId });
-      if (tag) tagsArray.push(tag);
+
+    // Supporter les tags par nom (string) ou par ID
+    if (tags && Array.isArray(tags)) {
+      for (let tagInput of tags) {
+        let tag: Tag | null = null;
+
+        // Si c'est un UUID, chercher par ID
+        if (
+          typeof tagInput === "string" &&
+          tagInput.match(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+          )
+        ) {
+          tag = await tagRepository.findOneBy({ id: tagInput });
+        }
+
+        // Sinon, chercher par nom
+        if (!tag && typeof tagInput === "string") {
+          tag = await tagRepository.findOneBy({ name: tagInput });
+
+          // Si le tag n'existe pas, le créer
+          if (!tag) {
+            const newTag = tagRepository.create({ name: tagInput });
+            tag = await tagRepository.save(newTag);
+          }
+        }
+
+        if (tag) tagsArray.push(tag);
+      }
     }
 
     let payload: any = {

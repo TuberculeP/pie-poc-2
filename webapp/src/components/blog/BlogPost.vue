@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { defineProps, computed, ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import {
-  deletePost,
-  updatePost,
-  createPost,
-  type Post,
-  type CreatePostData,
-  likePost,
-  getPostById,
-} from "../../services/posts";
 import { useAuthStore } from "../../stores/authStore";
+import { formatFullDate } from "../../lib/utils/dateFormatter";
 import BaseButton from "../ui/BaseButton.vue";
+import {
+  createPost,
+  deletePost,
+  getPostById,
+  likePost,
+  updatePost,
+} from "../../services/posts";
+import type { CreatePostData, Post } from "../../lib/utils/types";
 
 const props = defineProps<{
   post: Post;
@@ -39,9 +39,17 @@ const isLiked = ref(props.post.isLikedByMe || false);
 const likeCount = ref<number>(props.post.likesCount || 0);
 const isLiking = ref(false);
 
+// État pour le menu auteur
+const showAuthorMenu = ref(false);
+
 // Vérifier si l'utilisateur est admin
 const isAdmin = computed(() => {
   return authStore.user?.role === "admin";
+});
+
+// Vérifier si c'est le propre post de l'utilisateur
+const isOwnPost = computed(() => {
+  return authStore.user?.id === props.post.author?.id;
 });
 
 // Compter le nombre de commentaires (pour l'affichage)
@@ -55,7 +63,7 @@ const form = ref({
   is_highlight: false,
   highlight_on_tag: false,
   pinned_by_user: false,
-  comment_of_post_id: props.post.id || null, // Associer le commentaire au post
+  comment_of_post_id: props.post.id ? String(props.post.id) : null, // Associer le commentaire au post
 });
 
 const fetchComments = async () => {
@@ -63,7 +71,11 @@ const fetchComments = async () => {
   errorComments.value = null;
 
   try {
-    const result = await getPostById(props.post.id);
+    if (!props.post.id) {
+      errorComments.value = "ID du post manquant";
+      return;
+    }
+    const result = await getPostById(String(props.post.id));
     comments.value = Array.isArray(result.comments) ? result.comments : [];
   } catch (err) {
     errorComments.value = "Erreur lors du chargement des commentaires";
@@ -123,7 +135,7 @@ const handleSubmit = async () => {
       is_highlight: false,
       highlight_on_tag: false,
       pinned_by_user: false,
-      comment_of_post_id: props.post.id || null, // Associer le commentaire au post
+      comment_of_post_id: props.post.id ? String(props.post.id) : null, // Associer le commentaire au post
     };
 
     toggleCommentForm();
@@ -139,6 +151,7 @@ const handleSubmit = async () => {
 const toggleLike = async () => {
   if (!authStore.isAuthenticated) return;
   if (isLiking.value) return;
+  if (!props.post.id) return;
 
   try {
     if (isLiked.value) {
@@ -157,7 +170,7 @@ const toggleLike = async () => {
     isLiked.value = !isLiked.value;
     likeCount.value += isLiked.value ? 1 : -1; */
 
-    await likePost(props.post.id);
+    await likePost(String(props.post.id));
 
     // Pour l'instant, simulation
     await new Promise((resolve) => setTimeout(resolve, 300));
@@ -200,17 +213,6 @@ const toggleHighlight = async () => {
   }
 };
 
-const formatDate = (dateString?: string) => {
-  if (!dateString) return "";
-  return new Date(dateString).toLocaleDateString("fr-FR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
 // Navigation vers la page de détail
 const goToPostDetail = () => {
   if (props.post.id) {
@@ -218,7 +220,41 @@ const goToPostDetail = () => {
   }
 };
 
-const goToAuthorProfile = () => {};
+// Rechercher par tag
+const searchByTag = (tag: string) => {
+  router.push({ path: "/blog/search", query: { q: tag } });
+};
+
+// Toggle du menu auteur
+const toggleAuthorMenu = () => {
+  if (!isOwnPost.value) {
+    showAuthorMenu.value = !showAuthorMenu.value;
+  }
+};
+
+// Fermer le menu auteur
+const closeAuthorMenu = () => {
+  showAuthorMenu.value = false;
+};
+
+// Envoyer un message à l'auteur
+const sendMessageToAuthor = () => {
+  if (props.post.author?.id) {
+    // Stocker les infos de l'utilisateur dans sessionStorage pour la page messages
+    sessionStorage.setItem(
+      "messageRecipient",
+      JSON.stringify({
+        id: props.post.author.id,
+        firstName: props.post.author.firstName,
+        lastName: props.post.author.lastName,
+        email: props.post.author.email,
+      })
+    );
+    router.push("/messages");
+  }
+  closeAuthorMenu();
+};
+
 fetchComments();
 </script>
 <template>
@@ -230,15 +266,32 @@ fetchComments();
     @click="goToPostDetail"
   >
     <div class="post-header">
-      <div class="author" @click.stop="goToAuthorProfile">
-        {{
-          props.post.author
-            ? `${props.post.author.firstName} ${props.post.author.lastName}` ||
-              props.post.author.email
-            : "Auteur inconnu"
-        }}
+      <div class="author-wrapper" @click.stop>
+        <div
+          class="author"
+          :class="{ clickable: !isOwnPost }"
+          @click="toggleAuthorMenu"
+        >
+          {{
+            props.post.author
+              ? `${props.post.author.firstName} ${props.post.author.lastName}` ||
+                props.post.author.email
+              : "Auteur inconnu"
+          }}
+        </div>
+        <!-- Menu contextuel auteur -->
+        <div v-if="showAuthorMenu && !isOwnPost" class="author-menu">
+          <button class="author-menu-item" @click="sendMessageToAuthor">
+            <i class="fas fa-envelope"></i>
+            Envoyer un message
+          </button>
+          <button class="author-menu-item" @click="closeAuthorMenu">
+            <i class="fas fa-times"></i>
+            Fermer
+          </button>
+        </div>
       </div>
-      <div class="date">{{ formatDate(props.post.createdAt) }}</div>
+      <div class="date">{{ formatFullDate(props.post.createdAt) }}</div>
 
       <!-- Boutons d'administration (visibles seulement pour les admins) -->
       <div v-if="isAdmin" class="admin-controls" @click.stop>
@@ -260,6 +313,19 @@ fetchComments();
     <div class="post-content">
       {{ post.body }}
     </div>
+
+    <!-- Affichage des tags du post -->
+    <div v-if="post.tags && post.tags.length > 0" class="post-tags">
+      <span
+        v-for="tag in post.tags"
+        :key="typeof tag === 'string' ? tag : tag.id"
+        class="post-tag"
+        @click.stop="searchByTag(typeof tag === 'string' ? tag : tag.name)"
+      >
+        #{{ typeof tag === "string" ? tag : tag.name }}
+      </span>
+    </div>
+
     <div class="post-footer" @click.stop>
       <!-- Bouton Like avec icône de cœur -->
       <button
@@ -401,7 +467,7 @@ fetchComments();
                 }}
               </div>
               <div class="comment-date">
-                {{ formatDate(comment.createdAt) }}
+                {{ formatFullDate(comment.createdAt) }}
               </div>
             </div>
             <div class="comment-content">

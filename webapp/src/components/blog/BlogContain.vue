@@ -10,6 +10,7 @@ import BlogSearch from "./BlogSearch.vue";
 const postsKey = ref(0);
 const isAuthenticated = ref(false);
 const authStore = useAuthStore();
+const selectedTagsFilter = ref<string[]>([]);
 
 // Vérifier si l'utilisateur est connecté
 const checkAuthentication = async () => {
@@ -37,6 +38,17 @@ const handlePostCreated = () => {
   postsKey.value++;
 };
 
+// Gestion du filtrage par tags
+const handleTagSelected = (tag: string) => {
+  if (!selectedTagsFilter.value.includes(tag)) {
+    selectedTagsFilter.value.push(tag);
+  }
+};
+
+const handleTagDeselected = (tag: string) => {
+  selectedTagsFilter.value = selectedTagsFilter.value.filter((t) => t !== tag);
+};
+
 onMounted(() => {
   checkAuthentication();
 });
@@ -53,11 +65,14 @@ onMounted(() => {
         <router-link to="/login" class="login-link">Se connecter</router-link>
       </div>
 
-      <BlogPosts :key="postsKey" />
+      <BlogPosts :key="postsKey" :filterTags="selectedTagsFilter" />
     </div>
     <div class="blog-trends">
       <BlogSearch />
-      <BlogTrends />
+      <BlogTrends
+        @tagSelected="handleTagSelected"
+        @tagDeselected="handleTagDeselected"
+      />
       <!-- <BlogUsers /> -->
     </div>
   </div>
@@ -110,7 +125,8 @@ onMounted(() => {
 
 .test-admin-button.active {
   background: var(--color-accent);
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+  box-shadow: 0 4px 12px
+    color-mix(in srgb, var(--color-secondary) 30%, transparent);
 }
 
 .test-warning {

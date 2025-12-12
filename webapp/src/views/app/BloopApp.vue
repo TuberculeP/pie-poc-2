@@ -7,7 +7,14 @@ import BloopSmplr from "../../components/app/instruments/BloopSmplr.vue";
 import AppLayout from "../../layouts/AppLayout.vue";
 import BloopNoteSequencer from "../../components/app/BloopNoteSequencer.vue";
 import type { MidiNote, NoteName } from "../../lib/utils/types";
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import { useRoute } from "vue-router";
+
+// Route pour récupérer les query params
+const route = useRoute();
+
+// Computed pour récupérer le projectId depuis les query params
+const projectId = computed(() => route.query.projectId as string | undefined);
 
 const mainStore = useMainStore();
 const { isLoaded, loadPercentage } = storeToRefs(mainStore);
@@ -36,7 +43,7 @@ const currentInstrumentRef = ref<any>(null);
 const onNoteStart = (
   note: MidiNote,
   noteName: NoteName,
-  position: number,
+  position: number
 ): void => {
   // eslint-disable-next-line no-console
   console.log(`🚀 Note START Event:`, {
@@ -56,7 +63,7 @@ const onNoteStart = (
 const onNoteEnd = (
   note: MidiNote,
   noteName: NoteName,
-  position: number,
+  position: number
 ): void => {
   // eslint-disable-next-line no-console
   console.log(`🛑 Note END Event:`, {
@@ -99,7 +106,11 @@ const onNoteEnd = (
               ?.component
           "
         />
-        <BloopNoteSequencer @note-start="onNoteStart" @note-end="onNoteEnd" />
+        <BloopNoteSequencer
+          :project-id="projectId"
+          @note-start="onNoteStart"
+          @note-end="onNoteEnd"
+        />
       </div>
     </div>
   </AppLayout>
