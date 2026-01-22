@@ -25,6 +25,45 @@ const masterGainNode = audioContext.createGain();
 masterGainNode.connect(audioContext.destination);
 masterGainNode.gain.value = 0.3; // Valeur initiale
 
+// Créer une reverb avec ConvolverNode
+const convolver = audioContext.createConvolver();
+const reverbGainNode = audioContext.createGain();
+reverbGainNode.gain.value = 0; // Pas de reverb au démarrage
+
+// Créer un impulse response simple pour la reverb
+const impulseLength = audioContext.sampleRate * 3; // 3 secondes de reverb
+const impulseResponse = audioContext.createBuffer(
+  2,
+  impulseLength,
+  audioContext.sampleRate,
+);
+const impulseLeft = impulseResponse.getChannelData(0);
+const impulseRight = impulseResponse.getChannelData(1);
+
+// Générer une réponse impulsionnelle plus forte avec moins de bruit et plus d'amplitude
+for (let i = 0; i < impulseLength; i++) {
+  // Décroissance exponentielle lisse, amplifiée pour la reverb
+  const decay = Math.pow(1 - i / impulseLength, 2.5);
+  const randomNoise = Math.random() * 2 - 1;
+  impulseLeft[i] = randomNoise * decay * 0.5; // Amplitude augmentée
+  impulseRight[i] = randomNoise * decay * 0.5;
+}
+
+convolver.buffer = impulseResponse;
+
+// Créer un gain boost pour la reverb
+const reverbBoostGain = audioContext.createGain();
+reverbBoostGain.gain.value = 1.5; // Amplifier le signal reverb
+
+// Connecter le circuit de reverb : masterGain → convolver → boostGain → reverbGainNode → destination
+masterGainNode.connect(convolver);
+convolver.connect(reverbBoostGain);
+reverbBoostGain.connect(reverbGainNode);
+reverbGainNode.connect(audioContext.destination);
+
+// Connecter également le signal direct (dry signal)
+masterGainNode.connect(audioContext.destination);
+
 watch(
   potardTest,
   (newValue) => {
@@ -41,12 +80,37 @@ watch(
 watch(
   () => sequencerStore.volume,
   (newVolume) => {
+    if (!Number.isFinite(newVolume)) return; // Ignorer les valeurs invalides
     const normalizedVolume = newVolume / 100; // Convertir 0-100 en 0-1
-    masterGainNode.gain.exponentialRampToValueAtTime(
-      Math.max(0.01, normalizedVolume), // Éviter 0 qui peut causer des problèmes
-      audioContext.currentTime + 0.05,
-    );
+    if (normalizedVolume === 0) {
+      // Pour 0, utiliser setValueAtTime car exponentialRamp ne supporte pas 0
+      masterGainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
+    } else if (Number.isFinite(normalizedVolume)) {
+      masterGainNode.gain.exponentialRampToValueAtTime(
+        normalizedVolume,
+        audioContext.currentTime + 0.05,
+      );
+    }
   },
+);
+
+// Écouter les changements de reverb dans le store
+watch(
+  () => sequencerStore.reverb,
+  (newReverb) => {
+    if (!Number.isFinite(newReverb)) return; // Ignorer les valeurs invalides
+    const normalizedReverb = newReverb / 100; // Convertir 0-100 en 0-1
+    if (normalizedReverb === 0) {
+      // Pour 0, utiliser setValueAtTime
+      reverbGainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
+    } else if (Number.isFinite(normalizedReverb)) {
+      reverbGainNode.gain.exponentialRampToValueAtTime(
+        normalizedReverb,
+        audioContext.currentTime + 0.05,
+      );
+    }
+  },
+  { immediate: true }, // Initialiser avec la valeur du store au démarrage
 );
 
 const oscillators = ref<Record<number, any>>({});

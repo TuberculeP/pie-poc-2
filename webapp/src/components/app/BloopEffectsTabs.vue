@@ -19,6 +19,16 @@
             v-model.number="volumeValue"
           />
         </div>
+        <div class="reverb">
+          <label>Reverb : {{ Math.round(reverbValue || 0) }}%</label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            v-model.number="reverbValue"
+          />
+        </div>
       </div>
     </div>
 
@@ -35,11 +45,18 @@ import { computed } from "vue";
 
 const store = useSequencerStore();
 
-// Utiliser un computed avec getter et setter pour synchroniser directement avec le store
+// Utiliser des computed avec getter et setter pour synchroniser directement avec le store
 const volumeValue = computed({
   get: () => store.volume,
   set: (newValue) => {
     store.volume = newValue;
+  },
+});
+
+const reverbValue = computed({
+  get: () => store.reverb,
+  set: (newValue) => {
+    store.reverb = newValue;
   },
 });
 </script>

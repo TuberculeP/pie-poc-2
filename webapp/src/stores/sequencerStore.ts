@@ -11,6 +11,7 @@ const STORAGE_KEY = "bloop-sequencer-project";
 const DEFAULT_COLS = 64;
 const DEFAULT_TEMPO = 120;
 const DEFAULT_VOLUME = 100;
+const DEFAULT_REVERB = 20;
 
 export const useSequencerStore = defineStore("sequencerStore", () => {
   // État du projet
@@ -22,6 +23,7 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     createdAt: new Date(),
     updatedAt: new Date(),
     volume: DEFAULT_VOLUME,
+    reverb: DEFAULT_REVERB,
   });
 
   // Computed pour la séquence active
@@ -65,6 +67,14 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     },
   });
 
+  const reverb = computed<number>({
+    get: () => project.value.reverb ?? DEFAULT_REVERB,
+    set: (newReverb: number) => {
+      project.value.reverb = newReverb;
+      project.value.updatedAt = new Date();
+    },
+  });
+
   const cols = computed<number>(
     () => activeSequence.value?.cols || DEFAULT_COLS,
   );
@@ -104,6 +114,7 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       volume: DEFAULT_VOLUME,
+      reverb: DEFAULT_REVERB,
     };
 
     project.value.sequences.push(newSequence);
@@ -164,6 +175,7 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       volume: sequence.volume,
+      reverb: sequence.reverb,
     };
 
     project.value.sequences.push(newSequence);
@@ -476,6 +488,7 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       createdAt: new Date(data.createdAt || new Date()),
       updatedAt: new Date(data.updatedAt || new Date()),
       volume: data.volume || DEFAULT_VOLUME,
+      reverb: data.reverb || DEFAULT_REVERB,
     };
 
     // Détecter si c'est un projet avec l'ancien système de notes
@@ -523,6 +536,7 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       createdAt: new Date(data.timestamp || new Date()),
       updatedAt: new Date(),
       volume: DEFAULT_VOLUME,
+      reverb: DEFAULT_REVERB,
     };
 
     project.value.sequences.push(newSequence);
@@ -560,6 +574,7 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     tempo,
     cols,
     volume,
+    reverb,
 
     // Actions pour les séquences
     createSequence,

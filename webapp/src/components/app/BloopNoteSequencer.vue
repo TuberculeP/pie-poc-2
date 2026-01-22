@@ -466,8 +466,8 @@ onMounted(() => {
   sequencerStore.initialize();
 
   setTimeout(() => {
-    sequencerStore.volume = 0.1;
-    console.log("Volume forcé à 10%");
+    sequencerStore.volume = 50;
+    console.log("Volume forcé à 50%");
   }, 1000);
 
   document.addEventListener("keydown", handleKeyDown);

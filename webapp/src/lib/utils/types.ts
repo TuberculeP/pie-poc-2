@@ -51,6 +51,7 @@ export interface Sequence {
   createdAt: Date;
   updatedAt: Date;
   volume: number;
+  reverb: number;
 }
 
 export interface SequencerProject {
@@ -61,6 +62,7 @@ export interface SequencerProject {
   createdAt: Date;
   updatedAt: Date;
   volume: number;
+  reverb: number;
 }
 
 // Format de sauvegarde compatible avec l'ancien système

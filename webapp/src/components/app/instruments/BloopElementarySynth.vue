@@ -68,7 +68,8 @@ watch(computedVoices, () => {
 watch(
   () => sequencerStore.volume,
   (newVolume) => {
-    masterGain = Math.max(0.01, newVolume / 100); // Convertir 0-100 en 0-1
+    // Pour Elementary, on peut utiliser 0 directement car ce n'est pas exponentialRampToValueAtTime
+    masterGain = newVolume / 100; // Convertir 0-100 en 0-1
   },
 );
 

@@ -161,11 +161,15 @@ masterGainNode.gain.value = 1;
 watch(
   () => sequencerStore.volume,
   (newVolume) => {
-    const normalizedVolume = Math.max(0.01, newVolume / 100);
-    masterGainNode.gain.exponentialRampToValueAtTime(
-      normalizedVolume,
-      audioContext.currentTime + 0.05,
-    );
+    const normalizedVolume = newVolume / 100;
+    if (normalizedVolume === 0) {
+      masterGainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
+    } else {
+      masterGainNode.gain.exponentialRampToValueAtTime(
+        normalizedVolume,
+        audioContext.currentTime + 0.05,
+      );
+    }
   },
 );
 
