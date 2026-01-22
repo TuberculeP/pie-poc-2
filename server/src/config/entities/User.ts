@@ -11,6 +11,7 @@ import {
 import { Post } from "./Post";
 import { Subscription } from "./Subscription";
 import { DirectMessage } from "./DirectMessage";
+import { MessageLike } from "./MessageLike";
 
 @Entity()
 export class User {
@@ -57,6 +58,9 @@ export class User {
 
   @OneToMany(() => DirectMessage, (directMessage) => directMessage.receiver)
   receivedMessages: DirectMessage[];
+
+  @OneToMany(() => MessageLike, (like) => like.user)
+  messageLikes: MessageLike[];
 
   @CreateDateColumn()
   createdAt: Date;

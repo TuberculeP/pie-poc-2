@@ -40,6 +40,8 @@ export function useMessages() {
   let unsubscribeNewMessage: (() => void) | null = null;
   let unsubscribeSent: (() => void) | null = null;
   let unsubscribeTyping: (() => void) | null = null;
+  let unsubscribeLiked: (() => void) | null = null;
+  let unsubscribeUnliked: (() => void) | null = null;
   let typingTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Charger les conversations
@@ -199,6 +201,44 @@ export function useMessages() {
         }
       },
     );
+
+    unsubscribeLiked = onSocketEvent(
+      "messages:liked",
+      (data: { messageId: string; like: any }) => {
+        // Find and update the message with the new like
+        if (currentMessages.value) {
+          const message = currentMessages.value.find(
+            (m) => m.id === data.messageId,
+          );
+          if (message) {
+            if (!message.likes) {
+              message.likes = [];
+            }
+            // Check if the like already exists (avoid duplicates)
+            if (!message.likes.find((l) => l.id === data.like.id)) {
+              message.likes.push(data.like);
+            }
+          }
+        }
+      },
+    );
+
+    unsubscribeUnliked = onSocketEvent(
+      "messages:unliked",
+      (data: { messageId: string; userId: string }) => {
+        // Find and update the message by removing the like
+        if (currentMessages.value) {
+          const message = currentMessages.value.find(
+            (m) => m.id === data.messageId,
+          );
+          if (message && message.likes) {
+            message.likes = message.likes.filter(
+              (l) => l.user.id !== data.userId,
+            );
+          }
+        }
+      },
+    );
   };
 
   // Vérifier si un destinataire a été passé depuis le blog
@@ -231,6 +271,8 @@ export function useMessages() {
     if (unsubscribeNewMessage) unsubscribeNewMessage();
     if (unsubscribeSent) unsubscribeSent();
     if (unsubscribeTyping) unsubscribeTyping();
+    if (unsubscribeLiked) unsubscribeLiked();
+    if (unsubscribeUnliked) unsubscribeUnliked();
 
     if (socket.connected && authStore.user?.id) {
       socket.emit("messages:unregister", { userId: authStore.user.id });

@@ -3,6 +3,7 @@ import type { EventGroup } from "./event_handler";
 import pg from "../config/db.config";
 import { DirectMessage } from "../config/entities/DirectMessage";
 import { User } from "../config/entities/User";
+import { MessageLike } from "../config/entities/MessageLike";
 
 // Map pour garder la trace des utilisateurs connectés (userId -> socketId)
 export const connectedUsers = new Map<string, string>();
@@ -125,6 +126,150 @@ const messagesEvents: EventGroup = {
         senderId: data.senderId,
         isTyping: data.isTyping,
       });
+    }
+  },
+
+  // Aimer un message
+  like: async ({ ws, data }) => {
+    if (!ws || !data?.messageId || !data?.userId) {
+      ws?.emit("messages:error", { message: "Missing data" });
+      return;
+    }
+
+    try {
+      const userRepository = pg.getRepository(User);
+      const messageRepository = pg.getRepository(DirectMessage);
+      const likeRepository = pg.getRepository(MessageLike);
+
+      const user = await userRepository.findOneBy({ id: data.userId });
+      const message = await messageRepository.findOne({
+        where: { id: data.messageId },
+        relations: ["likes", "likes.user"],
+      });
+
+      if (!user || !message) {
+        ws.emit("messages:error", { message: "User or message not found" });
+        return;
+      }
+
+      // Vérifier si l'utilisateur a déjà liké
+      const existingLike = await likeRepository.findOneBy({
+        user: { id: data.userId },
+        message: { id: data.messageId },
+      });
+
+      if (existingLike) {
+        ws.emit("messages:error", { message: "Already liked" });
+        return;
+      }
+
+      // Créer et sauvegarder le like
+      const newLike = likeRepository.create({ user, message });
+      await likeRepository.save(newLike);
+
+      // Préparer la charge utile du like
+      const likePayload = {
+        id: newLike.id,
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+        },
+        createdAt: newLike.createdAt,
+      };
+
+      // Broadcaser le like à tous les utilisateurs dans la conversation
+      // Envoyer au sender du message
+      const senderSocketId = connectedUsers.get(message.sender.id);
+      if (senderSocketId && message.sender.id !== data.userId) {
+        ws?.to(senderSocketId).emit("messages:liked", {
+          messageId: data.messageId,
+          like: likePayload,
+        });
+      }
+
+      // Envoyer au receiver du message
+      const receiverSocketId = connectedUsers.get(message.receiver.id);
+      if (receiverSocketId && message.receiver.id !== data.userId) {
+        ws?.to(receiverSocketId).emit("messages:liked", {
+          messageId: data.messageId,
+          like: likePayload,
+        });
+      }
+
+      // Confirmer au client qui a liké
+      ws.emit("messages:liked", {
+        messageId: data.messageId,
+        like: likePayload,
+      });
+    } catch (error) {
+      console.error("Error liking message:", error);
+      ws.emit("messages:error", { message: "Failed to like message" });
+    }
+  },
+
+  // Retirer un like d'un message
+  unlike: async ({ ws, data }) => {
+    if (!ws || !data?.messageId || !data?.userId) {
+      ws?.emit("messages:error", { message: "Missing data" });
+      return;
+    }
+
+    try {
+      const likeRepository = pg.getRepository(MessageLike);
+      const messageRepository = pg.getRepository(DirectMessage);
+
+      const message = await messageRepository.findOne({
+        where: { id: data.messageId },
+        relations: ["sender", "receiver"],
+      });
+
+      if (!message) {
+        ws.emit("messages:error", { message: "Message not found" });
+        return;
+      }
+
+      // Trouver et supprimer le like
+      const like = await likeRepository.findOneBy({
+        user: { id: data.userId },
+        message: { id: data.messageId },
+      });
+
+      if (!like) {
+        ws.emit("messages:error", { message: "Like not found" });
+        return;
+      }
+
+      await likeRepository.remove(like);
+
+      // Broadcaser le unlike à tous les utilisateurs dans la conversation
+      // Envoyer au sender du message
+      const senderSocketId = connectedUsers.get(message.sender.id);
+      if (senderSocketId && message.sender.id !== data.userId) {
+        ws?.to(senderSocketId).emit("messages:unliked", {
+          messageId: data.messageId,
+          userId: data.userId,
+        });
+      }
+
+      // Envoyer au receiver du message
+      const receiverSocketId = connectedUsers.get(message.receiver.id);
+      if (receiverSocketId && message.receiver.id !== data.userId) {
+        ws?.to(receiverSocketId).emit("messages:unliked", {
+          messageId: data.messageId,
+          userId: data.userId,
+        });
+      }
+
+      // Confirmer au client qui a unliké
+      ws.emit("messages:unliked", {
+        messageId: data.messageId,
+        userId: data.userId,
+      });
+    } catch (error) {
+      console.error("Error unliking message:", error);
+      ws.emit("messages:error", { message: "Failed to unlike message" });
     }
   },
 };

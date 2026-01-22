@@ -2,6 +2,7 @@ import { Router } from "express";
 import pg from "../../config/db.config";
 import { DirectMessage } from "../../config/entities/DirectMessage";
 import { User } from "../../config/entities/User";
+import { MessageLike } from "../../config/entities/MessageLike";
 
 const messagesRouter = Router();
 
@@ -97,7 +98,7 @@ messagesRouter.get("/conversation/:userId", async (req, res) => {
           isActive: true,
         },
       ],
-      relations: ["sender", "receiver"],
+      relations: ["sender", "receiver", "likes", "likes.user"],
       order: { createdAt: "ASC" },
     });
 
@@ -250,6 +251,116 @@ messagesRouter.get("/users", async (req, res) => {
       status: 200,
       message: "Users retrieved",
       body: filteredUsers,
+    });
+  } catch (err) {
+    res.status(500).json({ status: 500, message: "Server error", error: err });
+  }
+});
+
+// Aimer un message
+messagesRouter.post("/:messageId/like", async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      res.status(401).json({
+        status: 401,
+        message: "Login required",
+      });
+      return;
+    }
+
+    const messageRepository = pg.getRepository(DirectMessage);
+    const userRepository = pg.getRepository(User);
+    const likeRepository = pg.getRepository(MessageLike);
+
+    const messageId = req.params.messageId;
+    const userId = req.user.id;
+
+    const message = await messageRepository.findOneBy({ id: messageId });
+    const user = await userRepository.findOneBy({ id: userId });
+
+    if (!message) {
+      res.status(404).json({
+        status: 404,
+        message: "Message not found",
+      });
+      return;
+    }
+
+    if (!user) {
+      res.status(404).json({
+        status: 404,
+        message: "User not found",
+      });
+      return;
+    }
+
+    // Vérifier si le like existe déjà
+    const existingLike = await likeRepository.findOneBy({
+      user: { id: userId },
+      message: { id: messageId },
+    });
+
+    if (existingLike) {
+      res.status(409).json({
+        status: 409,
+        message: "Message already liked",
+      });
+      return;
+    }
+
+    const newLike = likeRepository.create({
+      user,
+      message,
+    });
+
+    await likeRepository.save(newLike);
+
+    res.status(201).json({
+      status: 201,
+      message: "Message liked",
+      body: newLike,
+    });
+  } catch (err) {
+    res.status(500).json({ status: 500, message: "Server error", error: err });
+  }
+});
+
+// Retirer un like d'un message
+messagesRouter.delete("/:messageId/like", async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      res.status(401).json({
+        status: 401,
+        message: "Login required",
+      });
+      return;
+    }
+
+    const likeRepository = pg.getRepository(MessageLike);
+
+    const messageId = req.params.messageId;
+    const userId = req.user.id;
+
+    const like = await likeRepository.findOne({
+      where: {
+        user: { id: userId },
+        message: { id: messageId },
+      },
+    });
+
+    if (!like) {
+      res.status(404).json({
+        status: 404,
+        message: "Like not found",
+      });
+      return;
+    }
+
+    await likeRepository.remove(like);
+
+    res.status(200).json({
+      status: 200,
+      message: "Like removed",
     });
   } catch (err) {
     res.status(500).json({ status: 500, message: "Server error", error: err });

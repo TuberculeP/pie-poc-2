@@ -113,7 +113,7 @@ defineEmits<{
 }
 
 .unread-badge {
-  background: var(--accent-primary);
+  background: var(--color-error);
   color: white;
   font-size: 0.75rem;
   padding: 0.125rem 0.5rem;
