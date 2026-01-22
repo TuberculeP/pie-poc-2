@@ -36,6 +36,9 @@ export class User {
   @Column({ default: "ROLE_USER" })
   role: string;
 
+  @Column({ nullable: true, type: "text" })
+  profilePicture: string;
+
   @OneToMany(() => User, (user) => user.id)
   following: User[];
 

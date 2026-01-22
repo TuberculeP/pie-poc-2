@@ -153,7 +153,15 @@ onMounted(() => {
     <div class="profile-header">
       <div class="profile-info">
         <div class="profile-avatar-large">
-          {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
+          <img
+            v-if="user?.profilePicture"
+            :src="user.profilePicture"
+            :alt="`${user?.firstName} ${user?.lastName}`"
+            class="avatar-image"
+          />
+          <span v-else class="avatar-initials">
+            {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
+          </span>
         </div>
         <div class="profile-details">
           <h1 class="profile-name">
@@ -314,6 +322,20 @@ onMounted(() => {
   font-size: 2rem;
   font-weight: 700;
   color: var(--color-black);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .profile-details {
