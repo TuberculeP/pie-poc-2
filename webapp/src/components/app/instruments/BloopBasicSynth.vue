@@ -80,12 +80,11 @@ watch(
 watch(
   () => sequencerStore.volume,
   (newVolume) => {
-    if (!Number.isFinite(newVolume)) return; // Ignorer les valeurs invalides
     const normalizedVolume = newVolume / 100; // Convertir 0-100 en 0-1
     if (normalizedVolume === 0) {
       // Pour 0, utiliser setValueAtTime car exponentialRamp ne supporte pas 0
       masterGainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
-    } else if (Number.isFinite(normalizedVolume)) {
+    } else {
       masterGainNode.gain.exponentialRampToValueAtTime(
         normalizedVolume,
         audioContext.currentTime + 0.05,
@@ -98,12 +97,11 @@ watch(
 watch(
   () => sequencerStore.reverb,
   (newReverb) => {
-    if (!Number.isFinite(newReverb)) return; // Ignorer les valeurs invalides
     const normalizedReverb = newReverb / 100; // Convertir 0-100 en 0-1
     if (normalizedReverb === 0) {
       // Pour 0, utiliser setValueAtTime
       reverbGainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
-    } else if (Number.isFinite(normalizedReverb)) {
+    } else {
       reverbGainNode.gain.exponentialRampToValueAtTime(
         normalizedReverb,
         audioContext.currentTime + 0.05,
