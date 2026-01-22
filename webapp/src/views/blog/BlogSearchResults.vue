@@ -5,6 +5,9 @@ import { getAllPosts } from "../../services/posts";
 import BlogPost from "../../components/blog/BlogPost.vue";
 import BaseButton from "../../components/ui/BaseButton.vue";
 import type { Post } from "../../lib/utils/types";
+import LandingHeader from "../../components/landing/LandingHeader.vue";
+import LandingLayout from "../../layouts/LandingLayout.vue";
+
 
 const route = useRoute();
 const router = useRouter();
@@ -94,6 +97,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <LandingHeader />
   <div class="search-results-container">
     <!-- Header avec informations de recherche -->
     <div class="search-header">
@@ -113,7 +117,6 @@ onMounted(() => {
         ← Nouvelle recherche
       </BaseButton>
     </div>
-
     <!-- Statistiques et état -->
     <div class="search-stats">
       <div v-if="loading" class="loading">
@@ -183,6 +186,7 @@ onMounted(() => {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+  margin-top: 100px;
 }
 
 .search-header {

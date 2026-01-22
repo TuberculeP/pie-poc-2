@@ -869,7 +869,7 @@
 
 .tag-suggestion-item:hover {
   background: var(--color-accent);
-  color: var(--color-black);
+  color: var(--color-accent-hover);
 }
 
 /* Tags affichés dans les posts */
