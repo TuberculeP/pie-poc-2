@@ -182,9 +182,6 @@ watch(soundfont, (_, old) => {
 });
 
 onMounted(() => {
-  // Connecter la sortie du soundfont au gain node maître
-  soundfont.value.output.connect(masterGainNode);
-
   // S'abonner aux événements de notes du MIDIStore (clavier + séquenceur)
   unregisterNoteOn = midiStore.onNotePlayed((note, _key) => {
     // Convertir la note en format MIDI (ex: "C4" → "C4")
