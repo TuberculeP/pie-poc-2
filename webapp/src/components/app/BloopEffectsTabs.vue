@@ -4,7 +4,7 @@
       <div class="effects-eq">
         <div>
           <h3>EQ EZ</h3>
-          <div>test test</div>
+          <div>TEST</div>
         </div>
       </div>
 
