@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from "vue";
 import { useElementaryStore } from "../../../stores/elementaryStore";
+import { useSequencerStore } from "../../../stores/sequencerStore";
 import { el } from "@elemaudio/core";
 import { useMIDIStore } from "../../../stores/MIDIStore";
 import { ref } from "vue";
@@ -10,6 +11,7 @@ import { computed } from "vue";
 import BloopPotard from "../BloopPotard.vue";
 
 const elementaryStore = useElementaryStore();
+const sequencerStore = useSequencerStore();
 const midiStore = useMIDIStore();
 
 type Voice = {
@@ -24,6 +26,8 @@ const adsr = reactive({
   sustain: 1,
   release: 5,
 });
+
+let masterGain = 1; // Variable pour stocker le gain maître
 
 function computeFrequency(midiNote: number) {
   return 440 * 2 ** ((midiNote - 69) / 12);
@@ -53,9 +57,20 @@ const computedVoices = computed(() =>
 );
 
 watch(computedVoices, () => {
-  const out = el.add(...computedVoices.value);
+  const out = el.mul(
+    el.const({ key: "masterGain", value: masterGain }),
+    el.add(...computedVoices.value),
+  );
   elementaryStore.getCore().render(out, out);
 });
+
+// Écouter les changements du volume global
+watch(
+  () => sequencerStore.volume,
+  (newVolume) => {
+    masterGain = Math.max(0.01, newVolume / 100); // Convertir 0-100 en 0-1
+  },
+);
 
 // Fonctions de cleanup pour désenregistrer les callbacks
 let unregisterNoteOn: (() => void) | null = null;

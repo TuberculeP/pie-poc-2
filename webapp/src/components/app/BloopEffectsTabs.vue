@@ -10,13 +10,13 @@
 
       <div class="effects-audio-channel">
         <div class="reverb">
-          <label>Volume : {{ Math.round(store.volume * 100) }}%</label>
+          <label>Volume : {{ Math.round(volumeValue) }}%</label>
           <input
             type="range"
             min="0"
-            max="1"
-            step="0.01"
-            v-model="store.volume"
+            max="100"
+            step="1"
+            v-model.number="volumeValue"
           />
         </div>
       </div>
@@ -31,8 +31,17 @@
 
 <script setup lang="ts">
 import { useSequencerStore } from "../../stores/sequencerStore.ts";
+import { computed } from "vue";
 
 const store = useSequencerStore();
+
+// Utiliser un computed avec getter et setter pour synchroniser directement avec le store
+const volumeValue = computed({
+  get: () => store.volume,
+  set: (newValue) => {
+    store.volume = newValue;
+  },
+});
 </script>
 
 <style scoped lang="scss">

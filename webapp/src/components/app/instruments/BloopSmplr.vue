@@ -4,13 +4,15 @@ import { ref, computed } from "vue";
 import { Soundfont } from "smplr";
 import { watch } from "vue";
 import { useMIDIStore } from "../../../stores/MIDIStore";
+import { useSequencerStore } from "../../../stores/sequencerStore";
 
 const currentNotes = ref<{ note: string; stopFn: () => void; id: number }[]>(
   [],
 );
 
-// Store MIDI pour écouter les événements clavier/séquenceur
+// Stores pour accéder aux événements MIDI et au volume global
 const midiStore = useMIDIStore();
+const sequencerStore = useSequencerStore();
 
 // Fonctions de cleanup pour désenregistrer les callbacks
 let unregisterNoteOn: (() => void) | null = null;
@@ -148,9 +150,28 @@ const soundfontList = [
 ];
 
 const selectedSoundfont = ref("marimba");
+
+// Créer un AudioContext partagé avec gain node
+const audioContext = new AudioContext();
+const masterGainNode = audioContext.createGain();
+masterGainNode.connect(audioContext.destination);
+masterGainNode.gain.value = 1;
+
+// Écouter les changements du volume global
+watch(
+  () => sequencerStore.volume,
+  (newVolume) => {
+    const normalizedVolume = Math.max(0.01, newVolume / 100);
+    masterGainNode.gain.exponentialRampToValueAtTime(
+      normalizedVolume,
+      audioContext.currentTime + 0.05,
+    );
+  },
+);
+
 const soundfont = computed(
   () =>
-    new Soundfont(new AudioContext(), {
+    new Soundfont(audioContext, {
       instrument: selectedSoundfont.value,
     }),
 );
@@ -161,6 +182,9 @@ watch(soundfont, (_, old) => {
 });
 
 onMounted(() => {
+  // Connecter la sortie du soundfont au gain node maître
+  soundfont.value.output.connect(masterGainNode);
+
   // S'abonner aux événements de notes du MIDIStore (clavier + séquenceur)
   unregisterNoteOn = midiStore.onNotePlayed((note, _key) => {
     // Convertir la note en format MIDI (ex: "C4" → "C4")

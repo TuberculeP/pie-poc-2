@@ -2,6 +2,7 @@
 import BloopPotard from "../BloopPotard.vue";
 import type { Note, NoteName } from "../../../lib/utils/types.ts";
 import { useMIDIStore } from "../../../stores/MIDIStore.ts";
+import { useSequencerStore } from "../../../stores/sequencerStore.ts";
 import { onBeforeUnmount, ref } from "vue";
 import { watch } from "vue";
 
@@ -13,23 +14,39 @@ defineExpose({
 
 const MIDIStore = useMIDIStore();
 const { onNotePlayed, onNoteStopped } = MIDIStore;
+const sequencerStore = useSequencerStore();
 const audioContext = new (window.AudioContext ||
   (window as any).webkitAudioContext)();
 
 const potardTest = ref(127);
 
+// Créer un gain node principal pour le volume global
+const masterGainNode = audioContext.createGain();
+masterGainNode.connect(audioContext.destination);
+masterGainNode.gain.value = 0.3; // Valeur initiale
+
 watch(
   potardTest,
   (newValue) => {
-    const gain = audioContext.createGain();
-    gain.gain.value = newValue / 127;
-    gain.connect(audioContext.destination);
-    gain.gain.exponentialRampToValueAtTime(
-      gain.gain.value,
+    masterGainNode.gain.value = newValue / 127;
+    masterGainNode.gain.exponentialRampToValueAtTime(
+      newValue / 127,
       audioContext.currentTime + 0.03,
     );
   },
   { immediate: true },
+);
+
+// Écouter les changements du volume dans le store
+watch(
+  () => sequencerStore.volume,
+  (newVolume) => {
+    const normalizedVolume = newVolume / 100; // Convertir 0-100 en 0-1
+    masterGainNode.gain.exponentialRampToValueAtTime(
+      Math.max(0.01, normalizedVolume), // Éviter 0 qui peut causer des problèmes
+      audioContext.currentTime + 0.05,
+    );
+  },
 );
 
 const oscillators = ref<Record<number, any>>({});
@@ -84,7 +101,7 @@ function playNote(note: Note) {
   gainNode.gain.value = potardTest.value / 127;
 
   oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+  gainNode.connect(masterGainNode);
   oscillator.frequency.setValueAtTime(note.frequency, audioContext.currentTime);
   oscillator.start();
   oscillators.value[note.frequency] = oscillator;
@@ -109,7 +126,7 @@ function playSequencerNote(noteName: NoteName, noteId: string) {
   gainNode.gain.value = potardTest.value / 127;
 
   oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+  gainNode.connect(masterGainNode);
   oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
   oscillator.start();
 
