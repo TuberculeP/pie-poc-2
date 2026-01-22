@@ -50,6 +50,7 @@ export interface Sequence {
   cols: number;
   createdAt: Date;
   updatedAt: Date;
+  volume: number;
 }
 
 export interface SequencerProject {
@@ -59,6 +60,7 @@ export interface SequencerProject {
   version: string;
   createdAt: Date;
   updatedAt: Date;
+  volume: number;
 }
 
 // Format de sauvegarde compatible avec l'ancien système
