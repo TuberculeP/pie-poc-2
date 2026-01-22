@@ -2,10 +2,7 @@
   <div class="effects-tabs-container">
     <div class="effects-body">
       <div class="effects-eq">
-        <div>
-          <h3>EQ EZ</h3>
-          <div>TEST</div>
-        </div>
+        <EqualizerCurve />
       </div>
 
       <div class="effects-audio-channel">
@@ -42,6 +39,7 @@
 <script setup lang="ts">
 import { useSequencerStore } from "../../stores/sequencerStore.ts";
 import { computed } from "vue";
+import EqualizerCurve from "./EqualizerCurve.vue";
 
 const store = useSequencerStore();
 

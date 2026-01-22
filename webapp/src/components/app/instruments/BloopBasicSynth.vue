@@ -30,6 +30,23 @@ const convolver = audioContext.createConvolver();
 const reverbGainNode = audioContext.createGain();
 reverbGainNode.gain.value = 0; // Pas de reverb au démarrage
 
+// Créer les filtres EQ (3 bandes)
+const bassFilter = audioContext.createBiquadFilter();
+bassFilter.type = "lowshelf";
+bassFilter.frequency.value = 200; // Hz
+bassFilter.gain.value = 0; // dB
+
+const midFilter = audioContext.createBiquadFilter();
+midFilter.type = "peaking";
+midFilter.frequency.value = 1000; // Hz
+midFilter.Q.value = 1;
+midFilter.gain.value = 0; // dB
+
+const trebleFilter = audioContext.createBiquadFilter();
+trebleFilter.type = "highshelf";
+trebleFilter.frequency.value = 3000; // Hz
+trebleFilter.gain.value = 0; // dB
+
 // Créer un impulse response simple pour la reverb
 const impulseLength = audioContext.sampleRate * 3; // 3 secondes de reverb
 const impulseResponse = audioContext.createBuffer(
@@ -55,14 +72,31 @@ convolver.buffer = impulseResponse;
 const reverbBoostGain = audioContext.createGain();
 reverbBoostGain.gain.value = 1.5; // Amplifier le signal reverb
 
-// Connecter le circuit de reverb : masterGain → convolver → boostGain → reverbGainNode → destination
-masterGainNode.connect(convolver);
-convolver.connect(reverbBoostGain);
-reverbBoostGain.connect(reverbGainNode);
-reverbGainNode.connect(audioContext.destination);
+// Créer un gain pour le signal dry (non-reverb)
+const dryGain = audioContext.createGain();
+dryGain.gain.value = 1;
 
-// Connecter également le signal direct (dry signal)
-masterGainNode.connect(audioContext.destination);
+// Créer un gain pour le signal wet (reverb)
+const wetGain = audioContext.createGain();
+wetGain.gain.value = 0;
+
+// Chaîne audio complète:
+// masterGain → [bassFilter → midFilter → trebleFilter] → splitter
+//   ├→ dryGain → destination
+//   └→ convolver → reverbBoostGain → wetGain → destination
+masterGainNode.connect(bassFilter);
+bassFilter.connect(midFilter);
+midFilter.connect(trebleFilter);
+
+// Chemin dry (sans reverb)
+trebleFilter.connect(dryGain);
+dryGain.connect(audioContext.destination);
+
+// Chemin wet (avec reverb)
+trebleFilter.connect(convolver);
+convolver.connect(reverbBoostGain);
+reverbBoostGain.connect(wetGain);
+wetGain.connect(audioContext.destination);
 
 watch(
   potardTest,
@@ -100,15 +134,48 @@ watch(
     const normalizedReverb = newReverb / 100; // Convertir 0-100 en 0-1
     if (normalizedReverb === 0) {
       // Pour 0, utiliser setValueAtTime
-      reverbGainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
+      wetGain.gain.setValueAtTime(0.001, audioContext.currentTime);
     } else {
-      reverbGainNode.gain.exponentialRampToValueAtTime(
+      wetGain.gain.exponentialRampToValueAtTime(
         normalizedReverb,
         audioContext.currentTime + 0.05,
       );
     }
   },
   { immediate: true }, // Initialiser avec la valeur du store au démarrage
+);
+
+// Écouter les changements de bass dans le store
+watch(
+  () => sequencerStore.bass,
+  (newBass) => {
+    if (Number.isFinite(newBass)) {
+      bassFilter.gain.setValueAtTime(newBass, audioContext.currentTime);
+    }
+  },
+  { immediate: true },
+);
+
+// Écouter les changements de mid dans le store
+watch(
+  () => sequencerStore.mid,
+  (newMid) => {
+    if (Number.isFinite(newMid)) {
+      midFilter.gain.setValueAtTime(newMid, audioContext.currentTime);
+    }
+  },
+  { immediate: true },
+);
+
+// Écouter les changements de treble dans le store
+watch(
+  () => sequencerStore.treble,
+  (newTreble) => {
+    if (Number.isFinite(newTreble)) {
+      trebleFilter.gain.setValueAtTime(newTreble, audioContext.currentTime);
+    }
+  },
+  { immediate: true },
 );
 
 const oscillators = ref<Record<number, any>>({});

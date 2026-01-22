@@ -12,6 +12,9 @@ const DEFAULT_COLS = 64;
 const DEFAULT_TEMPO = 120;
 const DEFAULT_VOLUME = 100;
 const DEFAULT_REVERB = 20;
+const DEFAULT_BASS = 0;
+const DEFAULT_MID = 0;
+const DEFAULT_TREBLE = 0;
 
 export const useSequencerStore = defineStore("sequencerStore", () => {
   // État du projet
@@ -24,6 +27,9 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     updatedAt: new Date(),
     volume: DEFAULT_VOLUME,
     reverb: DEFAULT_REVERB,
+    bass: DEFAULT_BASS,
+    mid: DEFAULT_MID,
+    treble: DEFAULT_TREBLE,
   });
 
   // Computed pour la séquence active
@@ -71,6 +77,30 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     get: () => project.value.reverb ?? DEFAULT_REVERB,
     set: (newReverb: number) => {
       project.value.reverb = newReverb;
+      project.value.updatedAt = new Date();
+    },
+  });
+
+  const bass = computed<number>({
+    get: () => project.value.bass ?? DEFAULT_BASS,
+    set: (newBass: number) => {
+      project.value.bass = newBass;
+      project.value.updatedAt = new Date();
+    },
+  });
+
+  const mid = computed<number>({
+    get: () => project.value.mid ?? DEFAULT_MID,
+    set: (newMid: number) => {
+      project.value.mid = newMid;
+      project.value.updatedAt = new Date();
+    },
+  });
+
+  const treble = computed<number>({
+    get: () => project.value.treble ?? DEFAULT_TREBLE,
+    set: (newTreble: number) => {
+      project.value.treble = newTreble;
       project.value.updatedAt = new Date();
     },
   });
@@ -575,6 +605,9 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     cols,
     volume,
     reverb,
+    bass,
+    mid,
+    treble,
 
     // Actions pour les séquences
     createSequence,

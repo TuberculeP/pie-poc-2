@@ -63,6 +63,9 @@ export interface SequencerProject {
   updatedAt: Date;
   volume: number;
   reverb: number;
+  bass?: number;
+  mid?: number;
+  treble?: number;
 }
 
 // Format de sauvegarde compatible avec l'ancien système
