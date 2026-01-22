@@ -116,7 +116,7 @@ export const likeMessage = async (messageId: string): Promise<boolean> => {
         }
       };
 
-      const handleLiked = (data: any) => {
+      const handleLiked = () => {
         if (!resolved) {
           resolved = true;
           socket.off("messages:error", handleError);
@@ -174,7 +174,7 @@ export const unlikeMessage = async (messageId: string): Promise<boolean> => {
         }
       };
 
-      const handleUnliked = (data: any) => {
+      const handleUnliked = () => {
         if (!resolved) {
           resolved = true;
           socket.off("messages:error", handleError);
