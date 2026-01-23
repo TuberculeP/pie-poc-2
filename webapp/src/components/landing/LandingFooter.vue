@@ -126,7 +126,7 @@
       <!-- Section footer bottom -->
       <div class="footer-bottom">
         <div class="footer-bottom-left">
-          <p>&copy; 2025 BLOOP. Tous droits réservés.</p>
+          <p>&copy; 2026 BLOOP. Tous droits réservés.</p>
         </div>
         <div class="footer-bottom-right">
           <a href="#">Politique de confidentialité</a>

@@ -3,13 +3,13 @@
     <a href="/" class="logo">
       <img src="../../assets/logo/logo_background_yellow.svg" alt="Logo" />
     </a>
-    <div class="toggle" @click="toggleMenu" :class="{ active: isMenuOpen }">
+    <div class="toggle" @click="toggleMenu" :class="{ active: !isMenuOpen }">
       <span></span>
       <span></span>
       <span></span>
     </div>
     <ul :class="{ active: isMenuOpen }" @click="handleMenuClick">
-      <li><a href="#" @click="closeMenu">Produit</a></li>
+      <li><a href="/" @click="closeMenu">Accueil</a></li>
       <li><a href="#" @click="closeMenu">Galerie</a></li>
       <li><a href="/blog" @click="closeMenu">Blog</a></li>
       <li><a href="#" @click="closeMenu">À propos</a></li>
@@ -18,15 +18,15 @@
         <a href="#" @click.prevent="toggleProfileMenu" class="profile-link">
           <span class="profile-avatar">{{ userInitials }}</span>
           <span class="profile-name">{{ user?.firstName || "Profil" }}</span>
-          <span class="dropdown-arrow">▼</span>
+          <i class="fas fa-angle-down"></i>
         </a>
         <div v-if="showProfileMenu" class="profile-dropdown">
-          <router-link to="/profile" @click="closeProfileMenu"
-            >Mon Profil</router-link
-          >
-          <router-link to="/messages" @click="closeProfileMenu"
-            >Mes Messages</router-link
-          >
+          <router-link to="/profile" @click="closeProfileMenu">
+            Mon Profil
+          </router-link>
+          <router-link to="/messages" @click="closeProfileMenu">
+            Mes Messages
+          </router-link>
           <a href="#" @click.prevent="handleLogout">Déconnexion</a>
         </div>
       </li>
@@ -34,14 +34,14 @@
       <!-- Si non connecté -->
       <li v-else class="start-now-dropdown" @mouseleave="showAuthMenu = false">
         <button class="start-now-btn" @click="showAuthMenu = !showAuthMenu">
-          Start now
-          <span class="dropdown-arrow">▼</span>
+          Profil
+          <i class="fas fa-angle-down"></i>
         </button>
         <div v-if="showAuthMenu" class="auth-dropdown">
           <router-link to="/login" @click="closeMenu">Connexion</router-link>
-          <router-link to="/register" @click="closeMenu"
-            >Inscription</router-link
-          >
+          <router-link to="/register" @click="closeMenu">
+            Inscription
+          </router-link>
         </div>
       </li>
     </ul>
@@ -61,7 +61,7 @@ const props = defineProps<{
 const router = useRouter();
 const authStore = useAuthStore();
 const showProfileMenu = ref(false);
-const showAuthMenu = ref(false); // ✅ ajouté
+const showAuthMenu = ref(false);
 const isMenuOpen = ref(false);
 
 // États réactifs
@@ -84,7 +84,7 @@ const toggleMenu = () => {
 const closeMenu = () => {
   isMenuOpen.value = false;
   showProfileMenu.value = false;
-  showAuthMenu.value = false; // ✅ ajouté
+  showAuthMenu.value = false;
 };
 
 // Gestion du menu profil
@@ -193,12 +193,12 @@ header {
   top: 0;
   left: 0;
   width: 100%;
-  padding: 40px 100px;
+  padding: 32px 64px;
   z-index: 1000;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: 0.5s;
+  transition: 0.2s;
 }
 
 header .logo img {
@@ -207,6 +207,7 @@ header .logo img {
 
 /* Toggle Button (Burger Menu) */
 .toggle {
+  z-index: 50;
   position: relative;
   width: 30px;
   height: 30px;
@@ -225,16 +226,22 @@ header .logo img {
   transition: 0.3s ease-in-out;
 }
 
-.toggle.active span:nth-child(1) {
+.toggle span:nth-child(1) {
   transform: rotate(45deg) translate(5px, 5px);
 }
 
-.toggle.active span:nth-child(2) {
+.toggle span:nth-child(2) {
   opacity: 0;
 }
 
-.toggle.active span:nth-child(3) {
+.toggle span:nth-child(3) {
   transform: rotate(-45deg) translate(7px, -6px);
+}
+
+/* État BURGER quand actif */
+.toggle.active span {
+  transform: none;
+  opacity: 1;
 }
 
 header ul {
@@ -401,7 +408,7 @@ header.sticky .toggle span {
   justify-content: center;
   font-weight: 600;
   font-size: 14px;
-  color: var(--color-white);
+  color: var(--color-black);
 }
 
 .profile-name {
@@ -428,18 +435,6 @@ header.sticky .toggle span {
   padding: 8px 0;
   z-index: 1000;
   margin-top: 8px;
-}
-
-.profile-dropdown::before {
-  content: "";
-  position: absolute;
-  top: -6px;
-  right: 20px;
-  width: 12px;
-  height: 12px;
-  background: var(--color-white);
-  transform: rotate(45deg);
-  box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .profile-dropdown a {
@@ -500,24 +495,9 @@ header.sticky .profile-link:hover {
     backdrop-filter: blur(10px);
   }
 
-  header ul::before {
-    content: "✕";
-    position: absolute;
-    top: 30px;
-    left: 30px;
-    font-size: 2rem;
-    color: #fff;
-    cursor: pointer;
-    z-index: 1001;
-    transition: color 0.3s;
-  }
-
-  header ul::before:hover {
-    color: var(--color-accent);
-  }
-
   header ul.active {
     transform: translateY(0);
+    width: 100%;
   }
 
   header ul li {
@@ -533,14 +513,6 @@ header.sticky .profile-link:hover {
 
   header.sticky ul {
     background: rgba(255, 255, 255, 0.95);
-  }
-
-  header.sticky ul::before {
-    color: #000;
-  }
-
-  header.sticky ul::before:hover {
-    color: var(--color-accent);
   }
 
   header.sticky ul li a {
@@ -589,10 +561,6 @@ header.sticky .profile-link:hover {
     backdrop-filter: blur(10px);
     margin-top: 10px;
     border-radius: 8px;
-  }
-
-  .profile-dropdown::before {
-    display: none;
   }
 
   .profile-dropdown a {
@@ -644,11 +612,6 @@ header.sticky .profile-link:hover {
     padding: 20px 30px;
   }
 
-  header ul {
-    width: auto;
-    margin: 0 auto;
-  }
-
   .toggle {
     width: 25px;
     height: 25px;
@@ -671,12 +634,6 @@ header.sticky .profile-link:hover {
 
   .profile-dropdown {
     min-width: 160px;
-  }
-}
-
-@media screen and (min-width: 975px) {
-  header ul.active {
-    transform: none;
   }
 }
 </style>
