@@ -7,7 +7,6 @@ import BaseButton from "../../components/ui/BaseButton.vue";
 import type { Post } from "../../lib/utils/types";
 import LandingHeader from "../../components/landing/LandingHeader.vue";
 
-
 const route = useRoute();
 const router = useRouter();
 

@@ -6,6 +6,14 @@ import { Tag } from "./Tag";
 import { User } from "./User";
 import { MessageLike } from "./MessageLike";
 
-const entities = [User, Post, Tag, Subscription, DirectMessage, Project, MessageLike];
+const entities = [
+  User,
+  Post,
+  Tag,
+  Subscription,
+  DirectMessage,
+  Project,
+  MessageLike,
+];
 
 export default entities;

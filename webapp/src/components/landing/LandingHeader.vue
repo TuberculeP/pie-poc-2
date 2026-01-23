@@ -21,7 +21,8 @@
             :src="user.profilePicture"
             :alt="`${user?.firstName} ${user?.lastName}`"
             class="avatar-image"
-          /> <div v-else class="profile-avatar">
+          />
+          <div v-else class="profile-avatar">
             {{ userInitials }}
           </div>
           <span class="profile-name">{{ user?.firstName || "Profil" }}</span>

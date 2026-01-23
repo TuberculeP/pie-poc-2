@@ -20,7 +20,9 @@ const isLiking = ref(false);
 
 const currentUserLike = computed(() => {
   if (!props.message.likes || !authStore.user) return null;
-  return props.message.likes.find((like) => like.user.id === authStore.user?.id);
+  return props.message.likes.find(
+    (like) => like.user.id === authStore.user?.id,
+  );
 });
 
 const likeCount = computed(() => {
