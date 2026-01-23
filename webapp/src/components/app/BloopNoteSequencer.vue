@@ -219,13 +219,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  onMounted,
-  onUnmounted,
-  watch,
-} from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { GridLayout, GridItem } from "grid-layout-plus";
 import type { MidiNote, NoteName } from "../../lib/utils/types";
 import { useMIDIStore } from "../../stores/MIDIStore";

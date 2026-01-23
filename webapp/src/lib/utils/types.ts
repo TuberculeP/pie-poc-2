@@ -54,29 +54,29 @@ export interface Sequence {
 
 // Types pour l'arrangement (FL Studio style Playlist)
 export interface ArrangementClip {
-  id: string;              // ID unique du clip
-  sequenceId: string;      // ID de la séquence référencée
-  x: number;               // Position de départ (colonne dans l'arrangement)
-  y: number;               // Piste (0, 1, 2... placement libre)
-  color?: string;          // Couleur optionnelle du clip
-  startOffset?: number;    // Début de lecture dans la séquence (trim gauche)
-  endOffset?: number;      // Fin de lecture dans la séquence (trim droit, depuis la fin)
+  id: string; // ID unique du clip
+  sequenceId: string; // ID de la séquence référencée
+  x: number; // Position de départ (colonne dans l'arrangement)
+  y: number; // Piste (0, 1, 2... placement libre)
+  color?: string; // Couleur optionnelle du clip
+  startOffset?: number; // Début de lecture dans la séquence (trim gauche)
+  endOffset?: number; // Fin de lecture dans la séquence (trim droit, depuis la fin)
 }
 
 export interface Arrangement {
   id: string;
   name: string;
   clips: ArrangementClip[];
-  tempo: number;           // Tempo maître
-  cols: number;            // Longueur totale (ex: 256 colonnes)
-  trackCount: number;      // Nombre de pistes visibles
+  tempo: number; // Tempo maître
+  cols: number; // Longueur totale (ex: 256 colonnes)
+  trackCount: number; // Nombre de pistes visibles
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface SequencerProject {
   sequences: Sequence[];
-  arrangement: Arrangement;        // Vue arrangement avec clips
+  arrangement: Arrangement; // Vue arrangement avec clips
   activeSequenceId: string | null;
   projectName: string;
   version: string;

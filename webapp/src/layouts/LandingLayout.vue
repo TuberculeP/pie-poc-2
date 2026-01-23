@@ -1,57 +1,61 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, provide } from 'vue'
+import { ref, onMounted, onUnmounted, provide } from "vue";
 // import { useLenis } from '../composables/useLenis'
-import { useGsap } from '../composables/useGsap'
-import ParallaxContainer from '../components/landing/parallax/ParallaxContainer.vue'
+import { useGsap } from "../composables/useGsap";
+import ParallaxContainer from "../components/landing/parallax/ParallaxContainer.vue";
 
-const isLoaded = ref(false)
-const scrollProgress = ref(0)
+const isLoaded = ref(false);
+const scrollProgress = ref(0);
 
 // Désactivé temporairement pour tester le scroll natif
 // const { lenis, scrollTo } = useLenis()
-const lenis = ref(null)
+const lenis = ref(null);
 const scrollTo = (target: string | number | HTMLElement) => {
-  const el = typeof target === 'string' ? document.querySelector(target) : target
+  const el =
+    typeof target === "string" ? document.querySelector(target) : target;
   if (el instanceof HTMLElement) {
-    el.scrollIntoView({ behavior: 'smooth' })
+    el.scrollIntoView({ behavior: "smooth" });
   }
-}
-const { gsap } = useGsap()
+};
+const { gsap } = useGsap();
 
-provide('lenis', lenis)
-provide('scrollTo', scrollTo)
+provide("lenis", lenis);
+provide("scrollTo", scrollTo);
 
 const updateScrollProgress = () => {
-  const scrollTop = window.scrollY
-  const docHeight = document.documentElement.scrollHeight - window.innerHeight
-  scrollProgress.value = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0
-}
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  scrollProgress.value = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+};
 
 onMounted(() => {
-  window.addEventListener('scroll', updateScrollProgress, { passive: true })
+  window.addEventListener("scroll", updateScrollProgress, { passive: true });
 
   setTimeout(() => {
-    isLoaded.value = true
-  }, 100)
+    isLoaded.value = true;
+  }, 100);
 
-  gsap.to('.landing-layout', {
+  gsap.to(".landing-layout", {
     scrollTrigger: {
-      start: 'top top',
-      end: 'bottom bottom',
+      start: "top top",
+      end: "bottom bottom",
       scrub: true,
     },
-  })
-})
+  });
+});
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', updateScrollProgress)
-})
+  window.removeEventListener("scroll", updateScrollProgress);
+});
 </script>
 
 <template>
   <div class="landing-layout" :class="{ loaded: isLoaded }">
     <!-- Global scroll progress indicator -->
-    <div class="scroll-progress-bar" :style="{ width: scrollProgress + '%' }"></div>
+    <div
+      class="scroll-progress-bar"
+      :style="{ width: scrollProgress + '%' }"
+    ></div>
 
     <!-- Parallax background with all layers -->
     <ParallaxContainer>
@@ -75,7 +79,12 @@ onUnmounted(() => {
 .landing-layout {
   position: relative;
   min-height: 100vh;
-  font-family: var(--font-body), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    var(--font-body),
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   color: var(--color-white);
   overflow: visible;
   background: #060b17;
@@ -87,7 +96,11 @@ onUnmounted(() => {
   top: 0;
   left: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--color-accent), var(--color-secondary));
+  background: linear-gradient(
+    90deg,
+    var(--color-accent),
+    var(--color-secondary)
+  );
   z-index: 9999;
   transition: width 0.1s linear;
   box-shadow: 0 0 10px var(--color-accent);

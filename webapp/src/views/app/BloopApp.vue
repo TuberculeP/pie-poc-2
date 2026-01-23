@@ -23,12 +23,12 @@ const projectId = computed(() => route.query.projectId as string | undefined);
 const sequencerStore = useSequencerStore();
 
 // Mode de vue (Pattern ou Arrangement)
-const viewMode = ref<'pattern' | 'arrangement'>('pattern');
+const viewMode = ref<"pattern" | "arrangement">("pattern");
 
 // Fonction pour basculer vers le mode Pattern et sélectionner une séquence
 const editSequence = (sequenceId: string) => {
   sequencerStore.setActiveSequence(sequenceId);
-  viewMode.value = 'pattern';
+  viewMode.value = "pattern";
 };
 
 const mainStore = useMainStore();
@@ -123,10 +123,7 @@ const onNoteEnd = (
         />
 
         <!-- Tabs avec switch Pattern/Arrangement -->
-        <BloopSequenceTabs
-          v-model="viewMode"
-          @edit-sequence="editSequence"
-        />
+        <BloopSequenceTabs v-model="viewMode" @edit-sequence="editSequence" />
 
         <!-- Vue Pattern (Piano Roll) -->
         <BloopNoteSequencer

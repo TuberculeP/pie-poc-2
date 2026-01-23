@@ -52,48 +52,48 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import gsap from 'gsap'
+import { ref, computed, onMounted } from "vue";
+import gsap from "gsap";
 
 interface MusicalNote {
-  id: number
-  x: number
-  y: number
-  size: number
-  delay: number
-  duration: number
-  symbol: string
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  delay: number;
+  duration: number;
+  symbol: string;
 }
 
 interface GeometricShape {
-  id: number
-  x: number
-  y: number
-  size: number
-  delay: number
-  duration: number
-  type: 'circle' | 'square' | 'triangle'
-  color: string
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  delay: number;
+  duration: number;
+  type: "circle" | "square" | "triangle";
+  color: string;
 }
 
 interface GlowingDot {
-  id: number
-  x: number
-  y: number
-  size: number
-  delay: number
-  color: string
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  delay: number;
+  color: string;
 }
 
-const containerRef = ref<HTMLElement | null>(null)
+const containerRef = ref<HTMLElement | null>(null);
 
-const noteSymbols = ['♪', '♫', '♬', '♩', '𝄞']
+const noteSymbols = ["♪", "♫", "♬", "♩", "𝄞"];
 const colors = [
-  'rgba(255, 210, 105, 0.5)',
-  'rgba(145, 165, 249, 0.5)',
-  'rgba(124, 200, 245, 0.5)',
-  'rgba(96, 189, 97, 0.5)',
-]
+  "rgba(255, 210, 105, 0.5)",
+  "rgba(145, 165, 249, 0.5)",
+  "rgba(124, 200, 245, 0.5)",
+  "rgba(96, 189, 97, 0.5)",
+];
 
 const musicalNotes = computed<MusicalNote[]>(() => {
   return Array.from({ length: 15 }, (_, i) => ({
@@ -104,11 +104,15 @@ const musicalNotes = computed<MusicalNote[]>(() => {
     delay: Math.random() * 10,
     duration: Math.random() * 10 + 15,
     symbol: noteSymbols[Math.floor(Math.random() * noteSymbols.length)],
-  }))
-})
+  }));
+});
 
 const geometricShapes = computed<GeometricShape[]>(() => {
-  const types: ('circle' | 'square' | 'triangle')[] = ['circle', 'square', 'triangle']
+  const types: ("circle" | "square" | "triangle")[] = [
+    "circle",
+    "square",
+    "triangle",
+  ];
   return Array.from({ length: 8 }, (_, i) => ({
     id: i,
     x: Math.random() * 90 + 5,
@@ -118,8 +122,8 @@ const geometricShapes = computed<GeometricShape[]>(() => {
     duration: Math.random() * 15 + 20,
     type: types[Math.floor(Math.random() * types.length)],
     color: colors[Math.floor(Math.random() * colors.length)],
-  }))
-})
+  }));
+});
 
 const glowingDots = computed<GlowingDot[]>(() => {
   return Array.from({ length: 12 }, (_, i) => ({
@@ -129,51 +133,51 @@ const glowingDots = computed<GlowingDot[]>(() => {
     size: Math.random() * 6 + 4,
     delay: Math.random() * 5,
     color: colors[Math.floor(Math.random() * colors.length)],
-  }))
-})
+  }));
+});
 
 onMounted(() => {
   if (containerRef.value) {
-    const notes = containerRef.value.querySelectorAll('.floating-note')
-    const shapes = containerRef.value.querySelectorAll('.floating-shape')
-    const dots = containerRef.value.querySelectorAll('.glowing-dot')
+    const notes = containerRef.value.querySelectorAll(".floating-note");
+    const shapes = containerRef.value.querySelectorAll(".floating-shape");
+    const dots = containerRef.value.querySelectorAll(".glowing-dot");
 
     notes.forEach((note, index) => {
       gsap.to(note, {
-        y: '-=100',
+        y: "-=100",
         x: `+=${(Math.random() - 0.5) * 50}`,
         rotation: Math.random() * 360,
         duration: musicalNotes.value[index]?.duration || 15,
-        ease: 'none',
+        ease: "none",
         repeat: -1,
         delay: musicalNotes.value[index]?.delay || 0,
-      })
-    })
+      });
+    });
 
     shapes.forEach((shape, index) => {
       gsap.to(shape, {
-        y: '-=80',
+        y: "-=80",
         rotation: 360,
         duration: geometricShapes.value[index]?.duration || 20,
-        ease: 'none',
+        ease: "none",
         repeat: -1,
         delay: geometricShapes.value[index]?.delay || 0,
-      })
-    })
+      });
+    });
 
     dots.forEach((dot, index) => {
       gsap.to(dot, {
-        y: '-=60',
+        y: "-=60",
         scale: 1.5,
         duration: 8,
-        ease: 'sine.inOut',
+        ease: "sine.inOut",
         repeat: -1,
         yoyo: true,
         delay: glowingDots.value[index]?.delay || 0,
-      })
-    })
+      });
+    });
   }
-})
+});
 </script>
 
 <style scoped>

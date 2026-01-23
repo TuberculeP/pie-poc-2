@@ -15,85 +15,85 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { ref, computed, onMounted, watch } from "vue";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const props = withDefaults(
   defineProps<{
-    text: string
-    tag?: string
-    animationType?: 'fade' | 'slide' | 'rotate3d' | 'wave'
-    duration?: number
-    stagger?: number
-    delay?: number
-    triggerStart?: string
-    scrub?: boolean | number
+    text: string;
+    tag?: string;
+    animationType?: "fade" | "slide" | "rotate3d" | "wave";
+    duration?: number;
+    stagger?: number;
+    delay?: number;
+    triggerStart?: string;
+    scrub?: boolean | number;
   }>(),
   {
-    tag: 'span',
-    animationType: 'rotate3d',
+    tag: "span",
+    animationType: "rotate3d",
     duration: 0.8,
     stagger: 0.02,
     delay: 0,
-    triggerStart: 'top 80%',
+    triggerStart: "top 80%",
     scrub: false,
   },
-)
+);
 
-const textRef = ref<HTMLElement | null>(null)
+const textRef = ref<HTMLElement | null>(null);
 
-const words = computed(() => props.text.split(' '))
+const words = computed(() => props.text.split(" "));
 
 const getAnimationProps = () => {
   switch (props.animationType) {
-    case 'fade':
+    case "fade":
       return {
         opacity: 0,
         y: 20,
-      }
-    case 'slide':
+      };
+    case "slide":
       return {
         opacity: 0,
         y: 50,
         x: -20,
-      }
-    case 'rotate3d':
+      };
+    case "rotate3d":
       return {
         opacity: 0,
         y: 80,
         rotateX: -90,
-        transformOrigin: 'top center',
-      }
-    case 'wave':
+        transformOrigin: "top center",
+      };
+    case "wave":
       return {
         opacity: 0,
         y: 30,
         scale: 0.5,
-      }
+      };
     default:
       return {
         opacity: 0,
         y: 50,
-      }
+      };
   }
-}
+};
 
 const animate = () => {
-  if (!textRef.value) return
+  if (!textRef.value) return;
 
-  const chars = textRef.value.querySelectorAll('.char:not(.space)')
+  const chars = textRef.value.querySelectorAll(".char:not(.space)");
 
-  gsap.set(chars, getAnimationProps())
+  gsap.set(chars, getAnimationProps());
 
   const scrollTriggerConfig: ScrollTrigger.Vars = {
     trigger: textRef.value,
     start: props.triggerStart,
-  }
+  };
 
   if (props.scrub) {
-    scrollTriggerConfig.scrub = props.scrub === true ? 1 : props.scrub
-    scrollTriggerConfig.end = 'top 30%'
+    scrollTriggerConfig.scrub = props.scrub === true ? 1 : props.scrub;
+    scrollTriggerConfig.end = "top 30%";
   }
 
   gsap.to(chars, {
@@ -105,22 +105,22 @@ const animate = () => {
     duration: props.duration,
     stagger: props.stagger,
     delay: props.delay,
-    ease: 'back.out(1.7)',
+    ease: "back.out(1.7)",
     scrollTrigger: scrollTriggerConfig,
-  })
-}
+  });
+};
 
 onMounted(() => {
-  animate()
-})
+  animate();
+});
 
 watch(
   () => props.text,
   () => {
-    ScrollTrigger.refresh()
-    animate()
+    ScrollTrigger.refresh();
+    animate();
   },
-)
+);
 </script>
 
 <style scoped>

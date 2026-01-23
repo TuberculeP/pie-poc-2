@@ -28,36 +28,36 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import gsap from 'gsap'
+import { ref, computed, onMounted } from "vue";
+import gsap from "gsap";
 
 interface Star {
-  id: number
-  x: number
-  y: number
-  size: number
-  delay: number
-  duration: number
-  opacity: number
+  id: number;
+  x: number;
+  y: number;
+  size: number;
+  delay: number;
+  duration: number;
+  opacity: number;
 }
 
 interface ShootingStar {
-  id: number
-  x: number
-  y: number
-  delay: number
+  id: number;
+  x: number;
+  y: number;
+  delay: number;
 }
 
 const props = withDefaults(
   defineProps<{
-    count?: number
+    count?: number;
   }>(),
   {
     count: 100,
   },
-)
+);
 
-const starfieldRef = ref<HTMLElement | null>(null)
+const starfieldRef = ref<HTMLElement | null>(null);
 
 const stars = computed<Star[]>(() => {
   return Array.from({ length: props.count }, (_, i) => ({
@@ -68,8 +68,8 @@ const stars = computed<Star[]>(() => {
     delay: Math.random() * 5,
     duration: Math.random() * 3 + 2,
     opacity: Math.random() * 0.5 + 0.3,
-  }))
-})
+  }));
+});
 
 const shootingStars = computed<ShootingStar[]>(() => {
   return Array.from({ length: 5 }, (_, i) => ({
@@ -77,25 +77,25 @@ const shootingStars = computed<ShootingStar[]>(() => {
     x: Math.random() * 80 + 10,
     y: Math.random() * 30,
     delay: Math.random() * 15 + i * 8,
-  }))
-})
+  }));
+});
 
 onMounted(() => {
   if (starfieldRef.value) {
-    const starElements = starfieldRef.value.querySelectorAll('.star')
+    const starElements = starfieldRef.value.querySelectorAll(".star");
 
     starElements.forEach((star, index) => {
       gsap.to(star, {
         y: `+=${Math.random() * 50 + 20}`,
         duration: stars.value[index]?.duration || 3,
-        ease: 'none',
+        ease: "none",
         repeat: -1,
         yoyo: true,
         delay: stars.value[index]?.delay || 0,
-      })
-    })
+      });
+    });
   }
-})
+});
 </script>
 
 <style scoped>
@@ -139,7 +139,7 @@ onMounted(() => {
 }
 
 .shooting-star::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 0;

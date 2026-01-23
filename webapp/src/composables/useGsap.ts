@@ -1,30 +1,30 @@
-import { onMounted, onUnmounted } from 'vue'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { onMounted, onUnmounted } from "vue";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-let isRegistered = false
+let isRegistered = false;
 
 export function useGsap() {
   onMounted(() => {
     if (!isRegistered) {
-      gsap.registerPlugin(ScrollTrigger)
-      isRegistered = true
+      gsap.registerPlugin(ScrollTrigger);
+      isRegistered = true;
     }
 
     gsap.config({
       force3D: true,
       nullTargetWarn: false,
-    })
+    });
 
     ScrollTrigger.config({
       limitCallbacks: true,
       ignoreMobileResize: true,
-    })
-  })
+    });
+  });
 
   onUnmounted(() => {
-    ScrollTrigger.getAll().forEach((trigger) => trigger.kill())
-  })
+    ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+  });
 
   const createScrollAnimation = (
     target: gsap.TweenTarget,
@@ -36,18 +36,18 @@ export function useGsap() {
       scrollTrigger: {
         ...triggerOptions,
       },
-    })
-  }
+    });
+  };
 
   const createTimeline = (triggerOptions?: ScrollTrigger.Vars) => {
     return gsap.timeline({
       scrollTrigger: triggerOptions,
-    })
-  }
+    });
+  };
 
   const prefersReducedMotion = () => {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  }
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  };
 
   return {
     gsap,
@@ -55,5 +55,5 @@ export function useGsap() {
     createScrollAnimation,
     createTimeline,
     prefersReducedMotion,
-  }
+  };
 }

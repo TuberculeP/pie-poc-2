@@ -31,8 +31,15 @@
       <!-- Header avec les mesures -->
       <div class="arrangement-header">
         <div class="track-labels-header"></div>
-        <div class="timeline-header" ref="timelineHeaderRef" @click="onTimelineHeaderClick">
-          <div class="timeline-header-inner" :style="{ width: `${gridWidth}px` }">
+        <div
+          class="timeline-header"
+          ref="timelineHeaderRef"
+          @click="onTimelineHeaderClick"
+        >
+          <div
+            class="timeline-header-inner"
+            :style="{ width: `${gridWidth}px` }"
+          >
             <div
               v-for="measure in measures"
               :key="measure"
@@ -49,11 +56,7 @@
       <div class="arrangement-body">
         <!-- Labels des pistes -->
         <div class="track-labels">
-          <div
-            v-for="track in trackCount"
-            :key="track"
-            class="track-label"
-          >
+          <div v-for="track in trackCount" :key="track" class="track-label">
             Track {{ track }}
           </div>
         </div>
@@ -69,11 +72,7 @@
         >
           <!-- Grille de fond -->
           <div class="background-grid" :style="gridStyle">
-            <div
-              v-for="track in trackCount"
-              :key="track"
-              class="grid-row"
-            >
+            <div v-for="track in trackCount" :key="track" class="grid-row">
               <div
                 v-for="col in arrangementCols"
                 :key="`${track}-${col}`"
@@ -92,7 +91,7 @@
               :class="{
                 selected: selectedClips.has(clip.id),
                 dragging: draggedClipId === clip.id,
-                trimming: trimmingClipId === clip.id
+                trimming: trimmingClipId === clip.id,
               }"
               :style="getClipStyle(clip)"
               draggable="true"
@@ -106,7 +105,9 @@
                 class="resize-handle resize-handle-left"
                 @mousedown.stop="startResize($event, clip, 'left')"
               ></div>
-              <span class="clip-name">{{ getSequenceName(clip.sequenceId) }}</span>
+              <span class="clip-name">{{
+                getSequenceName(clip.sequenceId)
+              }}</span>
               <div class="clip-notes-preview">
                 <div
                   v-for="note in getClipNotesPreview(clip)"
@@ -127,7 +128,9 @@
           <div
             v-if="isPlaying || currentPosition > 0"
             class="playback-cursor"
-            :style="{ left: `${(precisePosition / arrangementCols) * gridWidth}px` }"
+            :style="{
+              left: `${(precisePosition / arrangementCols) * gridWidth}px`,
+            }"
           ></div>
 
           <!-- Zone de drop preview -->
@@ -142,8 +145,12 @@
       <!-- Contrôles -->
       <div class="arrangement-controls">
         <div class="playback-controls">
-          <button @click="togglePlayback" class="btn btn-primary" :class="{ 'btn-pause': isPlaying }">
-            {{ isPlaying ? 'Pause' : 'Play' }}
+          <button
+            @click="togglePlayback"
+            class="btn btn-primary"
+            :class="{ 'btn-pause': isPlaying }"
+          >
+            {{ isPlaying ? "Pause" : "Play" }}
           </button>
           <button @click="stopPlayback" class="btn btn-secondary">Stop</button>
         </div>
@@ -161,7 +168,11 @@
         </div>
 
         <div class="position-display">
-          <span>{{ Math.floor(currentPosition / 4) + 1 }}:{{ (currentPosition % 4) + 1 }}</span>
+          <span
+            >{{ Math.floor(currentPosition / 4) + 1 }}:{{
+              (currentPosition % 4) + 1
+            }}</span
+          >
         </div>
 
         <div class="selection-controls">
@@ -190,10 +201,18 @@
       :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }"
       @click.stop
     >
-      <div class="context-menu-item" @click="duplicateContextClip">Dupliquer</div>
-      <div class="context-menu-item" @click="makeContextClipUnique">Rendre unique</div>
-      <div class="context-menu-item" @click="editContextClipSequence">Éditer pattern</div>
-      <div class="context-menu-item danger" @click="deleteContextClip">Supprimer</div>
+      <div class="context-menu-item" @click="duplicateContextClip">
+        Dupliquer
+      </div>
+      <div class="context-menu-item" @click="makeContextClipUnique">
+        Rendre unique
+      </div>
+      <div class="context-menu-item" @click="editContextClipSequence">
+        Éditer pattern
+      </div>
+      <div class="context-menu-item danger" @click="deleteContextClip">
+        Supprimer
+      </div>
     </div>
   </div>
 </template>
@@ -202,7 +221,11 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useSequencerStore } from "../../stores/sequencerStore";
 import { useMIDIStore } from "../../stores/MIDIStore";
-import type { ArrangementClip, Sequence, MidiNote } from "../../lib/utils/types";
+import type {
+  ArrangementClip,
+  Sequence,
+  MidiNote,
+} from "../../lib/utils/types";
 
 // Stores
 const sequencerStore = useSequencerStore();
@@ -238,7 +261,7 @@ const dropPreview = ref<{ x: number; y: number; width: number } | null>(null);
 
 // État de trim (couper le clip)
 const trimmingClipId = ref<string | null>(null);
-const trimDirection = ref<'left' | 'right' | null>(null);
+const trimDirection = ref<"left" | "right" | null>(null);
 const trimStartMouseX = ref(0);
 const trimStartOffset = ref(0);
 const trimEndOffset = ref(0);
@@ -323,7 +346,8 @@ const onDragOver = (event: DragEvent) => {
     const sequence = sequencerStore.getSequenceById(draggedSequenceId.value);
     if (sequence) {
       // Calculer la largeur auto-trimmée
-      const { startOffset, endOffset } = sequencerStore.calculateAutoTrimOffsets(sequence);
+      const { startOffset, endOffset } =
+        sequencerStore.calculateAutoTrimOffsets(sequence);
       const trimmedDuration = sequence.cols - startOffset - endOffset;
       width = trimmedDuration * cellWidth;
     }
@@ -332,7 +356,9 @@ const onDragOver = (event: DragEvent) => {
     const adjustedX = x - dragOffsetX.value;
     const col = Math.floor(adjustedX / cellWidth);
     previewX = Math.max(0, col * cellWidth);
-    const clip = sequencerStore.arrangementClips.find(c => c.id === draggedClipId.value);
+    const clip = sequencerStore.arrangementClips.find(
+      (c) => c.id === draggedClipId.value,
+    );
     if (clip) {
       width = sequencerStore.getClipDuration(clip) * cellWidth;
     }
@@ -393,7 +419,11 @@ const getDropPreviewStyle = () => {
 };
 
 // Fonctions de trim (couper) des clips
-const startResize = (event: MouseEvent, clip: ArrangementClip, direction: 'left' | 'right') => {
+const startResize = (
+  event: MouseEvent,
+  clip: ArrangementClip,
+  direction: "left" | "right",
+) => {
   event.preventDefault();
   trimmingClipId.value = clip.id;
   trimDirection.value = direction;
@@ -406,8 +436,8 @@ const startResize = (event: MouseEvent, clip: ArrangementClip, direction: 'left'
   selectedClips.value.add(clip.id);
 
   // Ajouter les listeners globaux
-  document.addEventListener('mousemove', onTrimMove);
-  document.addEventListener('mouseup', onTrimEnd);
+  document.addEventListener("mousemove", onTrimMove);
+  document.addEventListener("mouseup", onTrimEnd);
 };
 
 const onTrimMove = (event: MouseEvent) => {
@@ -416,7 +446,7 @@ const onTrimMove = (event: MouseEvent) => {
   const deltaX = event.clientX - trimStartMouseX.value;
   const deltaCols = Math.round(deltaX / cellWidth);
 
-  if (trimDirection.value === 'right') {
+  if (trimDirection.value === "right") {
     // Trim depuis la droite : augmenter le endOffset (couper la fin)
     const newEndOffset = trimEndOffset.value - deltaCols;
     sequencerStore.trimClipEnd(trimmingClipId.value, newEndOffset);
@@ -430,8 +460,8 @@ const onTrimMove = (event: MouseEvent) => {
 const onTrimEnd = () => {
   trimmingClipId.value = null;
   trimDirection.value = null;
-  document.removeEventListener('mousemove', onTrimMove);
-  document.removeEventListener('mouseup', onTrimEnd);
+  document.removeEventListener("mousemove", onTrimMove);
+  document.removeEventListener("mouseup", onTrimEnd);
 };
 
 // Fonctions de style des clips
@@ -464,7 +494,7 @@ const getClipNotesPreview = (clip: ArrangementClip): MidiNote[] => {
   const visibleEnd = sequence.cols - endOffset;
 
   // Filtrer les notes qui sont visibles dans la zone trimée
-  return sequence.layout.filter(note => {
+  return sequence.layout.filter((note) => {
     const noteEnd = note.x + note.w;
     // La note doit être au moins partiellement visible dans la zone [startOffset, visibleEnd]
     return noteEnd > startOffset && note.x < visibleEnd;
@@ -541,7 +571,9 @@ const makeContextClipUnique = () => {
 
 const editContextClipSequence = () => {
   if (contextMenu.value.clipId) {
-    const clip = sequencerStore.arrangementClips.find(c => c.id === contextMenu.value.clipId);
+    const clip = sequencerStore.arrangementClips.find(
+      (c) => c.id === contextMenu.value.clipId,
+    );
     if (clip) {
       emit("editSequence", clip.sequenceId);
     }
@@ -558,14 +590,14 @@ const deleteContextClip = () => {
 
 // Actions sur les clips sélectionnés
 const deleteSelectedClips = () => {
-  selectedClips.value.forEach(clipId => {
+  selectedClips.value.forEach((clipId) => {
     sequencerStore.removeClipFromArrangement(clipId);
   });
   selectedClips.value.clear();
 };
 
 const duplicateSelectedClips = () => {
-  selectedClips.value.forEach(clipId => {
+  selectedClips.value.forEach((clipId) => {
     sequencerStore.duplicateClip(clipId);
   });
 };
@@ -589,7 +621,9 @@ const onGridScroll = () => {
   if (gridRef.value && timelineHeaderRef.value) {
     // Utiliser transform pour une synchronisation plus fluide
     const scrollLeft = gridRef.value.scrollLeft;
-    const inner = timelineHeaderRef.value.querySelector('.timeline-header-inner') as HTMLElement;
+    const inner = timelineHeaderRef.value.querySelector(
+      ".timeline-header-inner",
+    ) as HTMLElement;
     if (inner) {
       inner.style.transform = `translateX(-${scrollLeft}px)`;
     }
@@ -657,7 +691,11 @@ const startPlayback = () => {
     const newIntegerPosition = Math.floor(precisePosition.value);
 
     if (newIntegerPosition > lastNoteCheckPosition.value) {
-      for (let pos = lastNoteCheckPosition.value + 1; pos <= newIntegerPosition; pos++) {
+      for (
+        let pos = lastNoteCheckPosition.value + 1;
+        pos <= newIntegerPosition;
+        pos++
+      ) {
         if (pos < sequencerStore.getArrangementLength()) {
           playNotesAtPosition(pos);
         }
@@ -687,7 +725,7 @@ const pausePlayback = () => {
 
 const stopPlayback = () => {
   // Arrêter toutes les notes actives
-  activeNotes.value.forEach(noteId => {
+  activeNotes.value.forEach((noteId) => {
     // Trouver la note et émettre l'événement de fin
     const parts = noteId.split("_");
     if (parts.length >= 2) {
@@ -706,7 +744,8 @@ const stopPlayback = () => {
 
 const playNotesAtPosition = (position: number) => {
   // Arrêter les notes qui se terminent
-  const notesToStop = sequencerStore.getArrangementNotesEndingAtPosition(position);
+  const notesToStop =
+    sequencerStore.getArrangementNotesEndingAtPosition(position);
   notesToStop.forEach(({ note, noteName }) => {
     activeNotes.value.delete(note.i);
     emit("noteEnd", note, noteName, position);
@@ -754,8 +793,8 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener("keydown", handleKeyDown);
   document.removeEventListener("click", handleGlobalClick);
-  document.removeEventListener('mousemove', onTrimMove);
-  document.removeEventListener('mouseup', onTrimEnd);
+  document.removeEventListener("mousemove", onTrimMove);
+  document.removeEventListener("mouseup", onTrimEnd);
   if (playbackAnimationId.value) {
     cancelAnimationFrame(playbackAnimationId.value);
   }
@@ -947,7 +986,9 @@ onUnmounted(() => {
   pointer-events: all;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition:
+    transform 0.1s,
+    box-shadow 0.1s;
 }
 
 .arrangement-clip:hover {
@@ -978,7 +1019,9 @@ onUnmounted(() => {
   cursor: ew-resize;
   z-index: 5;
   opacity: 0;
-  transition: opacity 0.2s, background-color 0.2s;
+  transition:
+    opacity 0.2s,
+    background-color 0.2s;
 }
 
 .resize-handle:hover,
