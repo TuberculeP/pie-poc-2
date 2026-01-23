@@ -217,6 +217,8 @@
         >
       </div>
     </div>
+
+    <BloopEffectsTabs />
   </div>
 </template>
 
@@ -236,6 +238,7 @@ import { useMIDIStore } from "../../stores/MIDIStore";
 import { useProjectStore } from "../../stores/projectStore";
 import { useSequencerStore } from "../../stores/sequencerStore";
 import BloopSequenceTabs from "./BloopSequenceTabs.vue";
+import BloopEffectsTabs from "./BloopEffectsTabs.vue";
 
 // Props
 interface Props {
@@ -461,6 +464,11 @@ const handleGlobalMouseUp = (): void => {
 onMounted(() => {
   // Initialiser le store du séquenceur
   sequencerStore.initialize();
+
+  setTimeout(() => {
+    sequencerStore.volume = 50;
+    console.log("Volume forcé à 50%");
+  }, 1000);
 
   document.addEventListener("keydown", handleKeyDown);
   document.addEventListener("mouseup", handleGlobalMouseUp);

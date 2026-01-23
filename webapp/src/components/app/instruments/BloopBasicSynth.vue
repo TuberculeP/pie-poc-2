@@ -2,10 +2,9 @@
 import BloopPotard from "../BloopPotard.vue";
 import type { Note, NoteName } from "../../../lib/utils/types.ts";
 import { useMIDIStore } from "../../../stores/MIDIStore.ts";
+import { useAudioBusStore } from "../../../stores/audioBusStore.ts";
 import { onBeforeUnmount, ref } from "vue";
-import { watch } from "vue";
 
-// Exposition des fonctions pour le séquenceur
 defineExpose({
   playSequencerNote,
   stopSequencerNote,
@@ -13,45 +12,29 @@ defineExpose({
 
 const MIDIStore = useMIDIStore();
 const { onNotePlayed, onNoteStopped } = MIDIStore;
-const audioContext = new (window.AudioContext ||
-  (window as any).webkitAudioContext)();
+const audioBusStore = useAudioBusStore();
+
+const { audioContext, inputBus } = audioBusStore;
 
 const potardTest = ref(127);
 
-watch(
-  potardTest,
-  (newValue) => {
-    const gain = audioContext.createGain();
-    gain.gain.value = newValue / 127;
-    gain.connect(audioContext.destination);
-    gain.gain.exponentialRampToValueAtTime(
-      gain.gain.value,
-      audioContext.currentTime + 0.03,
-    );
-  },
-  { immediate: true },
-);
-
 const oscillators = ref<Record<number, any>>({});
-const sequencerOscillators = ref<Record<string, any>>({}); // Pour les notes du séquenceur
+const sequencerOscillators = ref<Record<string, any>>({});
 
 const oscillatorType = ref<OscillatorType>("sine");
 
-// Fonction pour convertir un nom de note en fréquence
 function noteNameToFrequency(noteName: NoteName): number {
   const noteRegex = /^([A-G])(#?)(\d+)$/;
   const match = noteName.match(noteRegex);
 
   if (!match) {
-    // eslint-disable-next-line no-console
     console.warn(`Invalid note name: ${noteName}`);
-    return 440; // Fallback sur A4
+    return 440;
   }
 
   const [, note, sharp, octaveStr] = match;
   const octave = parseInt(octaveStr);
 
-  // Table des notes avec leur offset depuis C
   const noteOffsets: Record<string, number> = {
     C: 0,
     D: 2,
@@ -67,16 +50,15 @@ function noteNameToFrequency(noteName: NoteName): number {
     semitone += 1;
   }
 
-  // Calcul de la fréquence : A4 (440Hz) est notre référence
-  // MIDI note 69 = A4
-  const midiNote = octave * 12 + semitone + 12; // +12 car C0 = MIDI note 12
+  const midiNote = octave * 12 + semitone + 12;
   const a4MidiNote = 69;
 
   return 440 * Math.pow(2, (midiNote - a4MidiNote) / 12);
 }
 
-// Fonctions pour le système MIDI clavier
 function playNote(note: Note) {
+  audioBusStore.ensureAudioContextResumed();
+
   const oscillator = audioContext.createOscillator();
   oscillator.type = oscillatorType.value;
 
@@ -84,7 +66,7 @@ function playNote(note: Note) {
   gainNode.gain.value = potardTest.value / 127;
 
   oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+  gainNode.connect(inputBus);
   oscillator.frequency.setValueAtTime(note.frequency, audioContext.currentTime);
   oscillator.start();
   oscillators.value[note.frequency] = oscillator;
@@ -98,8 +80,9 @@ function stopNote(note: Note) {
   }
 }
 
-// Fonctions pour le séquenceur de notes
 function playSequencerNote(noteName: NoteName, noteId: string) {
+  audioBusStore.ensureAudioContextResumed();
+
   const frequency = noteNameToFrequency(noteName);
 
   const oscillator = audioContext.createOscillator();
@@ -109,7 +92,7 @@ function playSequencerNote(noteName: NoteName, noteId: string) {
   gainNode.gain.value = potardTest.value / 127;
 
   oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+  gainNode.connect(inputBus);
   oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
   oscillator.start();
 
@@ -124,13 +107,10 @@ function stopSequencerNote(noteId: string) {
   }
 }
 
-// Enregistrer les callbacks et récupérer les fonctions de déconnexion
 const unregisterPlayCallback = onNotePlayed(playNote);
 const unregisterStopCallback = onNoteStopped(stopNote);
 
-// Se déconnecter quand le composant est démonté
 onBeforeUnmount(() => {
-  // Arrêter tous les oscillateurs en cours (clavier et séquenceur)
   Object.values(oscillators.value).forEach((oscillator) => {
     oscillator.stop();
   });
@@ -140,7 +120,6 @@ onBeforeUnmount(() => {
   oscillators.value = {};
   sequencerOscillators.value = {};
 
-  // Déconnecter les callbacks du MIDIStore
   unregisterPlayCallback();
   unregisterStopCallback();
 });
@@ -156,7 +135,7 @@ onBeforeUnmount(() => {
       <option value="triangle">Triangle</option>
     </select>
     <BloopPotard v-model="potardTest" />
-    ‘{{ potardTest }}
+    '{{ potardTest }}
   </div>
 </template>
 
