@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from "vue";
 import { ref, computed } from "vue";
-import { Soundfont } from "smplr";
+import { Soundfont, Reverb } from "smplr";
 import { watch } from "vue";
 import { useMIDIStore } from "../../../stores/MIDIStore";
 import { useSequencerStore } from "../../../stores/sequencerStore";
@@ -157,6 +157,16 @@ const masterGainNode = audioContext.createGain();
 masterGainNode.connect(audioContext.destination);
 masterGainNode.gain.value = 1;
 
+// Créer la reverb et attendre qu'elle soit chargée
+const reverb = new Reverb(audioContext);
+let reverbReady = false;
+let reverbAddedToSoundfont = false; // Flag pour savoir si addEffect a réussi
+
+// Attendre 1200ms pour que la Reverb se charge
+setTimeout(() => {
+  reverbReady = true;
+}, 1200);
+
 // Écouter les changements du volume global
 watch(
   () => sequencerStore.volume,
@@ -180,12 +190,74 @@ const soundfont = computed(
     }),
 );
 
-watch(soundfont, (_, old) => {
-  old.disconnect();
-  currentNotes.value = [];
-});
+// Écouter les changements d'instrument
+watch(
+  () => selectedSoundfont.value,
+  () => {
+    reverbAddedToSoundfont = false;
+
+    setTimeout(() => {
+      if (soundfont.value && soundfont.value.output && reverbReady) {
+        try {
+          soundfont.value.output.addEffect("reverb", reverb, 0);
+          reverbAddedToSoundfont = true;
+
+          const normalizedReverb = sequencerStore.reverb / 100;
+          soundfont.value.output.sendEffect("reverb", normalizedReverb);
+        } catch (e) {
+          console.error("Erreur lors de l'ajout de la reverb:", e);
+        }
+      }
+    }, 50);
+  },
+);
+
+// Écouter les changements de reverb et mettre à jour l'effet
+watch(
+  () => sequencerStore.reverb,
+  (newReverb) => {
+    if (!reverbAddedToSoundfont) return;
+
+    const normalizedReverb = newReverb / 100;
+    try {
+      if (soundfont.value && soundfont.value.output) {
+        soundfont.value.output.sendEffect("reverb", normalizedReverb);
+      }
+    } catch (error) {
+      console.error("Erreur reverb:", error);
+    }
+  },
+  { immediate: true },
+);
 
 onMounted(() => {
+  // Ajouter la reverb à la soundfont au démarrage
+  const addReverbWithPolling = () => {
+    const startTime = Date.now();
+    const timeoutMs = 5000;
+    const pollIntervalMs = 100;
+
+    const pollInterval = setInterval(() => {
+      if (soundfont.value && soundfont.value.output && reverbReady) {
+        clearInterval(pollInterval);
+        try {
+          soundfont.value.output.addEffect("reverb", reverb, 0);
+          reverbAddedToSoundfont = true;
+
+          const normalizedReverb = sequencerStore.reverb / 100;
+          soundfont.value.output.sendEffect("reverb", normalizedReverb);
+        } catch (e) {
+          console.error("Erreur lors de l'ajout de la reverb:", e);
+        }
+      } else if (Date.now() - startTime > timeoutMs) {
+        clearInterval(pollInterval);
+        console.warn("Timeout: reverb n'a pas pu être ajoutée");
+      }
+    }, pollIntervalMs);
+  };
+
+  addReverbWithPolling();
+
   // S'abonner aux événements de notes du MIDIStore (clavier + séquenceur)
   unregisterNoteOn = midiStore.onNotePlayed((note, _key) => {
     // Convertir la note en format MIDI (ex: "C4" → "C4")
@@ -228,7 +300,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <p>Smplr</p>
+  <p>Sampler</p>
   <select v-model="selectedSoundfont">
     <option v-for="item in soundfontList" :value="item" :key="item">
       {{ item }}
