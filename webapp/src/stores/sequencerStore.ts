@@ -1,10 +1,19 @@
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
-import type { Sequence, SequencerProject, MidiNote, LegacySequenceData } from "../lib/utils/types";
+import type {
+  Sequence,
+  SequencerProject,
+  MidiNote,
+  LegacySequenceData,
+  EQBand,
+} from "../lib/utils/types";
+import { cloneEQBands } from "../lib/audio/config";
 
 const STORAGE_KEY = "bloop-sequencer-project";
 const DEFAULT_COLS = 64;
 const DEFAULT_TEMPO = 120;
+const DEFAULT_VOLUME = 100;
+const DEFAULT_REVERB = 20;
 
 export const useSequencerStore = defineStore("sequencerStore", () => {
   // État du projet
@@ -12,17 +21,22 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     sequences: [],
     activeSequenceId: null,
     projectName: "Mon Projet",
-    version: "2.0",
+    version: "2.1",
     createdAt: new Date(),
     updatedAt: new Date(),
+    volume: DEFAULT_VOLUME,
+    reverb: DEFAULT_REVERB,
+    eqBands: cloneEQBands(),
   });
 
   // Computed pour la séquence active
   const activeSequence = computed<Sequence | null>(() => {
     if (!project.value.activeSequenceId) return null;
-    return project.value.sequences.find(
-      (seq) => seq.id === project.value.activeSequenceId
-    ) || null;
+    return (
+      project.value.sequences.find(
+        (seq) => seq.id === project.value.activeSequenceId,
+      ) || null
+    );
   });
 
   // Computed pour les propriétés de la séquence active (compatibilité avec le composant existant)
@@ -34,7 +48,7 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
         activeSequence.value.updatedAt = new Date();
         project.value.updatedAt = new Date();
       }
-    }
+    },
   });
 
   const tempo = computed<number>({
@@ -45,10 +59,62 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
         activeSequence.value.updatedAt = new Date();
         project.value.updatedAt = new Date();
       }
-    }
+    },
   });
 
-  const cols = computed<number>(() => activeSequence.value?.cols || DEFAULT_COLS);
+  const volume = computed<number>({
+    get: () => project.value.volume,
+    set: (newVolume: number) => {
+      project.value.volume = newVolume;
+      project.value.updatedAt = new Date();
+    },
+  });
+
+  const reverb = computed<number>({
+    get: () => project.value.reverb ?? DEFAULT_REVERB,
+    set: (newReverb: number) => {
+      project.value.reverb = newReverb;
+      project.value.updatedAt = new Date();
+    },
+  });
+
+  const eqBands = computed<EQBand[]>({
+    get: () => project.value.eqBands ?? cloneEQBands(),
+    set: (newBands: EQBand[]) => {
+      project.value.eqBands = newBands;
+      project.value.updatedAt = new Date();
+    },
+  });
+
+  const updateEQBand = (bandId: string, gain: number) => {
+    const bands = project.value.eqBands ?? cloneEQBands();
+    const band = bands.find((b: EQBand) => b.id === bandId);
+    if (band) {
+      band.gain = gain;
+      project.value.eqBands = bands;
+      project.value.updatedAt = new Date();
+    }
+  };
+
+  // Legacy getters pour compatibilité
+  const bass = computed<number>(() => {
+    const band = eqBands.value.find((b) => b.id === "bass");
+    return band?.gain ?? 0;
+  });
+
+  const mid = computed<number>(() => {
+    const band = eqBands.value.find((b) => b.id === "mid");
+    return band?.gain ?? 0;
+  });
+
+  const treble = computed<number>(() => {
+    const band = eqBands.value.find((b) => b.id === "brilliance");
+    return band?.gain ?? 0;
+  });
+
+  const cols = computed<number>(
+    () => activeSequence.value?.cols || DEFAULT_COLS,
+  );
 
   // Générer un ID unique
   const generateId = (): string => {
@@ -65,12 +131,12 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     const baseName = "Séquence";
     let counter = 1;
     let name = `${baseName} ${counter}`;
-    
-    while (project.value.sequences.some(seq => seq.name === name)) {
+
+    while (project.value.sequences.some((seq) => seq.name === name)) {
       counter++;
       name = `${baseName} ${counter}`;
     }
-    
+
     return name;
   };
 
@@ -84,6 +150,8 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       cols: DEFAULT_COLS,
       createdAt: new Date(),
       updatedAt: new Date(),
+      volume: DEFAULT_VOLUME,
+      reverb: DEFAULT_REVERB,
     };
 
     project.value.sequences.push(newSequence);
@@ -95,7 +163,9 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
 
   // Supprimer une séquence
   const deleteSequence = (sequenceId: string): boolean => {
-    const index = project.value.sequences.findIndex(seq => seq.id === sequenceId);
+    const index = project.value.sequences.findIndex(
+      (seq) => seq.id === sequenceId,
+    );
     if (index === -1) return false;
 
     project.value.sequences.splice(index, 1);
@@ -115,7 +185,9 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
 
   // Renommer une séquence
   const renameSequence = (sequenceId: string, newName: string): boolean => {
-    const sequence = project.value.sequences.find(seq => seq.id === sequenceId);
+    const sequence = project.value.sequences.find(
+      (seq) => seq.id === sequenceId,
+    );
     if (!sequence) return false;
 
     sequence.name = newName;
@@ -126,7 +198,9 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
 
   // Dupliquer une séquence
   const duplicateSequence = (sequenceId: string): string | null => {
-    const sequence = project.value.sequences.find(seq => seq.id === sequenceId);
+    const sequence = project.value.sequences.find(
+      (seq) => seq.id === sequenceId,
+    );
     if (!sequence) return null;
 
     const newSequence: Sequence = {
@@ -137,6 +211,8 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       cols: sequence.cols,
       createdAt: new Date(),
       updatedAt: new Date(),
+      volume: sequence.volume,
+      reverb: sequence.reverb,
     };
 
     project.value.sequences.push(newSequence);
@@ -151,7 +227,9 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       return true;
     }
 
-    const sequence = project.value.sequences.find(seq => seq.id === sequenceId);
+    const sequence = project.value.sequences.find(
+      (seq) => seq.id === sequenceId,
+    );
     if (!sequence) return false;
 
     project.value.activeSequenceId = sequenceId;
@@ -160,9 +238,12 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
 
   // Réorganiser les séquences
   const reorderSequences = (fromIndex: number, toIndex: number): boolean => {
-    if (fromIndex < 0 || toIndex < 0 || 
-        fromIndex >= project.value.sequences.length || 
-        toIndex >= project.value.sequences.length) {
+    if (
+      fromIndex < 0 ||
+      toIndex < 0 ||
+      fromIndex >= project.value.sequences.length ||
+      toIndex >= project.value.sequences.length
+    ) {
       return false;
     }
 
@@ -188,14 +269,14 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       if (!saved) return false;
 
       const data = JSON.parse(saved) as SequencerProject;
-      
+
       // Validation basique
       if (!data.sequences || !Array.isArray(data.sequences)) return false;
 
       // Convertir les dates
       data.createdAt = new Date(data.createdAt);
       data.updatedAt = new Date(data.updatedAt);
-      data.sequences.forEach(seq => {
+      data.sequences.forEach((seq) => {
         seq.createdAt = new Date(seq.createdAt);
         seq.updatedAt = new Date(seq.updatedAt);
       });
@@ -215,7 +296,7 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(dataBlob);
-    link.download = `${project.value.projectName.replace(/[^a-z0-9]/gi, '_')}-${new Date().toISOString().split("T")[0]}.json`;
+    link.download = `${project.value.projectName.replace(/[^a-z0-9]/gi, "_")}-${new Date().toISOString().split("T")[0]}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -256,7 +337,9 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
             resolve(true);
           } catch (error) {
             console.error("Erreur lors de l'import:", error);
-            alert("Erreur lors du chargement du fichier. Vérifiez le format JSON.");
+            alert(
+              "Erreur lors du chargement du fichier. Vérifiez le format JSON.",
+            );
             resolve(false);
           }
         };
@@ -271,7 +354,10 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
   };
 
   // Détecter si c'est un projet avec l'ancien système de notes
-  const isLegacyNoteSystem = (version: string | undefined, sequences: any[]): boolean => {
+  const isLegacyNoteSystem = (
+    version: string | undefined,
+    sequences: any[],
+  ): boolean => {
     // Si la version est explicitement "2.0", c'est le nouveau système
     if (version === "2.0") {
       return false;
@@ -279,62 +365,207 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
 
     // Si la version est absente ou différente, vérifier avec les coordonnées Y
     // Ancien système avait 36 notes max (y de 0 à 35)
-    return sequences.some(seq =>
-      seq.layout?.some((note: any) => note.y >= 36)
-    ) === false && sequences.some(seq => seq.layout?.length > 0);
+    return (
+      sequences.some((seq) => seq.layout?.some((note: any) => note.y >= 36)) ===
+        false && sequences.some((seq) => seq.layout?.length > 0)
+    );
   };
 
   // Migration des coordonnées Y de l'ancien système (36 notes) vers le nouveau (87 notes)
   const migrateNoteCoordinates = (oldY: number): number => {
     // Ancien système : C6 à C#3 (36 notes)
     const oldNotes = [
-      "C6", "B5", "A#5", "A5", "G#5", "G5", "F#5", "F5", "E5", "D#5", "D5", "C#5", "C5",
-      "B4", "A#4", "A4", "G#4", "G4", "F#4", "F4", "E4", "D#4", "D4", "C#4", "C4",
-      "B3", "A#3", "A3", "G#3", "G3", "F#3", "F3", "E3", "D#3", "D3", "C#3"
+      "C6",
+      "B5",
+      "A#5",
+      "A5",
+      "G#5",
+      "G5",
+      "F#5",
+      "F5",
+      "E5",
+      "D#5",
+      "D5",
+      "C#5",
+      "C5",
+      "B4",
+      "A#4",
+      "A4",
+      "G#4",
+      "G4",
+      "F#4",
+      "F4",
+      "E4",
+      "D#4",
+      "D4",
+      "C#4",
+      "C4",
+      "B3",
+      "A#3",
+      "A3",
+      "G#3",
+      "G3",
+      "F#3",
+      "F3",
+      "E3",
+      "D#3",
+      "D3",
+      "C#3",
     ];
-    
+
     // Nouveau système : C8 à A0 (87 notes)
     const newNotes = [
       "C8",
-      "B7", "A#7", "A7", "G#7", "G7", "F#7", "F7", "E7", "D#7", "D7", "C#7", "C7",
-      "B6", "A#6", "A6", "G#6", "G6", "F#6", "F6", "E6", "D#6", "D6", "C#6", "C6",
-      "B5", "A#5", "A5", "G#5", "G5", "F#5", "F5", "E5", "D#5", "D5", "C#5", "C5",
-      "B4", "A#4", "A4", "G#4", "G4", "F#4", "F4", "E4", "D#4", "D4", "C#4", "C4",
-      "B3", "A#3", "A3", "G#3", "G3", "F#3", "F3", "E3", "D#3", "D3", "C#3", "C3",
-      "B2", "A#2", "A2", "G#2", "G2", "F#2", "F2", "E2", "D#2", "D2", "C#2", "C2",
-      "B1", "A#1", "A1", "G#1", "G1", "F#1", "F1", "E1", "D#1", "D1", "C#1", "C1",
-      "B0", "A#0", "A0"
+      "B7",
+      "A#7",
+      "A7",
+      "G#7",
+      "G7",
+      "F#7",
+      "F7",
+      "E7",
+      "D#7",
+      "D7",
+      "C#7",
+      "C7",
+      "B6",
+      "A#6",
+      "A6",
+      "G#6",
+      "G6",
+      "F#6",
+      "F6",
+      "E6",
+      "D#6",
+      "D6",
+      "C#6",
+      "C6",
+      "B5",
+      "A#5",
+      "A5",
+      "G#5",
+      "G5",
+      "F#5",
+      "F5",
+      "E5",
+      "D#5",
+      "D5",
+      "C#5",
+      "C5",
+      "B4",
+      "A#4",
+      "A4",
+      "G#4",
+      "G4",
+      "F#4",
+      "F4",
+      "E4",
+      "D#4",
+      "D4",
+      "C#4",
+      "C4",
+      "B3",
+      "A#3",
+      "A3",
+      "G#3",
+      "G3",
+      "F#3",
+      "F3",
+      "E3",
+      "D#3",
+      "D3",
+      "C#3",
+      "C3",
+      "B2",
+      "A#2",
+      "A2",
+      "G#2",
+      "G2",
+      "F#2",
+      "F2",
+      "E2",
+      "D#2",
+      "D2",
+      "C#2",
+      "C2",
+      "B1",
+      "A#1",
+      "A1",
+      "G#1",
+      "G1",
+      "F#1",
+      "F1",
+      "E1",
+      "D#1",
+      "D1",
+      "C#1",
+      "C1",
+      "B0",
+      "A#0",
+      "A0",
     ];
 
     // Si l'ancien Y est valide, trouver la note correspondante et sa nouvelle position
     if (oldY >= 0 && oldY < oldNotes.length) {
       const noteName = oldNotes[oldY];
-      const newIndex = newNotes.findIndex(n => n === noteName);
+      const newIndex = newNotes.findIndex((n) => n === noteName);
       return newIndex >= 0 ? newIndex : oldY; // Fallback vers oldY si pas trouvé
     }
-    
+
     return oldY; // Retourner l'ancienne valeur si hors limites
+  };
+
+  // Migrer l'ancien système EQ (bass/mid/treble) vers le nouveau (eqBands)
+  const migrateEQFromLegacy = (data: any): EQBand[] => {
+    const bands = cloneEQBands();
+    if (data.bass !== undefined) {
+      const bassBand = bands.find((b: EQBand) => b.id === "bass");
+      if (bassBand) bassBand.gain = data.bass;
+    }
+    if (data.mid !== undefined) {
+      const midBand = bands.find((b: EQBand) => b.id === "mid");
+      if (midBand) midBand.gain = data.mid;
+    }
+    if (data.treble !== undefined) {
+      const trebleBand = bands.find((b: EQBand) => b.id === "brilliance");
+      if (trebleBand) trebleBand.gain = data.treble;
+    }
+    return bands;
   };
 
   // Charger les données d'un projet (fonction publique)
   const loadProjectData = (data: any): void => {
+    // Déterminer les bandes EQ (nouveau système ou migration)
+    let eqBands: EQBand[];
+    if (data.eqBands && Array.isArray(data.eqBands)) {
+      eqBands = data.eqBands;
+    } else {
+      eqBands = migrateEQFromLegacy(data);
+    }
+
     const newProject: SequencerProject = {
       sequences: data.sequences || [],
       activeSequenceId: data.activeSequenceId || null,
       projectName: data.projectName || "Projet Importé",
-      version: data.version || "2.0",
+      version: data.version || "2.1",
       createdAt: new Date(data.createdAt || new Date()),
       updatedAt: new Date(data.updatedAt || new Date()),
+      volume: data.volume ?? DEFAULT_VOLUME,
+      reverb: data.reverb ?? DEFAULT_REVERB,
+      eqBands,
     };
 
     // Détecter si c'est un projet avec l'ancien système de notes
-    const needsMigration = isLegacyNoteSystem(data.version, newProject.sequences);
+    const needsMigration = isLegacyNoteSystem(
+      data.version,
+      newProject.sequences,
+    );
 
     // Convertir les dates des séquences et s'assurer que les IDs des notes sont uniques
-    newProject.sequences.forEach(seq => {
+    newProject.sequences.forEach((seq) => {
       seq.createdAt = new Date(seq.createdAt);
       seq.updatedAt = new Date(seq.updatedAt);
-      
+
       // Régénérer les IDs des notes et migrer les coordonnées Y si nécessaire
       seq.layout.forEach((note, index) => {
         // Migrer les coordonnées Y de l'ancien système vers le nouveau si nécessaire
@@ -343,7 +574,7 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
           note.y = migrateNoteCoordinates(oldY);
           console.log(`Migrated note Y from ${oldY} to ${note.y}`);
         }
-        
+
         // Régénérer les IDs pour éviter les doublons entre séquences
         note.i = generateNoteId(seq.id) + `_${index}`;
       });
@@ -368,6 +599,8 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       cols: data.cols || DEFAULT_COLS,
       createdAt: new Date(data.timestamp || new Date()),
       updatedAt: new Date(),
+      volume: DEFAULT_VOLUME,
+      reverb: DEFAULT_REVERB,
     };
 
     project.value.sequences.push(newSequence);
@@ -404,6 +637,14 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     layout,
     tempo,
     cols,
+    volume,
+    reverb,
+    eqBands,
+    updateEQBand,
+    // Legacy (read-only)
+    bass,
+    mid,
+    treble,
 
     // Actions pour les séquences
     createSequence,
