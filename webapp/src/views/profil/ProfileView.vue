@@ -285,7 +285,7 @@ onMounted(() => {
   align-items: flex-start;
   margin-bottom: 2rem;
   padding-bottom: 2rem;
-  border-bottom: 2px solid var(--color-border-secondary);
+  border-bottom: 2px solid var(--color-accent3);
 }
 
 .profile-info {
@@ -298,7 +298,7 @@ onMounted(() => {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--color-accent);
+  background: var(--color-accent2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -340,7 +340,7 @@ onMounted(() => {
   padding: 2rem;
   background: var(--color-background-secondary);
   border-radius: 12px;
-  border: 1px solid var(--color-border-secondary);
+  border: 1px solid var(--color-accent3);
 }
 
 .stat-item {

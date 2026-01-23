@@ -3,7 +3,7 @@
     <div class="parallax-viewport">
       <!-- Layer 0: Stars (slowest) -->
       <div class="parallax-layer layer-0" ref="layer0">
-        <StarfieldLayer :count="150" />
+        <!-- <StarfieldLayer :count="150" /> -->
       </div>
 
       <!-- Layer 1: Gradient Orbs -->
@@ -33,80 +33,77 @@
 
     <!-- Noise overlay -->
     <div class="noise-overlay"></div>
-
-    <!-- Vignette -->
-    <div class="vignette-overlay"></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useGsap } from '../../../composables/useGsap'
-import { useParallax } from '../../../composables/useParallax'
-import StarfieldLayer from './StarfieldLayer.vue'
-import FloatingElements from './FloatingElements.vue'
+import { ref, onMounted } from "vue";
+import { useGsap } from "../../../composables/useGsap";
+import { useParallax } from "../../../composables/useParallax";
+// import StarfieldLayer from "./StarfieldLayer.vue";
+import FloatingElements from "./FloatingElements.vue";
 
-const containerRef = ref<HTMLElement | null>(null)
-const layer0 = ref<HTMLElement | null>(null)
-const layer1 = ref<HTMLElement | null>(null)
-const layer2 = ref<HTMLElement | null>(null)
-const layer3 = ref<HTMLElement | null>(null)
+const containerRef = ref<HTMLElement | null>(null);
+const layer0 = ref<HTMLElement | null>(null);
+const layer1 = ref<HTMLElement | null>(null);
+const layer2 = ref<HTMLElement | null>(null);
+const layer3 = ref<HTMLElement | null>(null);
 
-const { gsap, ScrollTrigger } = useGsap()
-const { addMouseParallax } = useParallax(containerRef)
+const { gsap, ScrollTrigger } = useGsap();
+const { addMouseParallax } = useParallax(containerRef);
 
 onMounted(() => {
   if (layer0.value) {
     gsap.to(layer0.value, {
       y: () => ScrollTrigger.maxScroll(window) * 0.1,
-      ease: 'none',
+      ease: "none",
       scrollTrigger: {
-        start: 'top top',
-        end: 'bottom bottom',
+        start: "top top",
+        end: "bottom bottom",
         scrub: 0.3,
       },
-    })
+    });
   }
 
   if (layer1.value) {
     gsap.to(layer1.value, {
       y: () => ScrollTrigger.maxScroll(window) * 0.2,
-      ease: 'none',
+      ease: "none",
       scrollTrigger: {
-        start: 'top top',
-        end: 'bottom bottom',
+        start: "top top",
+        end: "bottom bottom",
         scrub: 0.5,
       },
-    })
-    addMouseParallax(layer1.value, 0.02)
+    });
+    addMouseParallax(layer1.value, 0.02);
   }
 
   if (layer2.value) {
     gsap.to(layer2.value, {
       y: () => ScrollTrigger.maxScroll(window) * 0.35,
-      ease: 'none',
+      ease: "none",
       scrollTrigger: {
-        start: 'top top',
-        end: 'bottom bottom',
+        start: "top top",
+        end: "bottom bottom",
         scrub: 0.7,
       },
-    })
-    addMouseParallax(layer2.value, 0.03)
+    });
+    addMouseParallax(layer2.value, 0.03);
   }
 
   if (layer3.value) {
     gsap.to(layer3.value, {
       y: () => ScrollTrigger.maxScroll(window) * 0.5,
-      ease: 'none',
+      ease: "none",
       scrollTrigger: {
-        start: 'top top',
-        end: 'bottom bottom',
+        start: "top top",
+        end: "bottom bottom",
         scrub: 1,
       },
-    })
-    addMouseParallax(layer3.value, 0.04)
+    });
+    addMouseParallax(layer3.value, 0.04);
   }
-})
+});
 </script>
 
 <style scoped>
@@ -115,7 +112,7 @@ onMounted(() => {
   width: 100%;
   min-height: 100vh;
   overflow: visible;
-  background: linear-gradient(180deg, #060b17 0%, #0d1428 50%, #0a1020 100%);
+  background: linear-gradient(180deg, #170209 0%, #21030d 50%, #320917 100%);
 }
 
 .parallax-viewport {
@@ -170,7 +167,11 @@ onMounted(() => {
 .orb-1 {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(255, 210, 105, 0.4) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 210, 105, 0.4) 0%,
+    transparent 70%
+  );
   top: 5%;
   right: -10%;
   animation-delay: 0s;
@@ -179,7 +180,11 @@ onMounted(() => {
 .orb-2 {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(145, 165, 249, 0.4) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(145, 165, 249, 0.4) 0%,
+    transparent 70%
+  );
   bottom: 20%;
   left: -10%;
   animation-delay: -7s;
@@ -188,7 +193,11 @@ onMounted(() => {
 .orb-3 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(124, 200, 245, 0.3) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(124, 200, 245, 0.3) 0%,
+    transparent 70%
+  );
   top: 40%;
   left: 30%;
   animation-delay: -14s;
@@ -265,17 +274,6 @@ onMounted(() => {
   z-index: 100;
   opacity: 0.03;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
-}
-
-.vignette-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 99;
-  background: radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(6, 11, 23, 0.8) 100%);
 }
 
 /* Mobile optimizations */

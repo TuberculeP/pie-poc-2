@@ -147,12 +147,12 @@ const handleClick = (event: MouseEvent) => {
 
 .base-button--ghost {
   background: transparent;
-  color: var(--color-secondary);
-  border: 1px solid var(--color-secondary);
+  color: var(--color-accent3);
+  border: 1px solid var(--color-accent3);
 }
 
 .base-button--ghost:hover:not(:disabled) {
-  background: var(--color-secondary);
+  background: var(--color-accent3);
   color: var(--color-white);
   transform: translateY(-1px);
 }

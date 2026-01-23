@@ -3,7 +3,7 @@
     <div class="section-container">
       <!-- Header -->
       <div class="section-header" :class="{ visible: isVisible }">
-        <span class="section-tag">Tout inclus</span>
+        <!-- <span class="section-tag">Tout inclus</span> -->
         <h2 class="section-title">Inclus de base</h2>
         <p class="section-subtitle">
           Cliquez sur une catégorie pour découvrir ce que BLOOP vous offre.
@@ -18,7 +18,7 @@
           class="category-card"
           :class="{
             visible: isVisible,
-            expanded: expandedCard === catIndex
+            expanded: expandedCard === catIndex,
           }"
           :style="{ '--index': catIndex }"
           @click="toggleCard(catIndex)"
@@ -30,10 +30,19 @@
             </div>
             <div class="card-info">
               <h3 class="card-title">{{ category.title }}</h3>
-              <span class="card-count">{{ category.features.length }} fonctionnalités</span>
+              <span class="card-count"
+                >{{ category.features.length }} fonctionnalités</span
+              >
             </div>
             <div class="expand-indicator">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <path d="M12 5v14M5 12h14" />
               </svg>
             </div>
@@ -64,152 +73,247 @@
     <div class="section-bg">
       <div class="bg-gradient"></div>
       <div class="bg-particles">
-        <div v-for="n in 15" :key="n" class="particle" :style="getParticleStyle(n)"></div>
+        <div
+          v-for="n in 15"
+          :key="n"
+          class="particle"
+          :style="getParticleStyle(n)"
+        ></div>
       </div>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, h, type Component } from 'vue'
+import { ref, onMounted, onUnmounted, h, type Component } from "vue";
 
-const sectionRef = ref<HTMLElement | null>(null)
-const isVisible = ref(false)
-const expandedCard = ref<number | null>(null)
+const sectionRef = ref<HTMLElement | null>(null);
+const isVisible = ref(false);
+const expandedCard = ref<number | null>(null);
 
 const toggleCard = (index: number) => {
-  expandedCard.value = expandedCard.value === index ? null : index
-}
+  expandedCard.value = expandedCard.value === index ? null : index;
+};
 
 // SVG Icon components
 const ShieldIcon: Component = {
   render() {
-    return h('svg', { width: 32, height: 32, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
-      h('path', { d: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' })
-    ])
-  }
-}
+    return h(
+      "svg",
+      {
+        width: 32,
+        height: 32,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": 2,
+      },
+      [h("path", { d: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" })],
+    );
+  },
+};
 
 const BoltIcon: Component = {
   render() {
-    return h('svg', { width: 32, height: 32, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
-      h('polygon', { points: '13 2 3 14 12 14 11 22 21 10 12 10 13 2' })
-    ])
-  }
-}
+    return h(
+      "svg",
+      {
+        width: 32,
+        height: 32,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": 2,
+      },
+      [h("polygon", { points: "13 2 3 14 12 14 11 22 21 10 12 10 13 2" })],
+    );
+  },
+};
 
 const StarIcon: Component = {
   render() {
-    return h('svg', { width: 32, height: 32, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
-      h('path', { d: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' })
-    ])
-  }
-}
+    return h(
+      "svg",
+      {
+        width: 32,
+        height: 32,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": 2,
+      },
+      [
+        h("path", {
+          d: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
+        }),
+      ],
+    );
+  },
+};
 
 const MusicIcon: Component = {
   render() {
-    return h('svg', { width: 32, height: 32, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
-      h('path', { d: 'M9 18V5l12-2v13' }),
-      h('circle', { cx: 6, cy: 18, r: 3 }),
-      h('circle', { cx: 18, cy: 16, r: 3 })
-    ])
-  }
-}
+    return h(
+      "svg",
+      {
+        width: 32,
+        height: 32,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        "stroke-width": 2,
+      },
+      [
+        h("path", { d: "M9 18V5l12-2v13" }),
+        h("circle", { cx: 6, cy: 18, r: 3 }),
+        h("circle", { cx: 18, cy: 16, r: 3 }),
+      ],
+    );
+  },
+};
 
 // Categories data
 const categories = [
   {
-    id: 'security',
-    title: 'Sécurité & Stabilité',
+    id: "security",
+    title: "Sécurité & Stabilité",
     icon: ShieldIcon,
-    iconClass: 'security',
-    glowClass: 'glow-green',
+    iconClass: "security",
+    glowClass: "glow-green",
     features: [
-      { emoji: '🛡️', title: 'Connexion sécurisée', description: 'Sessions chiffrées SSL' },
-      { emoji: '🚨', title: 'Reprise automatique', description: 'Récupération après crash' },
-      { emoji: '🔒', title: 'Sessions isolées', description: 'Projets indépendants' },
-      { emoji: '🕵️', title: 'Protection cloud', description: 'Sauvegardes automatiques' }
-    ]
+      {
+        emoji: "🛡️",
+        title: "Connexion sécurisée",
+        description: "Sessions chiffrées SSL",
+      },
+      {
+        emoji: "🚨",
+        title: "Reprise automatique",
+        description: "Récupération après crash",
+      },
+      {
+        emoji: "🔒",
+        title: "Sessions isolées",
+        description: "Projets indépendants",
+      },
+      {
+        emoji: "🕵️",
+        title: "Protection cloud",
+        description: "Sauvegardes automatiques",
+      },
+    ],
   },
   {
-    id: 'performance',
-    title: 'Performance & Vitesse',
+    id: "performance",
+    title: "Performance & Vitesse",
     icon: BoltIcon,
-    iconClass: 'performance',
-    glowClass: 'glow-yellow',
+    iconClass: "performance",
+    glowClass: "glow-yellow",
     features: [
-      { emoji: '⚡', title: 'Audio temps réel', description: 'Zéro latence' },
-      { emoji: '🚀', title: 'Interface fluide', description: 'Réactivité maximale' },
-      { emoji: '🌐', title: 'Accès partout', description: 'Studio dans le cloud' },
-      { emoji: '🔗', title: 'Collaboration live', description: 'Travail en équipe' }
-    ]
+      { emoji: "⚡", title: "Audio temps réel", description: "Zéro latence" },
+      {
+        emoji: "🚀",
+        title: "Interface fluide",
+        description: "Réactivité maximale",
+      },
+      {
+        emoji: "🌐",
+        title: "Accès partout",
+        description: "Studio dans le cloud",
+      },
+      {
+        emoji: "🔗",
+        title: "Collaboration live",
+        description: "Travail en équipe",
+      },
+    ],
   },
   {
-    id: 'pro',
-    title: 'Outils Pro',
+    id: "pro",
+    title: "Outils Pro",
     icon: StarIcon,
-    iconClass: 'pro',
-    glowClass: 'glow-blue',
+    iconClass: "pro",
+    glowClass: "glow-blue",
     features: [
-      { emoji: '🎹', title: 'Piano roll', description: 'Composition intuitive' },
-      { emoji: '🎤', title: 'Enregistrement', description: 'Micro & instruments' },
-      { emoji: '🎛️', title: 'Effets live', description: 'EQ, reverb, delay...' },
-      { emoji: '📤', title: 'Export pro', description: 'MP3, WAV, stems' }
-    ]
+      {
+        emoji: "🎹",
+        title: "Piano roll",
+        description: "Composition intuitive",
+      },
+      {
+        emoji: "🎤",
+        title: "Enregistrement",
+        description: "Micro & instruments",
+      },
+      {
+        emoji: "🎛️",
+        title: "Effets live",
+        description: "EQ, reverb, delay...",
+      },
+      { emoji: "📤", title: "Export pro", description: "MP3, WAV, stems" },
+    ],
   },
   {
-    id: 'creative',
-    title: 'Création Musicale',
+    id: "creative",
+    title: "Création Musicale",
     icon: MusicIcon,
-    iconClass: 'creative',
-    glowClass: 'glow-purple',
+    iconClass: "creative",
+    glowClass: "glow-purple",
     features: [
-      { emoji: '📁', title: 'Import facile', description: 'Glissé-déposé' },
-      { emoji: '🧠', title: 'Interface intuitive', description: 'Prise en main rapide' },
-      { emoji: '🎨', title: 'Presets inclus', description: 'Sons prêts à l\'emploi' },
-      { emoji: '🔄', title: 'Historique', description: 'Annuler illimité' }
-    ]
-  }
-]
+      { emoji: "📁", title: "Import facile", description: "Glissé-déposé" },
+      {
+        emoji: "🧠",
+        title: "Interface intuitive",
+        description: "Prise en main rapide",
+      },
+      {
+        emoji: "🎨",
+        title: "Presets inclus",
+        description: "Sons prêts à l'emploi",
+      },
+      { emoji: "🔄", title: "Historique", description: "Annuler illimité" },
+    ],
+  },
+];
 
 // Generate particle styles
 const getParticleStyle = (n: number) => {
-  const size = Math.random() * 4 + 2
-  const left = Math.random() * 100
-  const delay = Math.random() * 5
-  const duration = Math.random() * 10 + 15
+  const size = Math.random() * 4 + 2;
+  const left = Math.random() * 100;
+  const delay = Math.random() * 5;
+  const duration = Math.random() * 10 + 15;
   return {
     width: `${size}px`,
     height: `${size}px`,
     left: `${left}%`,
     animationDelay: `${delay}s`,
-    animationDuration: `${duration}s`
-  }
-}
+    animationDuration: `${duration}s`,
+  };
+};
 
 // Intersection Observer
-let observer: IntersectionObserver | null = null
+let observer: IntersectionObserver | null = null;
 
 onMounted(() => {
   observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          isVisible.value = true
+          isVisible.value = true;
         }
-      })
+      });
     },
-    { threshold: 0.1 }
-  )
+    { threshold: 0.1 },
+  );
 
   if (sectionRef.value) {
-    observer.observe(sectionRef.value)
+    observer.observe(sectionRef.value);
   }
-})
+});
 
 onUnmounted(() => {
-  if (observer) observer.disconnect()
-})
+  if (observer) observer.disconnect();
+});
 </script>
 
 <style scoped>
@@ -379,25 +483,41 @@ onUnmounted(() => {
 }
 
 .card-icon.security {
-  background: linear-gradient(135deg, rgba(96, 189, 97, 0.2) 0%, rgba(96, 189, 97, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(96, 189, 97, 0.2) 0%,
+    rgba(96, 189, 97, 0.05) 100%
+  );
   color: var(--color-validate);
   border: 1px solid rgba(96, 189, 97, 0.3);
 }
 
 .card-icon.performance {
-  background: linear-gradient(135deg, rgba(255, 210, 105, 0.2) 0%, rgba(255, 210, 105, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 210, 105, 0.2) 0%,
+    rgba(255, 210, 105, 0.05) 100%
+  );
   color: var(--color-accent);
   border: 1px solid rgba(255, 210, 105, 0.3);
 }
 
 .card-icon.pro {
-  background: linear-gradient(135deg, rgba(145, 165, 249, 0.2) 0%, rgba(145, 165, 249, 0.05) 100%);
-  color: var(--color-secondary);
+  background: linear-gradient(
+    135deg,
+    rgba(145, 165, 249, 0.2) 0%,
+    rgba(145, 165, 249, 0.05) 100%
+  );
+  color: var(--color-warning);
   border: 1px solid rgba(145, 165, 249, 0.3);
 }
 
 .card-icon.creative {
-  background: linear-gradient(135deg, rgba(200, 145, 249, 0.2) 0%, rgba(200, 145, 249, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(200, 145, 249, 0.2) 0%,
+    rgba(200, 145, 249, 0.05) 100%
+  );
   color: #c891f9;
   border: 1px solid rgba(200, 145, 249, 0.3);
 }

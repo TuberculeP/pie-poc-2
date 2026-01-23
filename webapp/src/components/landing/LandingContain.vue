@@ -5,10 +5,10 @@
       <div class="hero-container">
         <!-- Hero Content -->
         <div class="hero-content" ref="heroContentRef">
-          <div class="hero-badge" ref="heroBadgeRef">
+          <!-- <div class="hero-badge" ref="heroBadgeRef">
             <span class="badge-dot"></span>
             <span>Studio musical nouvelle generation</span>
-          </div>
+          </div> -->
 
           <h1 class="hero-title" ref="heroTitleRef">
             <SplitText
@@ -30,14 +30,19 @@
           </h1>
 
           <p class="hero-description" ref="heroDescRef">
-            BLOOP revolutionne la creation musicale. Un studio professionnel dans votre navigateur, accessible partout,
-            a tout moment. Liberez votre creativite.
+            BLOOP revolutionne la creation musicale. Un studio professionnel
+            dans votre navigateur, accessible partout, a tout moment. Liberez
+            votre creativite.
           </p>
 
           <div class="hero-stats" ref="heroStatsRef">
             <div v-for="stat in stats" :key="stat.label" class="stat-item">
               <span class="stat-value">
-                <CountUp v-if="typeof stat.raw === 'number'" :target="stat.raw" :suffix="stat.suffix" />
+                <CountUp
+                  v-if="typeof stat.raw === 'number'"
+                  :target="stat.raw"
+                  :suffix="stat.suffix"
+                />
                 <span v-else>{{ stat.value }}</span>
               </span>
               <span class="stat-label">{{ stat.label }}</span>
@@ -48,7 +53,14 @@
             <router-link to="/app" class="btn-cta primary">
               <span class="btn-shine"></span>
               <span class="btn-content">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
                   <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
                 <span>Commencer gratuitement</span>
@@ -57,7 +69,14 @@
             <button class="btn-cta secondary" @click="scrollToFeatures">
               <span class="btn-content">
                 <span>Decouvrir</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <polyline points="19 12 12 19 5 12"></polyline>
                 </svg>
@@ -78,10 +97,19 @@
             </div>
             <div class="mockup-content">
               <div class="waveform-container">
-                <div v-for="i in 40" :key="i" class="wave-bar" :style="{ '--i': i }"></div>
+                <div
+                  v-for="i in 40"
+                  :key="i"
+                  class="wave-bar"
+                  :style="{ '--i': i }"
+                ></div>
               </div>
               <div class="track-lanes">
-                <div v-for="track in mockupTracks" :key="track.name" class="track">
+                <div
+                  v-for="track in mockupTracks"
+                  :key="track.name"
+                  class="track"
+                >
                   <span class="track-name">{{ track.name }}</span>
                   <div class="track-blocks">
                     <div
@@ -99,7 +127,12 @@
               </div>
               <div class="mockup-controls">
                 <div class="control-btn play">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                   </svg>
                 </div>
@@ -119,11 +152,17 @@
     <section class="features" id="features" ref="featuresRef">
       <div class="section-container">
         <div class="section-header">
-          <span class="section-tag">Fonctionnalites</span>
+          <!-- <span class="section-tag">Fonctionnalites</span> -->
           <h2 class="section-title">
-            <SplitText text="Tout ce dont vous avez besoin" animation-type="slide" trigger-start="top 85%" />
+            <SplitText
+              text="Tout ce dont vous avez besoin"
+              animation-type="slide"
+              trigger-start="top 85%"
+            />
           </h2>
-          <p class="section-subtitle">Des outils professionnels accessibles a tous les createurs</p>
+          <p class="section-subtitle">
+            Des outils professionnels accessibles a tous les createurs
+          </p>
         </div>
 
         <div class="features-grid" ref="featuresGridRef">
@@ -135,7 +174,13 @@
             :style="{ '--color': feature.color }"
           >
             <div class="feature-morph">
-              <MorphShape :size="60" :color="feature.color" from-shape="circle" to-shape="square" :scrub="1" />
+              <MorphShape
+                :size="60"
+                :color="feature.color"
+                from-shape="circle"
+                to-shape="square"
+                :scrub="1"
+              />
             </div>
             <div class="feature-icon">
               <component :is="feature.icon" />
@@ -152,21 +197,44 @@
     <section class="how-it-works" id="gallery" ref="howItWorksRef">
       <div class="section-container">
         <div class="section-header">
-          <span class="section-tag">Simple & Rapide</span>
+          <!-- <span class="section-tag">Simple & Rapide</span> -->
           <h2 class="section-title">
-            <SplitText text="Comment ca marche ?" animation-type="fade" trigger-start="top 85%" />
+            <SplitText
+              text="Comment ca marche ?"
+              animation-type="fade"
+              trigger-start="top 85%"
+            />
           </h2>
         </div>
 
         <div class="steps-container" ref="stepsContainerRef">
           <!-- SVG Line that draws itself -->
-          <svg class="steps-line-svg" ref="stepsLineSvgRef" viewBox="0 0 4 300" preserveAspectRatio="none">
+          <svg
+            class="steps-line-svg"
+            ref="stepsLineSvgRef"
+            viewBox="0 0 4 300"
+            preserveAspectRatio="none"
+          >
             <line class="line-bg" x1="2" y1="0" x2="2" y2="300" />
-            <line class="line-progress" ref="lineProgressRef" x1="2" y1="0" x2="2" y2="300" />
+            <line
+              class="line-progress"
+              ref="lineProgressRef"
+              x1="2"
+              y1="0"
+              x2="2"
+              y2="300"
+            />
           </svg>
 
-          <div v-for="(step, index) in steps" :key="step.title" class="step-item" :data-index="index">
-            <div class="step-number">{{ String(index + 1).padStart(2, '0') }}</div>
+          <div
+            v-for="(step, index) in steps"
+            :key="step.title"
+            class="step-item"
+            :data-index="index"
+          >
+            <div class="step-number">
+              {{ String(index + 1).padStart(2, "0") }}
+            </div>
             <div class="step-content">
               <h3 class="step-title">{{ step.title }}</h3>
               <p class="step-description">{{ step.description }}</p>
@@ -185,11 +253,17 @@
     <section class="pricing" id="about" ref="pricingRef">
       <div class="section-container">
         <div class="section-header">
-          <span class="section-tag">Tarifs</span>
+          <!-- <span class="section-tag">Tarifs</span> -->
           <h2 class="section-title">
-            <SplitText text="Choisissez votre formule" animation-type="rotate3d" trigger-start="top 85%" />
+            <SplitText
+              text="Choisissez votre formule"
+              animation-type="rotate3d"
+              trigger-start="top 85%"
+            />
           </h2>
-          <p class="section-subtitle">Commencez gratuitement, evoluez selon vos besoins</p>
+          <p class="section-subtitle">
+            Commencez gratuitement, evoluez selon vos besoins
+          </p>
         </div>
 
         <div class="pricing-grid" ref="pricingGridRef">
@@ -208,15 +282,29 @@
               <div class="plan-price">
                 <span class="currency">EUR</span>
                 <span class="amount">
-                  <CountUp :target="parseFloat(plan.price)" :decimals="plan.price.includes('.') ? 2 : 0" />
+                  <CountUp
+                    :target="parseFloat(plan.price)"
+                    :decimals="plan.price.includes('.') ? 2 : 0"
+                  />
                 </span>
                 <span class="period">/mois</span>
               </div>
               <p class="plan-description">{{ plan.description }}</p>
             </div>
             <ul class="plan-features">
-              <li v-for="feature in plan.features" :key="feature" class="plan-feature">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <li
+                v-for="feature in plan.features"
+                :key="feature"
+                class="plan-feature"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
                 <span>{{ feature }}</span>
@@ -238,23 +326,40 @@
       <div class="cta-bg">
         <div class="cta-gradient"></div>
         <div class="cta-particles" ref="ctaParticlesRef">
-          <div v-for="n in 20" :key="n" class="cta-particle" :style="getParticleStyle(n)"></div>
+          <div
+            v-for="n in 20"
+            :key="n"
+            class="cta-particle"
+            :style="getParticleStyle(n)"
+          ></div>
         </div>
       </div>
       <div class="section-container">
         <div class="cta-content" ref="ctaContentRef">
           <h2 class="cta-title">
-            <SplitText text="Pret a creer ?" animation-type="wave" trigger-start="top 80%" />
+            <SplitText
+              text="Prêt à créer ?"
+              animation-type="wave"
+              trigger-start="top 80%"
+            />
           </h2>
           <p class="cta-description">
-            Rejoignez des milliers de createurs qui utilisent BLOOP pour donner vie a leurs idees musicales.
+            Rejoignez des milliers de createurs qui utilisent BLOOP pour donner
+            vie a leurs idees musicales.
           </p>
           <div class="cta-actions">
             <router-link to="/app" class="btn-cta primary large">
               <span class="btn-shine"></span>
               <span class="btn-content">
                 <span>Lancer le studio</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
                 </svg>
@@ -271,7 +376,10 @@
                 class="trust-avatar"
               />
             </div>
-            <span>+<CountUp :target="20000" :separator="' '" /> createurs nous font confiance</span>
+            <span
+              >+<CountUp :target="20000" :separator="' '" /> createurs nous font
+              confiance</span
+            >
           </div>
         </div>
       </div>
@@ -280,62 +388,78 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, h, inject, type ComponentPublicInstance } from 'vue'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import LandingIncluded from './LandingIncluded.vue'
-import SplitText from './effects/SplitText.vue'
-import CountUp from './effects/CountUp.vue'
-import MorphShape from './effects/MorphShape.vue'
+import {
+  ref,
+  onMounted,
+  onUnmounted,
+  h,
+  inject,
+  type ComponentPublicInstance,
+} from "vue";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import LandingIncluded from "./LandingIncluded.vue";
+import SplitText from "./effects/SplitText.vue";
+import CountUp from "./effects/CountUp.vue";
+import MorphShape from "./effects/MorphShape.vue";
 
-gsap.registerPlugin(ScrollTrigger)
+gsap.registerPlugin(ScrollTrigger);
 
-const scrollTo = inject<(target: string | number | HTMLElement, options?: object) => void>('scrollTo')
+const scrollTo =
+  inject<(target: string | number | HTMLElement, options?: object) => void>(
+    "scrollTo",
+  );
 
 // Refs
-const heroRef = ref<HTMLElement | null>(null)
-const heroBadgeRef = ref<HTMLElement | null>(null)
-const heroDescRef = ref<HTMLElement | null>(null)
-const heroStatsRef = ref<HTMLElement | null>(null)
-const heroActionsRef = ref<HTMLElement | null>(null)
-const heroVisualRef = ref<HTMLElement | null>(null)
-const mockupRef = ref<HTMLElement | null>(null)
-const featuresGridRef = ref<HTMLElement | null>(null)
-const featureCardRefs = ref<HTMLElement[]>([])
-const stepsContainerRef = ref<HTMLElement | null>(null)
-const lineProgressRef = ref<SVGLineElement | null>(null)
-const pricingGridRef = ref<HTMLElement | null>(null)
-const pricingCardRefs = ref<HTMLElement[]>([])
-const ctaRef = ref<HTMLElement | null>(null)
-const ctaContentRef = ref<HTMLElement | null>(null)
-const ctaParticlesRef = ref<HTMLElement | null>(null)
+const heroRef = ref<HTMLElement | null>(null);
+const heroBadgeRef = ref<HTMLElement | null>(null);
+const heroDescRef = ref<HTMLElement | null>(null);
+const heroStatsRef = ref<HTMLElement | null>(null);
+const heroActionsRef = ref<HTMLElement | null>(null);
+const heroVisualRef = ref<HTMLElement | null>(null);
+const mockupRef = ref<HTMLElement | null>(null);
+const featuresGridRef = ref<HTMLElement | null>(null);
+const featureCardRefs = ref<HTMLElement[]>([]);
+const stepsContainerRef = ref<HTMLElement | null>(null);
+const lineProgressRef = ref<SVGLineElement | null>(null);
+const pricingGridRef = ref<HTMLElement | null>(null);
+const pricingCardRefs = ref<HTMLElement[]>([]);
+const ctaRef = ref<HTMLElement | null>(null);
+const ctaContentRef = ref<HTMLElement | null>(null);
+const ctaParticlesRef = ref<HTMLElement | null>(null);
 
-const setFeatureCardRef = (el: Element | ComponentPublicInstance | null, index: number) => {
-  if (el) featureCardRefs.value[index] = el as HTMLElement
-}
+const setFeatureCardRef = (
+  el: Element | ComponentPublicInstance | null,
+  index: number,
+) => {
+  if (el) featureCardRefs.value[index] = el as HTMLElement;
+};
 
-const setPricingCardRef = (el: Element | ComponentPublicInstance | null, index: number) => {
-  if (el) pricingCardRefs.value[index] = el as HTMLElement
-}
+const setPricingCardRef = (
+  el: Element | ComponentPublicInstance | null,
+  index: number,
+) => {
+  if (el) pricingCardRefs.value[index] = el as HTMLElement;
+};
 
 // Data
 const trustAvatars = [
-  'https://i.pravatar.cc/150?img=1',
-  'https://i.pravatar.cc/150?img=5',
-  'https://i.pravatar.cc/150?img=8',
-  'https://i.pravatar.cc/150?img=12',
-]
+  "https://i.pravatar.cc/150?img=1",
+  "https://i.pravatar.cc/150?img=5",
+  "https://i.pravatar.cc/150?img=8",
+  "https://i.pravatar.cc/150?img=12",
+];
 
 const stats = [
-  { value: '+20k', raw: 20000, suffix: '+', label: 'Createurs' },
-  { value: '100%', raw: 100, suffix: '%', label: 'Cloud' },
-  { value: 'infinity', label: 'Possibilites' },
-]
+  { value: "+20k", raw: 20000, suffix: "+", label: "Createurs" },
+  { value: "100%", raw: 100, suffix: "%", label: "Cloud" },
+  { value: "infinity", label: "Possibilites" },
+];
 
 const mockupTracks = [
   {
-    name: 'Drums',
-    color: '#ffd269',
+    name: "Drums",
+    color: "var(--color-accent)",
     blocks: [
       { start: 5, width: 25 },
       { start: 35, width: 30 },
@@ -343,257 +467,359 @@ const mockupTracks = [
     ],
   },
   {
-    name: 'Bass',
-    color: '#91a5f9',
+    name: "Bass",
+    color: "var(--color-accent2)",
     blocks: [
       { start: 10, width: 20 },
       { start: 40, width: 35 },
     ],
   },
   {
-    name: 'Synth',
-    color: '#7cc8f5',
+    name: "Synth",
+    color: "var(--color-secondary)",
     blocks: [
       { start: 0, width: 15 },
       { start: 20, width: 25 },
       { start: 55, width: 40 },
     ],
   },
-  { name: 'Vocals', color: '#60bd61', blocks: [{ start: 25, width: 45 }] },
-]
+  {
+    name: "Vocals",
+    color: "var(--color-success)",
+    blocks: [{ start: 25, width: 45 }],
+  },
+];
 
 // Icons
 const WaveformIcon = () =>
   h(
-    'svg',
-    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
-    [h('path', { d: 'M2 12h2l2-7 3 14 3-10 2 6 2-3h6' })],
-  )
+    "svg",
+    {
+      width: 24,
+      height: 24,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 2,
+    },
+    [h("path", { d: "M2 12h2l2-7 3 14 3-10 2 6 2-3h6" })],
+  );
 
 const CloudIcon = () =>
   h(
-    'svg',
-    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
-    [h('path', { d: 'M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z' })],
-  )
+    "svg",
+    {
+      width: 24,
+      height: 24,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 2,
+    },
+    [h("path", { d: "M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" })],
+  );
 
 const LayoutIcon = () =>
   h(
-    'svg',
-    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    "svg",
+    {
+      width: 24,
+      height: 24,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 2,
+    },
     [
-      h('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2, ry: 2 }),
-      h('line', { x1: 3, y1: 9, x2: 21, y2: 9 }),
-      h('line', { x1: 9, y1: 21, x2: 9, y2: 9 }),
+      h("rect", { x: 3, y: 3, width: 18, height: 18, rx: 2, ry: 2 }),
+      h("line", { x1: 3, y1: 9, x2: 21, y2: 9 }),
+      h("line", { x1: 9, y1: 21, x2: 9, y2: 9 }),
     ],
-  )
+  );
 
 const UsersIcon = () =>
   h(
-    'svg',
-    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    "svg",
+    {
+      width: 24,
+      height: 24,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 2,
+    },
     [
-      h('path', { d: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' }),
-      h('circle', { cx: 9, cy: 7, r: 4 }),
-      h('path', { d: 'M23 21v-2a4 4 0 0 0-3-3.87' }),
-      h('path', { d: 'M16 3.13a4 4 0 0 1 0 7.75' }),
+      h("path", { d: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" }),
+      h("circle", { cx: 9, cy: 7, r: 4 }),
+      h("path", { d: "M23 21v-2a4 4 0 0 0-3-3.87" }),
+      h("path", { d: "M16 3.13a4 4 0 0 1 0 7.75" }),
     ],
-  )
+  );
 
 const MicIcon = () =>
   h(
-    'svg',
-    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    "svg",
+    {
+      width: 24,
+      height: 24,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 2,
+    },
     [
-      h('path', { d: 'M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z' }),
-      h('path', { d: 'M19 10v2a7 7 0 0 1-14 0v-2' }),
-      h('line', { x1: 12, y1: 19, x2: 12, y2: 23 }),
-      h('line', { x1: 8, y1: 23, x2: 16, y2: 23 }),
+      h("path", { d: "M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" }),
+      h("path", { d: "M19 10v2a7 7 0 0 1-14 0v-2" }),
+      h("line", { x1: 12, y1: 19, x2: 12, y2: 23 }),
+      h("line", { x1: 8, y1: 23, x2: 16, y2: 23 }),
     ],
-  )
+  );
 
 const InfinityIcon = () =>
   h(
-    'svg',
-    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
-    [h('path', { d: 'M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z' })],
-  )
+    "svg",
+    {
+      width: 24,
+      height: 24,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 2,
+    },
+    [
+      h("path", {
+        d: "M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z",
+      }),
+    ],
+  );
 
 const UserPlusIcon = () =>
   h(
-    'svg',
-    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    "svg",
+    {
+      width: 24,
+      height: 24,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 2,
+    },
     [
-      h('path', { d: 'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' }),
-      h('circle', { cx: 8.5, cy: 7, r: 4 }),
-      h('line', { x1: 20, y1: 8, x2: 20, y2: 14 }),
-      h('line', { x1: 23, y1: 11, x2: 17, y2: 11 }),
+      h("path", { d: "M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" }),
+      h("circle", { cx: 8.5, cy: 7, r: 4 }),
+      h("line", { x1: 20, y1: 8, x2: 20, y2: 14 }),
+      h("line", { x1: 23, y1: 11, x2: 17, y2: 11 }),
     ],
-  )
+  );
 
 const SlidersIcon = () =>
   h(
-    'svg',
-    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    "svg",
+    {
+      width: 24,
+      height: 24,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 2,
+    },
     [
-      h('line', { x1: 4, y1: 21, x2: 4, y2: 14 }),
-      h('line', { x1: 4, y1: 10, x2: 4, y2: 3 }),
-      h('line', { x1: 12, y1: 21, x2: 12, y2: 12 }),
-      h('line', { x1: 12, y1: 8, x2: 12, y2: 3 }),
-      h('line', { x1: 20, y1: 21, x2: 20, y2: 16 }),
-      h('line', { x1: 20, y1: 12, x2: 20, y2: 3 }),
-      h('line', { x1: 1, y1: 14, x2: 7, y2: 14 }),
-      h('line', { x1: 9, y1: 8, x2: 15, y2: 8 }),
-      h('line', { x1: 17, y1: 16, x2: 23, y2: 16 }),
+      h("line", { x1: 4, y1: 21, x2: 4, y2: 14 }),
+      h("line", { x1: 4, y1: 10, x2: 4, y2: 3 }),
+      h("line", { x1: 12, y1: 21, x2: 12, y2: 12 }),
+      h("line", { x1: 12, y1: 8, x2: 12, y2: 3 }),
+      h("line", { x1: 20, y1: 21, x2: 20, y2: 16 }),
+      h("line", { x1: 20, y1: 12, x2: 20, y2: 3 }),
+      h("line", { x1: 1, y1: 14, x2: 7, y2: 14 }),
+      h("line", { x1: 9, y1: 8, x2: 15, y2: 8 }),
+      h("line", { x1: 17, y1: 16, x2: 23, y2: 16 }),
     ],
-  )
+  );
 
 const RocketIcon = () =>
   h(
-    'svg',
-    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    "svg",
+    {
+      width: 24,
+      height: 24,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 2,
+    },
     [
-      h('path', {
-        d: 'M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z',
+      h("path", {
+        d: "M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z",
       }),
-      h('path', { d: 'M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z' }),
-      h('path', { d: 'M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0' }),
-      h('path', { d: 'M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5' }),
+      h("path", {
+        d: "M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z",
+      }),
+      h("path", { d: "M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" }),
+      h("path", { d: "M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" }),
     ],
-  )
+  );
 
 const features = [
   {
     icon: WaveformIcon,
-    title: 'Audio professionnel',
-    description: "Qualite studio avec notre moteur audio haute fidelite et nos effets professionnels.",
-    color: '#ffd269',
+    title: "Audio professionnel",
+    description:
+      "Qualite studio avec notre moteur audio haute fidelite et nos effets professionnels.",
+    color: "#ffd269",
   },
   {
     icon: CloudIcon,
-    title: '100% Cloud',
-    description: "Vos projets sauvegardes automatiquement, accessibles depuis n'importe ou.",
-    color: '#91a5f9',
+    title: "100% Cloud",
+    description:
+      "Vos projets sauvegardes automatiquement, accessibles depuis n'importe ou.",
+    color: "#91a5f9",
   },
   {
     icon: LayoutIcon,
-    title: 'Interface intuitive',
-    description: 'Une experience utilisateur pensee pour la creativite, pas la complexite.',
-    color: '#7cc8f5',
+    title: "Interface intuitive",
+    description:
+      "Une experience utilisateur pensee pour la creativite, pas la complexite.",
+    color: "#7cc8f5",
   },
   {
     icon: UsersIcon,
-    title: 'Collaboration live',
-    description: 'Creez ensemble en temps reel, ou que vous soyez dans le monde.',
-    color: '#60bd61',
+    title: "Collaboration live",
+    description:
+      "Creez ensemble en temps reel, ou que vous soyez dans le monde.",
+    color: "#60bd61",
   },
   {
     icon: MicIcon,
-    title: 'Multi-pistes',
-    description: "Enregistrez et mixez autant de pistes que votre creativite l'exige.",
-    color: '#f59e0b',
+    title: "Multi-pistes",
+    description:
+      "Enregistrez et mixez autant de pistes que votre creativite l'exige.",
+    color: "#f59e0b",
   },
   {
     icon: InfinityIcon,
-    title: 'Sans limites',
-    description: 'Pistes, presets et exports illimites pour une creation sans frontieres.',
-    color: '#ec4899',
+    title: "Sans limites",
+    description:
+      "Pistes, presets et exports illimites pour une creation sans frontieres.",
+    color: "#ec4899",
   },
-]
+];
 
 const steps = [
   {
     icon: UserPlusIcon,
-    title: 'Creez votre compte',
-    description: 'Inscription gratuite en quelques secondes. Commencez a creer immediatement.',
+    title: "Creez votre compte",
+    description:
+      "Inscription gratuite en quelques secondes. Commencez a creer immediatement.",
   },
   {
     icon: SlidersIcon,
-    title: 'Configurez votre studio',
-    description: 'Choisissez vos instruments, effets et configurez votre espace de travail ideal.',
+    title: "Configurez votre studio",
+    description:
+      "Choisissez vos instruments, effets et configurez votre espace de travail ideal.",
   },
   {
     icon: RocketIcon,
-    title: 'Lancez-vous !',
-    description: 'Creez, collaborez et partagez vos creations avec le monde entier.',
+    title: "Lancez-vous !",
+    description:
+      "Creez, collaborez et partagez vos creations avec le monde entier.",
   },
-]
+];
 
 const plans = [
   {
-    name: 'Freemium',
-    price: '0',
-    description: 'Pour decouvrir BLOOP',
+    name: "Freemium",
+    price: "0",
+    description: "Pour decouvrir BLOOP",
     popular: false,
-    features: ['Accès à l’espace MAO limité', 'Plus de 20 000 boucles', 'Plus de 500 instruments et sons', 'Espace communautaire'],
-    cta: 'Commencer gratuitement',
+    features: [
+      "Accès à l’espace MAO limité",
+      "Plus de 20 000 boucles",
+      "Plus de 500 instruments et sons",
+      "Espace communautaire",
+    ],
+    cta: "Commencer gratuitement",
   },
   {
-    name: 'Medium',
-    price: '9.99',
-    description: 'Pour les createurs serieux',
+    name: "Medium",
+    price: "9.99",
+    description: "Pour les createurs serieux",
     popular: true,
     features: [
-      'Accès illimité à l’espace MAO',
-      'Plus de 30 000 boucles',
-      'Partage et collaboration',
-      'Espace communautaire enrichi',
-      'Support prioritaire',
+      "Accès illimité à l’espace MAO",
+      "Plus de 30 000 boucles",
+      "Partage et collaboration",
+      "Espace communautaire enrichi",
+      "Support prioritaire",
     ],
-    cta: 'Essai gratuit 14 jours',
+    cta: "Essai gratuit 14 jours",
   },
   {
-    name: 'Premium',
-    price: '19.99',
-    description: 'Pour les professionnels',
+    name: "Premium",
+    price: "19.99",
+    description: "Pour les professionnels",
     popular: false,
-    features: ['Accès illimité à l’espace MAO', 'Collaboration avancée', 'Real-time vocal tuning et + de 40 effets', 'Espace communautaire premiumc', 'Diffusion de podcast sur Spotify'],
-    cta: 'Contacter les ventes',
+    features: [
+      "Accès illimité à l’espace MAO",
+      "Collaboration avancée",
+      "Real-time vocal tuning et + de 40 effets",
+      "Espace communautaire premiumc",
+      "Diffusion de podcast sur Spotify",
+    ],
+    cta: "Contacter les ventes",
   },
-]
+];
 
 // Helper functions
 const getParticleStyle = (_n: number) => {
-  const random = (min: number, max: number) => Math.random() * (max - min) + min
+  const random = (min: number, max: number) =>
+    Math.random() * (max - min) + min;
   return {
-    '--x': random(5, 95) + '%',
-    '--y': random(10, 90) + '%',
-    '--size': random(4, 12) + 'px',
-    '--duration': random(3, 8) + 's',
-    '--delay': random(0, 5) + 's',
-  }
-}
+    "--x": random(5, 95) + "%",
+    "--y": random(10, 90) + "%",
+    "--size": random(4, 12) + "px",
+    "--duration": random(3, 8) + "s",
+    "--delay": random(0, 5) + "s",
+  };
+};
 
 const scrollToFeatures = () => {
   if (scrollTo) {
-    scrollTo('#features', { duration: 1.2 })
+    scrollTo("#features", { duration: 1.2 });
   } else {
-    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+    document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
   }
-}
+};
 
 // GSAP Animations
 const initHeroAnimations = () => {
-  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+  const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
   // Initial states
-  gsap.set([heroBadgeRef.value, heroDescRef.value, heroStatsRef.value, heroActionsRef.value], {
-    opacity: 0,
-    y: 30,
-  })
-  gsap.set(heroVisualRef.value, { opacity: 0, x: 100, rotateY: -15 })
+  gsap.set(
+    [
+      heroBadgeRef.value,
+      heroDescRef.value,
+      heroStatsRef.value,
+      heroActionsRef.value,
+    ],
+    {
+      opacity: 0,
+      y: 30,
+    },
+  );
+  gsap.set(heroVisualRef.value, { opacity: 0, x: 100, rotateY: -15 });
 
   // Badge animation
-  tl.to(heroBadgeRef.value, { opacity: 1, y: 0, duration: 0.6 }, 0.3)
+  tl.to(heroBadgeRef.value, { opacity: 1, y: 0, duration: 0.6 }, 0.3);
 
   // Description
-  tl.to(heroDescRef.value, { opacity: 1, y: 0, duration: 0.6 }, 0.8)
+  tl.to(heroDescRef.value, { opacity: 1, y: 0, duration: 0.6 }, 0.8);
 
   // Stats
-  tl.to(heroStatsRef.value, { opacity: 1, y: 0, duration: 0.6 }, 1)
+  tl.to(heroStatsRef.value, { opacity: 1, y: 0, duration: 0.6 }, 1);
 
   // Actions
-  tl.to(heroActionsRef.value, { opacity: 1, y: 0, duration: 0.6 }, 1.2)
+  tl.to(heroActionsRef.value, { opacity: 1, y: 0, duration: 0.6 }, 1.2);
 
   // Visual with 3D rotation
   tl.to(
@@ -603,10 +829,10 @@ const initHeroAnimations = () => {
       x: 0,
       rotateY: 0,
       duration: 1.2,
-      ease: 'power2.out',
+      ease: "power2.out",
     },
     0.5,
-  )
+  );
 
   // Mockup 3D rotation on scroll
   if (mockupRef.value && heroRef.value) {
@@ -616,104 +842,107 @@ const initHeroAnimations = () => {
       scale: 0.95,
       scrollTrigger: {
         trigger: heroRef.value,
-        start: 'top top',
-        end: 'bottom top',
+        start: "top top",
+        end: "bottom top",
         scrub: 1,
       },
-    })
+    });
   }
-}
+};
 
 const initFeaturesAnimations = () => {
-  if (!featuresGridRef.value) return
+  if (!featuresGridRef.value) return;
 
   featureCardRefs.value.forEach((card) => {
-    if (!card) return
+    if (!card) return;
 
     gsap.from(card, {
       y: 80,
       opacity: 0,
       scale: 0.9,
-      borderRadius: '50%',
+      borderRadius: "50%",
       scrollTrigger: {
         trigger: card,
-        start: 'top 85%',
-        end: 'top 50%',
+        start: "top 85%",
+        end: "top 50%",
         scrub: 1,
       },
-    })
+    });
 
     // Icon rotation on scroll
-    const icon = card.querySelector('.feature-icon')
+    const icon = card.querySelector(".feature-icon");
     if (icon) {
       gsap.to(icon, {
         rotation: 360,
         scale: 1.1,
         scrollTrigger: {
           trigger: card,
-          start: 'top 80%',
-          end: 'top 30%',
+          start: "top 80%",
+          end: "top 30%",
           scrub: 2,
         },
-      })
+      });
     }
-  })
-}
+  });
+};
 
 const initStepsAnimations = () => {
-  if (!stepsContainerRef.value || !lineProgressRef.value) return
+  if (!stepsContainerRef.value || !lineProgressRef.value) return;
 
   // Self-drawing line
-  const lineLength = 300
-  gsap.set(lineProgressRef.value, { strokeDasharray: lineLength, strokeDashoffset: lineLength })
+  const lineLength = 300;
+  gsap.set(lineProgressRef.value, {
+    strokeDasharray: lineLength,
+    strokeDashoffset: lineLength,
+  });
 
   gsap.to(lineProgressRef.value, {
     strokeDashoffset: 0,
     scrollTrigger: {
       trigger: stepsContainerRef.value,
-      start: 'top 70%',
-      end: 'bottom 50%',
+      start: "top 70%",
+      end: "bottom 50%",
       scrub: 1,
     },
-  })
+  });
 
   // Step items animation
-  const stepItems = stepsContainerRef.value.querySelectorAll('.step-item')
+  const stepItems = stepsContainerRef.value.querySelectorAll(".step-item");
   stepItems.forEach((step, idx) => {
-    const stepNumber = step.querySelector('.step-number')
+    const stepNumber = step.querySelector(".step-number");
 
     gsap.from(step, {
       opacity: 0,
       x: idx % 2 === 0 ? -50 : 50,
       scrollTrigger: {
         trigger: step,
-        start: 'top 80%',
-        end: 'top 50%',
+        start: "top 80%",
+        end: "top 50%",
         scrub: 1,
       },
-    })
+    });
 
     // Step number activation
     gsap.to(stepNumber, {
-      backgroundColor: '#ffd269',
-      color: '#060b17',
+      backgroundColor: "var(--color-accent2)",
+      color: "#060b17",
       scale: 1.1,
-      boxShadow: '0 0 30px rgba(255, 210, 105, 0.5)',
+      boxShadow: "0 0 30px rgba(255, 210, 105, 0.5)",
       scrollTrigger: {
         trigger: step,
-        start: 'top 60%',
-        end: 'top 40%',
+        start: "top 60%",
+        end: "top 40%",
         scrub: 1,
       },
-    })
-  })
-}
+    });
+  });
+};
 
 const initPricingAnimations = () => {
-  if (!pricingGridRef.value) return
+  if (!pricingGridRef.value) return;
 
   pricingCardRefs.value.forEach((card) => {
-    if (!card) return
+    if (!card) return;
 
     // Cards emerge from depth
     gsap.from(card, {
@@ -723,109 +952,109 @@ const initPricingAnimations = () => {
       scale: 0.8,
       scrollTrigger: {
         trigger: card,
-        start: 'top 85%',
-        end: 'top 50%',
+        start: "top 85%",
+        end: "top 50%",
         scrub: 1,
       },
-    })
+    });
 
     // Popular card special glow
-    if (card.classList.contains('popular')) {
+    if (card.classList.contains("popular")) {
       gsap.to(card, {
-        boxShadow: '0 0 60px rgba(255, 210, 105, 0.4)',
+        boxShadow: "0 0 60px rgba(255, 210, 105, 0.4)",
         scrollTrigger: {
           trigger: card,
-          start: 'top 70%',
-          end: 'top 40%',
+          start: "top 70%",
+          end: "top 40%",
           scrub: 1,
         },
-      })
+      });
     }
-  })
-}
+  });
+};
 
 const initCtaAnimations = () => {
-  if (!ctaContentRef.value || !ctaParticlesRef.value) return
+  if (!ctaContentRef.value || !ctaParticlesRef.value) return;
 
   // CTA content dramatic reveal
-  gsap.from(ctaContentRef.value.querySelector('.cta-title'), {
+  gsap.from(ctaContentRef.value.querySelector(".cta-title"), {
     scale: 2,
     opacity: 0,
-    filter: 'blur(20px)',
+    filter: "blur(20px)",
     scrollTrigger: {
       trigger: ctaRef.value,
-      start: 'top 70%',
-      end: 'top 30%',
+      start: "top 70%",
+      end: "top 30%",
       scrub: 1,
     },
-  })
+  });
 
-  gsap.from(ctaContentRef.value.querySelector('.cta-description'), {
+  gsap.from(ctaContentRef.value.querySelector(".cta-description"), {
     y: 50,
     opacity: 0,
     scrollTrigger: {
       trigger: ctaRef.value,
-      start: 'top 60%',
-      end: 'top 30%',
+      start: "top 60%",
+      end: "top 30%",
       scrub: 1,
     },
-  })
+  });
 
-  gsap.from(ctaContentRef.value.querySelector('.cta-actions'), {
+  gsap.from(ctaContentRef.value.querySelector(".cta-actions"), {
     scale: 0,
     rotation: -180,
     scrollTrigger: {
       trigger: ctaRef.value,
-      start: 'top 50%',
-      end: 'top 20%',
+      start: "top 50%",
+      end: "top 20%",
       scrub: 1,
     },
-  })
+  });
 
   // Trust avatars stagger
-  const avatars = ctaContentRef.value.querySelectorAll('.trust-avatar')
+  const avatars = ctaContentRef.value.querySelectorAll(".trust-avatar");
   gsap.from(avatars, {
     x: -30,
     opacity: 0,
     stagger: 0.1,
     scrollTrigger: {
-      trigger: ctaContentRef.value.querySelector('.cta-trust'),
-      start: 'top 80%',
+      trigger: ctaContentRef.value.querySelector(".cta-trust"),
+      start: "top 80%",
     },
-  })
+  });
 
   // Particles converge toward center
-  const particles = ctaParticlesRef.value.querySelectorAll('.cta-particle')
+  const particles = ctaParticlesRef.value.querySelectorAll(".cta-particle");
   particles.forEach((particle) => {
     gsap.to(particle, {
-      x: '50vw',
-      y: '50%',
+      x: "50vw",
+      y: "50%",
       scale: 0,
       opacity: 0,
       scrollTrigger: {
         trigger: ctaRef.value,
-        start: 'top 50%',
-        end: 'bottom bottom',
+        start: "top 50%",
+        end: "bottom bottom",
         scrub: 2,
       },
-    })
-  })
-}
+    });
+  });
+};
 
 onMounted(() => {
   // Delay to ensure DOM is ready
   setTimeout(() => {
-    initHeroAnimations()
-    initFeaturesAnimations()
-    initStepsAnimations()
-    initPricingAnimations()
-    initCtaAnimations()
-  }, 100)
-})
+    initHeroAnimations();
+    initFeaturesAnimations();
+    initStepsAnimations();
+    initPricingAnimations();
+    initCtaAnimations();
+  }, 100);
+});
 
 onUnmounted(() => {
-  ScrollTrigger.getAll().forEach((trigger) => trigger.kill())
-})
+  ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+});
 </script>
 
 <style scoped>
@@ -921,7 +1150,12 @@ onUnmounted(() => {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-secondary) 50%, var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent) 0%,
+    var(--color-secondary) 50%,
+    var(--color-accent) 100%
+  );
   background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -995,7 +1229,11 @@ onUnmounted(() => {
 }
 
 .btn-cta.primary {
-  background: linear-gradient(135deg, var(--color-accent) 0%, #e5bc5c 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent) 0%,
+    var(--color-accent2) 100%
+  );
   color: var(--color-black);
   box-shadow: 0 4px 20px rgba(255, 210, 105, 0.3);
 }
@@ -1006,7 +1244,12 @@ onUnmounted(() => {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -1052,7 +1295,11 @@ onUnmounted(() => {
 .visual-glow {
   position: absolute;
   inset: -20%;
-  background: radial-gradient(circle at center, rgba(255, 210, 105, 0.15) 0%, transparent 60%);
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 210, 105, 0.15) 0%,
+    transparent 60%
+  );
   filter: blur(40px);
   animation: pulse-glow 4s ease-in-out infinite;
 }
@@ -1071,7 +1318,11 @@ onUnmounted(() => {
 
 .studio-mockup {
   position: relative;
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.9) 0%, rgba(6, 11, 23, 0.95) 100%);
+  background: linear-gradient(
+    145deg,
+    rgba(15, 23, 42, 0.9) 0%,
+    rgba(6, 11, 23, 0.95) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   overflow: hidden;
@@ -1137,7 +1388,11 @@ onUnmounted(() => {
 .wave-bar {
   width: 4px;
   height: 50%;
-  background: linear-gradient(180deg, var(--color-accent) 0%, var(--color-secondary) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--color-accent) 0%,
+    var(--color-accent3) 100%
+  );
   border-radius: 2px;
   animation: wave-dance 1.2s ease-in-out infinite;
   animation-delay: calc(var(--i) * 0.05s);
@@ -1241,7 +1496,11 @@ onUnmounted(() => {
   top: 0;
   width: 60%;
   height: 100%;
-  background: linear-gradient(90deg, var(--color-accent), var(--color-secondary));
+  background: linear-gradient(
+    90deg,
+    var(--color-accent),
+    var(--color-secondary)
+  );
   border-radius: 2px;
   animation: progress-move 8s linear infinite;
 }
@@ -1343,9 +1602,9 @@ onUnmounted(() => {
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-.feature-card:hover .feature-glow {
+/* .feature-card:hover .feature-glow {
   opacity: 1;
-}
+} */
 
 .feature-morph {
   position: absolute;
@@ -1360,7 +1619,11 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at top left, var(--color), transparent 60%);
+  background: radial-gradient(
+    circle at top left,
+    var(--color),
+    transparent 60%
+  );
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -1372,7 +1635,11 @@ onUnmounted(() => {
   justify-content: center;
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   margin-bottom: 1.5rem;
@@ -1397,7 +1664,12 @@ onUnmounted(() => {
 /* ==================== HOW IT WORKS ==================== */
 .how-it-works {
   padding: 8rem 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(255, 210, 105, 0.02) 50%, transparent 100%);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 210, 105, 0.02) 50%,
+    transparent 100%
+  );
 }
 
 .steps-container {
@@ -1515,7 +1787,11 @@ onUnmounted(() => {
 }
 
 .pricing-card.popular {
-  background: linear-gradient(145deg, rgba(255, 210, 105, 0.1) 0%, rgba(255, 210, 105, 0.02) 100%);
+  background: linear-gradient(
+    145deg,
+    rgba(255, 210, 105, 0.1) 0%,
+    rgba(255, 210, 105, 0.02) 100%
+  );
   border-color: rgba(255, 210, 105, 0.3);
   transform: scale(1.05);
 }
@@ -1530,7 +1806,11 @@ onUnmounted(() => {
   left: 50%;
   transform: translateX(-50%);
   padding: 0.5rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-accent) 0%, #e5bc5c 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent) 0%,
+    var(--color-accent2) 100%
+  );
   border-radius: 50px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -1621,7 +1901,11 @@ onUnmounted(() => {
 }
 
 .plan-btn.primary {
-  background: linear-gradient(135deg, var(--color-accent) 0%, #e5bc5c 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent) 0%,
+    var(--color-accent2) 100%
+  );
   border: none;
   color: var(--color-black);
 }
@@ -1646,7 +1930,11 @@ onUnmounted(() => {
 .cta-gradient {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, rgba(255, 210, 105, 0.1) 0%, transparent 60%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 210, 105, 0.1) 0%,
+    transparent 60%
+  );
 }
 
 .cta-particles {
@@ -1726,7 +2014,11 @@ onUnmounted(() => {
   border: 2px solid var(--color-black);
   margin-left: -10px;
   object-fit: cover;
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent) 0%,
+    var(--color-secondary) 100%
+  );
 }
 
 .trust-avatar:first-child {

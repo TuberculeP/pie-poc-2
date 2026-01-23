@@ -1,16 +1,27 @@
 <template>
-  <header class="main-header" :class="{ scrolled: isScrolled, 'menu-open': isMobileMenuOpen }">
+  <header
+    class="main-header"
+    :class="{ scrolled: isScrolled, 'menu-open': isMobileMenuOpen }"
+  >
     <div class="header-container">
       <!-- Logo avec animation -->
       <router-link to="/" class="logo-wrapper">
         <div class="logo-glow"></div>
-        <img src="../../assets/logo/logo_background_yellow.svg" alt="BLOOP" class="logo" />
+        <img
+          src="../../assets/logo/logo_background_yellow.svg"
+          alt="BLOOP"
+          class="logo"
+        />
       </router-link>
 
       <!-- Navigation principale -->
       <nav class="main-nav" :class="{ open: isMobileMenuOpen }">
         <ul class="nav-links">
-          <li v-for="(link, index) in navLinks" :key="link.name" :style="{ '--delay': index * 0.1 + 's' }">
+          <li
+            v-for="(link, index) in navLinks"
+            :key="link.name"
+            :style="{ '--delay': index * 0.1 + 's' }"
+          >
             <a :href="link.href" class="nav-link" @click="closeMobileMenu">
               <span class="nav-text">{{ link.name }}</span>
               <span class="nav-underline"></span>
@@ -26,8 +37,19 @@
               <span class="avatar-ring">
                 <span class="avatar">{{ userInitials }}</span>
               </span>
-              <span class="profile-name">{{ user?.firstName || 'Profil' }}</span>
-              <svg class="dropdown-icon" :class="{ rotated: showProfileMenu }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <span class="profile-name">{{
+                user?.firstName || "Profil"
+              }}</span>
+              <svg
+                class="dropdown-icon"
+                :class="{ rotated: showProfileMenu }"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </button>
@@ -36,15 +58,35 @@
               <div v-if="showProfileMenu" class="profile-dropdown">
                 <div class="dropdown-backdrop"></div>
                 <div class="dropdown-content">
-                  <router-link to="/profile" @click="closeProfileMenu" class="dropdown-item">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <router-link
+                    to="/profile"
+                    @click="closeProfileMenu"
+                    class="dropdown-item"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                      ></path>
                       <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                     <span>Mon Profil</span>
                   </router-link>
                   <button @click="handleLogout" class="dropdown-item logout">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
                       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                       <polyline points="16 17 21 12 16 7"></polyline>
                       <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -70,7 +112,11 @@
       </nav>
 
       <!-- Mobile menu toggle -->
-      <button class="mobile-toggle" @click="toggleMobileMenu" :class="{ active: isMobileMenuOpen }">
+      <button
+        class="mobile-toggle"
+        @click="toggleMobileMenu"
+        :class="{ active: isMobileMenuOpen }"
+      >
         <span class="toggle-line"></span>
         <span class="toggle-line"></span>
         <span class="toggle-line"></span>
@@ -85,128 +131,128 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '../../stores/authStore'
-import apiClient from '../../lib/utils/apiClient'
-import gsap from 'gsap'
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "../../stores/authStore";
+import apiClient from "../../lib/utils/apiClient";
+import gsap from "gsap";
 
-const router = useRouter()
-const authStore = useAuthStore()
+const router = useRouter();
+const authStore = useAuthStore();
 
 // Navigation links
 const navLinks = [
-  { name: 'Produit', href: '#features' },
-  { name: 'Galerie', href: '#gallery' },
-  { name: 'Blog', href: '/blog' },
-  { name: 'À propos', href: '#about' },
-  { name: 'Support', href: '#support' }
-]
+  { name: "Produit", href: "#features" },
+  { name: "Galerie", href: "#gallery" },
+  { name: "Blog", href: "/blog" },
+  { name: "À propos", href: "#about" },
+  { name: "Support", href: "#support" },
+];
 
 // State
-const isScrolled = ref(false)
-const scrollProgress = ref(0)
-const showProfileMenu = ref(false)
-const isMobileMenuOpen = ref(false)
+const isScrolled = ref(false);
+const scrollProgress = ref(0);
+const showProfileMenu = ref(false);
+const isMobileMenuOpen = ref(false);
 
 // Auth state
-const isAuthenticated = computed(() => authStore.isAuthenticated)
-const user = computed(() => authStore.user)
+const isAuthenticated = computed(() => authStore.isAuthenticated);
+const user = computed(() => authStore.user);
 
 const userInitials = computed(() => {
-  if (!user.value) return '?'
-  const firstName = user.value.firstName || ''
-  const lastName = user.value.lastName || ''
-  return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase()
-})
+  if (!user.value) return "?";
+  const firstName = user.value.firstName || "";
+  const lastName = user.value.lastName || "";
+  return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+});
 
 // Menu handlers
 const toggleProfileMenu = () => {
-  showProfileMenu.value = !showProfileMenu.value
-}
+  showProfileMenu.value = !showProfileMenu.value;
+};
 
 const closeProfileMenu = () => {
-  showProfileMenu.value = false
-}
+  showProfileMenu.value = false;
+};
 
 const toggleMobileMenu = () => {
-  isMobileMenuOpen.value = !isMobileMenuOpen.value
-  document.body.style.overflow = isMobileMenuOpen.value ? 'hidden' : ''
-}
+  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+  document.body.style.overflow = isMobileMenuOpen.value ? "hidden" : "";
+};
 
 const closeMobileMenu = () => {
-  isMobileMenuOpen.value = false
-  document.body.style.overflow = ''
-}
+  isMobileMenuOpen.value = false;
+  document.body.style.overflow = "";
+};
 
 // Click outside handler
 const handleClickOutside = (event: MouseEvent) => {
-  const target = event.target as HTMLElement
-  if (!target.closest('.profile-wrapper')) {
-    showProfileMenu.value = false
+  const target = event.target as HTMLElement;
+  if (!target.closest(".profile-wrapper")) {
+    showProfileMenu.value = false;
   }
-}
+};
 
 // Logout handler
 const handleLogout = async () => {
   try {
-    await apiClient.post('/auth/logout')
-    authStore.user = undefined
-    closeProfileMenu()
-    router.push('/')
+    await apiClient.post("/auth/logout");
+    authStore.user = undefined;
+    closeProfileMenu();
+    router.push("/");
   } catch (error) {
-    console.error('Erreur lors de la déconnexion:', error)
+    console.error("Erreur lors de la déconnexion:", error);
   }
-}
+};
 
 // Check auth
 const checkAuth = async () => {
   try {
-    const response = await apiClient.get<{ user: any }>('/auth/check')
+    const response = await apiClient.get<{ user: any }>("/auth/check");
     if (response.data?.user) {
-      authStore.user = response.data.user
+      authStore.user = response.data.user;
     }
   } catch {
-    authStore.user = undefined
+    authStore.user = undefined;
   }
-}
+};
 
 // Scroll handler
 const handleScroll = () => {
-  const scrollTop = window.scrollY
-  const docHeight = document.documentElement.scrollHeight - window.innerHeight
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
 
-  isScrolled.value = scrollTop > 50
-  scrollProgress.value = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0
-}
+  isScrolled.value = scrollTop > 50;
+  scrollProgress.value = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+};
 
 onMounted(() => {
-  checkAuth()
-  window.addEventListener('scroll', handleScroll, { passive: true })
-  document.addEventListener('click', handleClickOutside)
-  handleScroll()
+  checkAuth();
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  document.addEventListener("click", handleClickOutside);
+  handleScroll();
 
   // GSAP entrance animations
-  gsap.from('.logo-wrapper', {
+  gsap.from(".logo-wrapper", {
     opacity: 0,
     x: -30,
     duration: 0.8,
-    ease: 'power3.out',
-  })
+    ease: "power3.out",
+  });
 
-  gsap.from('.auth-section', {
+  gsap.from(".auth-section", {
     opacity: 0,
     x: 30,
     duration: 0.8,
-    ease: 'power3.out',
-  })
-})
+    ease: "power3.out",
+  });
+});
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-  document.removeEventListener('click', handleClickOutside)
-  document.body.style.overflow = ''
-})
+  window.removeEventListener("scroll", handleScroll);
+  document.removeEventListener("click", handleClickOutside);
+  document.body.style.overflow = "";
+});
 </script>
 
 <style scoped>
@@ -221,10 +267,14 @@ onUnmounted(() => {
 }
 
 .main-header::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(6, 11, 23, 0.9) 0%, rgba(6, 11, 23, 0) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(6, 11, 23, 0.9) 0%,
+    rgba(6, 11, 23, 0) 100%
+  );
   opacity: 1;
   transition: opacity 0.4s ease;
   pointer-events: none;
@@ -263,7 +313,11 @@ onUnmounted(() => {
   position: absolute;
   width: 60px;
   height: 60px;
-  background: radial-gradient(circle, rgba(255, 210, 105, 0.4) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 210, 105, 0.4) 0%,
+    transparent 70%
+  );
   border-radius: 50%;
   filter: blur(10px);
   opacity: 0;
@@ -276,8 +330,15 @@ onUnmounted(() => {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { transform: scale(1); opacity: 0.4; }
-  50% { transform: scale(1.2); opacity: 0.7; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
 }
 
 .logo {
@@ -348,7 +409,12 @@ onUnmounted(() => {
   transform: translateX(-50%) scaleX(0);
   width: 30px;
   height: 2px;
-  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent),
+    transparent
+  );
   border-radius: 2px;
   transition: transform 0.3s ease;
 }
@@ -388,10 +454,14 @@ onUnmounted(() => {
 }
 
 .btn-login::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%
+  );
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -408,7 +478,11 @@ onUnmounted(() => {
 .btn-register {
   position: relative;
   padding: 0.6rem 1.5rem;
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent) 0%,
+    var(--color-accent2) 100%
+  );
   color: var(--color-black);
   text-decoration: none;
   font-weight: 600;
@@ -430,7 +504,12 @@ onUnmounted(() => {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
   transition: left 0.5s ease;
 }
 
@@ -474,10 +553,14 @@ onUnmounted(() => {
 }
 
 .avatar-ring::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
-  background: linear-gradient(135deg, var(--color-accent), var(--color-secondary));
+  background: linear-gradient(
+    135deg,
+    var(--color-accent),
+    var(--color-secondary)
+  );
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -494,7 +577,11 @@ onUnmounted(() => {
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent) 0%,
+    var(--color-accent-hover) 100%
+  );
   border-radius: 50%;
   font-weight: 600;
   font-size: 0.85rem;
@@ -624,7 +711,11 @@ onUnmounted(() => {
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-accent), var(--color-secondary));
+  background: linear-gradient(
+    90deg,
+    var(--color-accent),
+    var(--color-secondary)
+  );
   transition: width 0.1s linear;
 }
 
@@ -655,7 +746,11 @@ onUnmounted(() => {
     right: -100%;
     width: 100%;
     height: 100vh;
-    background: linear-gradient(180deg, rgba(6, 11, 23, 0.98) 0%, rgba(4, 13, 26, 0.98) 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(6, 11, 23, 0.98) 0%,
+      rgba(4, 13, 26, 0.98) 100%
+    );
     backdrop-filter: blur(20px);
     flex-direction: column;
     justify-content: center;
