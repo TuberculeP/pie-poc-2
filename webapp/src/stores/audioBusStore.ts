@@ -44,6 +44,7 @@ export const useAudioBusStore = defineStore("audioBusStore", () => {
   const isInitialized = ref(true);
 
   const setGain = (node: GainNode, value: number) => {
+    if (!Number.isFinite(value)) return;
     const v = value === 0 ? 0.001 : value;
     node.gain.exponentialRampToValueAtTime(v, audioContext.currentTime + 0.05);
   };
