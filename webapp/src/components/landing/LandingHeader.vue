@@ -16,7 +16,15 @@
       <!-- Bouton profil si connecté -->
       <li v-if="isAuthenticated" class="profile-menu">
         <a href="#" @click.prevent="toggleProfileMenu" class="profile-link">
-          <span class="profile-avatar">{{ userInitials }}</span>
+          <img
+            v-if="user?.profilePicture"
+            :src="user.profilePicture"
+            :alt="`${user?.firstName} ${user?.lastName}`"
+            class="avatar-image"
+          />
+          <div v-else class="profile-avatar">
+            {{ userInitials }}
+          </div>
           <span class="profile-name">{{ user?.firstName || "Profil" }}</span>
           <span class="dropdown-arrow">▼</span>
         </a>
@@ -402,6 +410,13 @@ header.sticky .toggle span {
   font-weight: 600;
   font-size: 14px;
   color: var(--color-white);
+}
+
+.avatar-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .profile-name {

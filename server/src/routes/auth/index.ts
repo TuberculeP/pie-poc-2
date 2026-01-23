@@ -8,7 +8,7 @@ const authRouter = Router();
 
 authRouter.post("/register", async (req, res) => {
   // Validate user
-  const { firstName, lastName, email, password } = req.body;
+  const { firstName, lastName, email, password, profilePicture } = req.body;
   if (!firstName || !lastName || !email || !password) {
     res.status(400).json({ message: "All fields are required" });
     return;
@@ -22,6 +22,7 @@ authRouter.post("/register", async (req, res) => {
   newUser.lastName = lastName;
   newUser.email = email;
   newUser.password = hash;
+  newUser.profilePicture = profilePicture;
 
   // Save user to the database
   const userRepository = pg.getRepository(User);

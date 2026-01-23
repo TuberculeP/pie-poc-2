@@ -3,9 +3,11 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import { User } from "./User";
+import { MessageLike } from "./MessageLike";
 
 @Entity()
 export class DirectMessage {
@@ -32,4 +34,7 @@ export class DirectMessage {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @OneToMany(() => MessageLike, (like) => like.message, { cascade: true })
+  likes: MessageLike[];
 }
