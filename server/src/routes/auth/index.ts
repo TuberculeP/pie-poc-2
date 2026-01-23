@@ -104,19 +104,21 @@ authRouter.post("/forgot-password", async (req, res) => {
   const origin = req.headers.origin || `${req.protocol}://${req.headers.host}`;
   const resetUrl = `${origin}/reset-password?token=${resetToken}`;
 
-  await resend.emails.send({
-    from: "do-not-reply@bloop-on.cloud",
-    to: email,
-    subject: "Réinitialisation de votre mot de passe",
-    html: `
-      <h2>Réinitialisation de mot de passe</h2>
-      <p>Vous avez demandé à réinitialiser votre mot de passe.</p>
-      <p>Cliquez sur le lien ci-dessous pour définir un nouveau mot de passe :</p>
-      <a href="${resetUrl}">Réinitialiser mon mot de passe</a>
-      <p>Ce lien expire dans 1 heure.</p>
-      <p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
-    `,
-  });
+  if (resend) {
+    await resend.emails.send({
+      from: "do-not-reply@bloop-on.cloud",
+      to: email,
+      subject: "Réinitialisation de votre mot de passe",
+      html: `
+        <h2>Réinitialisation de mot de passe</h2>
+        <p>Vous avez demandé à réinitialiser votre mot de passe.</p>
+        <p>Cliquez sur le lien ci-dessous pour définir un nouveau mot de passe :</p>
+        <a href="${resetUrl}">Réinitialiser mon mot de passe</a>
+        <p>Ce lien expire dans 1 heure.</p>
+        <p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
+      `,
+    });
+  }
 
   res.status(200).json({ message: "Password reset email sent" });
 });
