@@ -1,8 +1,11 @@
+import passport from "passport";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { Router } from "express";
 import { User } from "../../config/entities/User";
 import pg from "../../config/db.config";
-import bcrypt from "bcrypt";
-import passport from "passport";
+import resend from "../../config/resend.config";
+import { isGoogleAuthEnabled } from "../../config/passport.config";
 
 const authRouter = Router();
 
@@ -75,5 +78,116 @@ authRouter.post("/logout", (req, res) => {
     res.status(200).json({ message: "Logout successful" });
   });
 });
+
+authRouter.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    res.status(400).json({ message: "Email is required" });
+    return;
+  }
+
+  const userRepository = pg.getRepository(User);
+  const user = await userRepository.findOne({ where: { email } });
+
+  if (!user) {
+    res.status(200).json({ message: "Password reset email sent" });
+    return;
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetTokenExpiry = new Date(Date.now() + 3600000);
+
+  user.resetToken = resetToken;
+  user.resetTokenExpiry = resetTokenExpiry;
+  await userRepository.save(user);
+
+  const origin = req.headers.origin || `${req.protocol}://${req.headers.host}`;
+  const resetUrl = `${origin}/reset-password?token=${resetToken}`;
+
+  await resend.emails.send({
+    from: "do-not-reply@bloop-on.cloud",
+    to: email,
+    subject: "Réinitialisation de votre mot de passe",
+    html: `
+      <h2>Réinitialisation de mot de passe</h2>
+      <p>Vous avez demandé à réinitialiser votre mot de passe.</p>
+      <p>Cliquez sur le lien ci-dessous pour définir un nouveau mot de passe :</p>
+      <a href="${resetUrl}">Réinitialiser mon mot de passe</a>
+      <p>Ce lien expire dans 1 heure.</p>
+      <p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
+    `,
+  });
+
+  res.status(200).json({ message: "Password reset email sent" });
+});
+
+authRouter.post("/reset-password", async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) {
+    res.status(400).json({ message: "Token and password are required" });
+    return;
+  }
+
+  const userRepository = pg.getRepository(User);
+  const user = await userRepository.findOne({ where: { resetToken: token } });
+
+  if (!user) {
+    res.status(400).json({ message: "Invalid or expired token" });
+    return;
+  }
+
+  if (!user.resetTokenExpiry || user.resetTokenExpiry < new Date()) {
+    res.status(400).json({ message: "Token has expired" });
+    return;
+  }
+
+  user.password = bcrypt.hashSync(password, 10);
+  user.resetToken = null as any;
+  user.resetTokenExpiry = null as any;
+  await userRepository.save(user);
+
+  res.status(200).json({ message: "Password updated successfully" });
+});
+
+authRouter.get("/config", (_, res) => {
+  res.status(200).json({ googleAuthEnabled: isGoogleAuthEnabled() });
+});
+
+authRouter.get("/google", (req, res, next) => {
+  const origin = req.headers.origin || req.headers.referer || "/";
+  passport.authenticate("google", {
+    scope: ["profile", "email"],
+    state: Buffer.from(origin).toString("base64"),
+  })(req, res, next);
+});
+
+authRouter.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/login?error=google_auth_failed",
+  }),
+  (req, res) => {
+    const state = req.query.state as string;
+    let redirectUrl = "/";
+    if (state) {
+      try {
+        const decoded = Buffer.from(state, "base64").toString("utf-8");
+        const url = new URL(decoded);
+        const authPaths = [
+          "/login",
+          "/register",
+          "/forgot-password",
+          "/reset-password",
+        ];
+        if (!authPaths.includes(url.pathname)) {
+          redirectUrl = url.pathname;
+        }
+      } catch {
+        redirectUrl = "/";
+      }
+    }
+    res.redirect(redirectUrl);
+  },
+);
 
 export default authRouter;

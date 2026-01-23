@@ -4,6 +4,8 @@ import LandingIndex from "./views/landing/LandingIndex.vue";
 import BloopApp from "./views/app/BloopApp.vue";
 import LoginView from "./views/auth/LoginView.vue";
 import RegisterView from "./views/auth/RegisterView.vue";
+import ForgotPasswordView from "./views/auth/ForgotPasswordView.vue";
+import ResetPasswordView from "./views/auth/ResetPasswordView.vue";
 
 import { useAuthStore } from "./stores/authStore";
 import apiClient from "./lib/utils/apiClient";
@@ -33,6 +35,8 @@ const routes = [
   { path: "/app", component: BloopApp, name: "app-main" },
   { path: "/login", component: LoginView, name: "app-login" },
   { path: "/register", component: RegisterView, name: "app-register" },
+  { path: "/forgot-password", component: ForgotPasswordView, name: "app-forgot-password" },
+  { path: "/reset-password", component: ResetPasswordView, name: "app-reset-password" },
   { path: "/blog", component: BlogApp, name: "app-blog" },
   {
     path: "/blog/search",
