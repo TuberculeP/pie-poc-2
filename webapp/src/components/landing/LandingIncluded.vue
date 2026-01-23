@@ -1,294 +1,561 @@
 <template>
-  <section class="features-wrapper">
-    <div class="container">
-      <!-- Titre principal -->
-      <h2 class="section-title">Inclus de base.</h2>
-      <span>
+  <section class="included-section" ref="sectionRef">
+    <div class="section-container">
+      <!-- Header -->
+      <div class="section-header" :class="{ visible: isVisible }">
+        <span class="section-tag">Tout inclus</span>
+        <h2 class="section-title">Inclus de base</h2>
         <p class="section-subtitle">
-          Tout ce qu’il faut pour créer, enregistrer et partager votre musique
-          depuis votre navigateur.
+          Cliquez sur une catégorie pour découvrir ce que BLOOP vous offre.
         </p>
-      </span>
-      <!-- Catégories côte à côte -->
-      <div class="horizontal-categories">
-        <!-- Stabilité & sécurité -->
-        <div class="category-column">
-          <h3 class="section-category">Stabilité & sécurité</h3>
-          <div class="features-grid square-grid">
-            <div
-              v-for="(item, i) in stabiliteSecurite"
-              :key="'sec-' + i"
-              class="feature-card centered"
-            >
-              <div class="feature-inner">
-                <div class="feature-icon">{{ item.emoji }}</div>
-                <h4 class="feature-title">{{ item.title }}</h4>
-                <p class="feature-description">{{ item.description }}</p>
-              </div>
+      </div>
+
+      <!-- Cards Container -->
+      <div class="cards-container">
+        <div
+          v-for="(category, catIndex) in categories"
+          :key="category.id"
+          class="category-card"
+          :class="{
+            visible: isVisible,
+            expanded: expandedCard === catIndex
+          }"
+          :style="{ '--index': catIndex }"
+          @click="toggleCard(catIndex)"
+        >
+          <!-- Card Header -->
+          <div class="card-header">
+            <div class="card-icon" :class="category.iconClass">
+              <component :is="category.icon" />
+            </div>
+            <div class="card-info">
+              <h3 class="card-title">{{ category.title }}</h3>
+              <span class="card-count">{{ category.features.length }} fonctionnalités</span>
+            </div>
+            <div class="expand-indicator">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
             </div>
           </div>
-        </div>
 
-        <!-- Performance & connectivité -->
-        <div class="category-column">
-          <h3 class="section-category">Performance & connectivité</h3>
-          <div class="features-grid square-grid">
-            <div
-              v-for="(item, i) in performance"
-              :key="'perf-' + i"
-              class="feature-card centered"
-            >
-              <div class="feature-inner">
-                <div class="feature-icon">{{ item.emoji }}</div>
-                <h4 class="feature-title">{{ item.title }}</h4>
-                <p class="feature-description">{{ item.description }}</p>
+          <!-- Expandable Features -->
+          <div class="card-features">
+            <div class="features-inner">
+              <div
+                v-for="(feature, featureIndex) in category.features"
+                :key="feature.title"
+                class="feature-item"
+                :style="{ '--feature-index': featureIndex }"
+              >
+                <span class="feature-emoji">{{ feature.emoji }}</span>
+                <div class="feature-content">
+                  <h5 class="feature-title">{{ feature.title }}</h5>
+                  <p class="feature-desc">{{ feature.description }}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Fonctionnalités pro -->
-      <h3 class="section-category">Fonctionnalités pro</h3>
-      <div class="features-grid">
-        <div
-          v-for="(item, i) in proFeatures"
-          :key="'pro-' + i"
-          class="feature-card centered"
-        >
-          <div class="feature-inner">
-            <div class="feature-icon">{{ item.emoji }}</div>
-            <h4 class="feature-title">{{ item.title }}</h4>
-            <p class="feature-description">{{ item.description }}</p>
-          </div>
-        </div>
+    <!-- Background decoration -->
+    <div class="section-bg">
+      <div class="bg-gradient"></div>
+      <div class="bg-particles">
+        <div v-for="n in 15" :key="n" class="particle" :style="getParticleStyle(n)"></div>
       </div>
     </div>
   </section>
 </template>
 
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, h, type Component } from 'vue'
+
+const sectionRef = ref<HTMLElement | null>(null)
+const isVisible = ref(false)
+const expandedCard = ref<number | null>(null)
+
+const toggleCard = (index: number) => {
+  expandedCard.value = expandedCard.value === index ? null : index
+}
+
+// SVG Icon components
+const ShieldIcon: Component = {
+  render() {
+    return h('svg', { width: 32, height: 32, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
+      h('path', { d: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' })
+    ])
+  }
+}
+
+const BoltIcon: Component = {
+  render() {
+    return h('svg', { width: 32, height: 32, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
+      h('polygon', { points: '13 2 3 14 12 14 11 22 21 10 12 10 13 2' })
+    ])
+  }
+}
+
+const StarIcon: Component = {
+  render() {
+    return h('svg', { width: 32, height: 32, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
+      h('path', { d: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' })
+    ])
+  }
+}
+
+const MusicIcon: Component = {
+  render() {
+    return h('svg', { width: 32, height: 32, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }, [
+      h('path', { d: 'M9 18V5l12-2v13' }),
+      h('circle', { cx: 6, cy: 18, r: 3 }),
+      h('circle', { cx: 18, cy: 16, r: 3 })
+    ])
+  }
+}
+
+// Categories data
+const categories = [
+  {
+    id: 'security',
+    title: 'Sécurité & Stabilité',
+    icon: ShieldIcon,
+    iconClass: 'security',
+    glowClass: 'glow-green',
+    features: [
+      { emoji: '🛡️', title: 'Connexion sécurisée', description: 'Sessions chiffrées SSL' },
+      { emoji: '🚨', title: 'Reprise automatique', description: 'Récupération après crash' },
+      { emoji: '🔒', title: 'Sessions isolées', description: 'Projets indépendants' },
+      { emoji: '🕵️', title: 'Protection cloud', description: 'Sauvegardes automatiques' }
+    ]
+  },
+  {
+    id: 'performance',
+    title: 'Performance & Vitesse',
+    icon: BoltIcon,
+    iconClass: 'performance',
+    glowClass: 'glow-yellow',
+    features: [
+      { emoji: '⚡', title: 'Audio temps réel', description: 'Zéro latence' },
+      { emoji: '🚀', title: 'Interface fluide', description: 'Réactivité maximale' },
+      { emoji: '🌐', title: 'Accès partout', description: 'Studio dans le cloud' },
+      { emoji: '🔗', title: 'Collaboration live', description: 'Travail en équipe' }
+    ]
+  },
+  {
+    id: 'pro',
+    title: 'Outils Pro',
+    icon: StarIcon,
+    iconClass: 'pro',
+    glowClass: 'glow-blue',
+    features: [
+      { emoji: '🎹', title: 'Piano roll', description: 'Composition intuitive' },
+      { emoji: '🎤', title: 'Enregistrement', description: 'Micro & instruments' },
+      { emoji: '🎛️', title: 'Effets live', description: 'EQ, reverb, delay...' },
+      { emoji: '📤', title: 'Export pro', description: 'MP3, WAV, stems' }
+    ]
+  },
+  {
+    id: 'creative',
+    title: 'Création Musicale',
+    icon: MusicIcon,
+    iconClass: 'creative',
+    glowClass: 'glow-purple',
+    features: [
+      { emoji: '📁', title: 'Import facile', description: 'Glissé-déposé' },
+      { emoji: '🧠', title: 'Interface intuitive', description: 'Prise en main rapide' },
+      { emoji: '🎨', title: 'Presets inclus', description: 'Sons prêts à l\'emploi' },
+      { emoji: '🔄', title: 'Historique', description: 'Annuler illimité' }
+    ]
+  }
+]
+
+// Generate particle styles
+const getParticleStyle = (n: number) => {
+  const size = Math.random() * 4 + 2
+  const left = Math.random() * 100
+  const delay = Math.random() * 5
+  const duration = Math.random() * 10 + 15
+  return {
+    width: `${size}px`,
+    height: `${size}px`,
+    left: `${left}%`,
+    animationDelay: `${delay}s`,
+    animationDuration: `${duration}s`
+  }
+}
+
+// Intersection Observer
+let observer: IntersectionObserver | null = null
+
+onMounted(() => {
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          isVisible.value = true
+        }
+      })
+    },
+    { threshold: 0.1 }
+  )
+
+  if (sectionRef.value) {
+    observer.observe(sectionRef.value)
+  }
+})
+
+onUnmounted(() => {
+  if (observer) observer.disconnect()
+})
+</script>
+
 <style scoped>
-.features-wrapper {
-  /* background-color: #f6f8fb; */
-  padding: 4rem 1rem;
+.included-section {
+  position: relative;
+  padding: 6rem 0;
+  overflow: hidden;
 }
 
-h3,
-span p {
-  color: #fff !important;
-}
-
-h1,
-h2 {
-  color: #ffd269 !important;
-}
-
-.container {
-  max-width: 1200px;
+.section-container {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
   margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Background */
+.section-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bg-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(145, 165, 249, 0.02) 30%,
+    rgba(255, 210, 105, 0.02) 70%,
+    transparent 100%
+  );
+}
+
+.bg-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  bottom: -10px;
+  background: rgba(255, 210, 105, 0.3);
+  border-radius: 50%;
+  animation: float-up linear infinite;
+  opacity: 0;
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+    transform: translateY(-10vh) scale(1);
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(-100vh) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* Section header */
+.section-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease;
+}
+
+.section-header.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-tag {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(145, 165, 249, 0.1);
+  border: 1px solid rgba(145, 165, 249, 0.2);
+  border-radius: 50px;
+  font-size: 0.85rem;
+  color: var(--color-secondary);
+  margin-bottom: 1rem;
 }
 
 .section-title {
-  text-align: center;
-  font-size: 2.5rem;
+  font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: #1e1e1e;
+  color: var(--color-accent);
+  margin-bottom: 1rem;
 }
 
 .section-subtitle {
-  text-align: center;
-  font-size: 1rem;
-  color: #555;
-  margin-bottom: 3rem;
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.7;
 }
 
-.section-category {
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin: 2rem 0 1.5rem;
-  color: #1e1e1e;
-  text-align: left;
-}
-
-.horizontal-categories {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3rem;
-  justify-content: center;
-  align-items: flex-start;
-  margin-bottom: 3rem;
-}
-
-.category-column {
-  flex: 1;
-  min-width: 300px;
-  max-width: 550px;
-}
-
-.features-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  justify-content: center;
-}
-
-.features-grid.square-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-  justify-content: center;
-}
-
-.feature-card {
-  background-color: white;
-  border-radius: 16px;
-  padding: 1.25rem 1.5rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease;
-  width: 100%;
-  max-width: 300px;
-  min-width: 260px;
-  min-height: 180px;
-  box-sizing: border-box;
-}
-
-.feature-card.centered {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
-
-.feature-inner {
+/* Cards Container - Accordion Style */
+.cards-container {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+}
+
+/* Category Card */
+.category-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition-delay: calc(var(--index) * 0.08s);
+  overflow: hidden;
+}
+
+.category-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.category-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.category-card.expanded {
+  border-color: rgba(255, 210, 105, 0.3);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Card Header */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.card-icon {
+  display: flex;
   align-items: center;
   justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  flex-shrink: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.feature-card:hover {
-  transform: translateY(-4px);
+.category-card.expanded .card-icon {
+  transform: scale(1.05);
 }
 
-.feature-icon {
-  font-size: 2rem;
-  margin-bottom: 0.8rem;
+.card-icon.security {
+  background: linear-gradient(135deg, rgba(96, 189, 97, 0.2) 0%, rgba(96, 189, 97, 0.05) 100%);
+  color: var(--color-validate);
+  border: 1px solid rgba(96, 189, 97, 0.3);
+}
+
+.card-icon.performance {
+  background: linear-gradient(135deg, rgba(255, 210, 105, 0.2) 0%, rgba(255, 210, 105, 0.05) 100%);
+  color: var(--color-accent);
+  border: 1px solid rgba(255, 210, 105, 0.3);
+}
+
+.card-icon.pro {
+  background: linear-gradient(135deg, rgba(145, 165, 249, 0.2) 0%, rgba(145, 165, 249, 0.05) 100%);
+  color: var(--color-secondary);
+  border: 1px solid rgba(145, 165, 249, 0.3);
+}
+
+.card-icon.creative {
+  background: linear-gradient(135deg, rgba(200, 145, 249, 0.2) 0%, rgba(200, 145, 249, 0.05) 100%);
+  color: #c891f9;
+  border: 1px solid rgba(200, 145, 249, 0.3);
+}
+
+.card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-white);
+  margin: 0 0 0.25rem 0;
+  transition: all 0.3s ease;
+}
+
+.category-card.expanded .card-title {
+  color: var(--color-accent);
+}
+
+.card-count {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.expand-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.4);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.category-card:hover .expand-indicator {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.category-card.expanded .expand-indicator {
+  transform: rotate(45deg);
+  background: rgba(255, 210, 105, 0.2);
+  color: var(--color-accent);
+}
+
+/* Card Features - Expandable */
+.card-features {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.category-card.expanded .card-features {
+  grid-template-rows: 1fr;
+}
+
+.features-inner {
+  overflow: hidden;
+}
+
+.category-card.expanded .features-inner {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  transition-delay: calc(var(--feature-index) * 0.05s + 0.1s);
+}
+
+.category-card.expanded .feature-item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.feature-item:last-child {
+  margin-bottom: 0;
+}
+
+.feature-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.feature-emoji {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.feature-item:hover .feature-emoji {
+  transform: scale(1.15);
+}
+
+.feature-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .feature-title {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  margin-bottom: 0.3rem;
-  color: #1e1e1e;
+  color: var(--color-white);
+  margin: 0 0 0.2rem 0;
 }
 
-.feature-description {
-  font-size: 0.92rem;
-  color: #666;
+.feature-desc {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
   line-height: 1.4;
-  max-width: 240px;
+  margin: 0;
 }
 
-@media (max-width: 900px) {
-  .horizontal-categories {
-    flex-direction: column;
-    align-items: center;
+/* Responsive */
+@media (max-width: 600px) {
+  .included-section {
+    padding: 4rem 0;
   }
 
-  .section-category {
-    text-align: center;
+  .section-container {
+    padding: 0 1rem;
   }
 
-  .features-grid.square-grid {
-    grid-template-columns: 1fr;
+  .section-header {
+    margin-bottom: 2rem;
+  }
+
+  .card-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .card-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .card-title {
+    font-size: 1rem;
+  }
+
+  .category-card.expanded .features-inner {
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  .feature-item {
+    padding: 0.75rem;
   }
 }
 </style>
-
-<script>
-export default {
-  name: "InclusDeBase",
-};
-</script>
-
-<script setup>
-const stabiliteSecurite = [
-  {
-    emoji: "🛡️",
-    title: "Connexion sécurisée",
-    description: "Toutes vos sessions sont chiffrées par SSL.",
-  },
-  {
-    emoji: "🚨",
-    title: "Reprise automatique",
-    description: "Revenez à votre dernier projet même après un crash.",
-  },
-  {
-    emoji: "🔒",
-    title: "Sessions isolées",
-    description: "Chaque projet est indépendant et protégé.",
-  },
-  {
-    emoji: "🕵️‍♂️",
-    title: "Protection des données",
-    description: "Sauvegardes automatiques dans le cloud.",
-  },
-];
-
-const performance = [
-  {
-    emoji: "⚡",
-    title: "Audio en temps réel",
-    description: "Aucune latence pendant l’enregistrement ou le mix.",
-  },
-  {
-    emoji: "🚀",
-    title: "Interface rapide",
-    description: "Chaque action est fluide, sans ralentissements.",
-  },
-  {
-    emoji: "🌐",
-    title: "Connexion partout",
-    description: "Accédez à votre studio depuis n’importe où.",
-  },
-  {
-    emoji: "🔗",
-    title: "Collaboration live",
-    description: "Travaillez à plusieurs sur un même projet en direct.",
-  },
-];
-
-const proFeatures = [
-  {
-    emoji: "🎹",
-    title: "Piano roll intégré",
-    description: "Composez vos mélodies, arpèges et accords facilement.",
-  },
-  {
-    emoji: "🎤",
-    title: "Enregistrement audio",
-    description: "Micro ou instrument, enregistrez sans plugin.",
-  },
-  {
-    emoji: "🎛️",
-    title: "Effets temps réel",
-    description: "Ajoutez EQ, reverb, compresseur, delay instantanément.",
-  },
-  {
-    emoji: "📤",
-    title: "Export pro",
-    description: "Export MP3, WAV, stems ou projet compressé.",
-  },
-  {
-    emoji: "📁",
-    title: "Import facile",
-    description: "Fichiers audio, MIDI ou presets, tout est glissé-déposé.",
-  },
-  {
-    emoji: "🧠",
-    title: "Interface intuitive",
-    description: "Aucune courbe d’apprentissage, tout est à sa place.",
-  },
-];
-</script>

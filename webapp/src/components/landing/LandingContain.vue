@@ -1,285 +1,277 @@
 <template>
-  <main class="main-section">
-    <!-- Hero Section -->
-    <section class="hero">
-      <div class="hero-background">
-        <div class="floating-cubes">
-          <div class="cube cube-1"></div>
-          <div class="cube cube-2"></div>
-          <div class="cube cube-3"></div>
-          <div class="cube cube-4"></div>
-          <div class="cube cube-5"></div>
-        </div>
-      </div>
-
+  <main class="landing-main">
+    <!-- ==================== HERO SECTION ==================== -->
+    <section class="hero" ref="heroRef">
       <div class="hero-container">
-        <div class="hero-content">
-          <h1 class="hero-title">
-            <span class="title-highlight">BLOOP</span>
-            <span class="title-main"
-              >Compose, mixe, crée – sans rien installer</span
-            >
+        <!-- Hero Content -->
+        <div class="hero-content" ref="heroContentRef">
+          <div class="hero-badge" ref="heroBadgeRef">
+            <span class="badge-dot"></span>
+            <span>Studio musical nouvelle generation</span>
+          </div>
+
+          <h1 class="hero-title" ref="heroTitleRef">
+            <SplitText
+              text="Compose, mixte, crée - sans rien installer"
+              tag="span"
+              class="title-line"
+              animation-type="rotate3d"
+              :delay="0.2"
+            />
+            <span class="title-line highlight">
+              <SplitText
+                text="sans limites"
+                tag="span"
+                class="gradient-text"
+                animation-type="rotate3d"
+                :delay="0.5"
+              />
+            </span>
           </h1>
-          <p class="hero-description">
-            Compose, enregistre et mixe ta musique depuis ton navigateur. Aucun
-            téléchargement, aucune limite. BLOOP te suit partout, que tu sois
-            chez toi, en studio ou en tournée.
+
+          <p class="hero-description" ref="heroDescRef">
+            BLOOP revolutionne la creation musicale. Un studio professionnel dans votre navigateur, accessible partout,
+            a tout moment. Liberez votre creativite.
           </p>
-          <div class="hero-stats">
-            <div class="stat">
-              <span class="stat-number">+20k</span>
-              <span class="stat-label">Créateurs actifs</span>
-            </div>
-            <div class="stat">
-              <span class="stat-number">100%</span>
-              <span class="stat-label">Basé sur le cloud</span>
-            </div>
-            <div class="stat">
-              <span class="stat-number">∞</span>
-              <span class="stat-label">Pistes & projets</span>
+
+          <div class="hero-stats" ref="heroStatsRef">
+            <div v-for="stat in stats" :key="stat.label" class="stat-item">
+              <span class="stat-value">
+                <CountUp v-if="typeof stat.raw === 'number'" :target="stat.raw" :suffix="stat.suffix" />
+                <span v-else>{{ stat.value }}</span>
+              </span>
+              <span class="stat-label">{{ stat.label }}</span>
             </div>
           </div>
-          <div class="hero-buttons">
-            <a class="btn btn-primary" href="/app">
-              <i class="fas fa-headphones"></i>
-              Essayer BLOOP
-            </a>
-            <button class="btn btn-secondary">
-              <i class="fas fa-play"></i>
-              Voir la démo
+
+          <div class="hero-actions" ref="heroActionsRef">
+            <router-link to="/app" class="btn-cta primary">
+              <span class="btn-shine"></span>
+              <span class="btn-content">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>Commencer gratuitement</span>
+              </span>
+            </router-link>
+            <button class="btn-cta secondary" @click="scrollToFeatures">
+              <span class="btn-content">
+                <span>Decouvrir</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <polyline points="19 12 12 19 5 12"></polyline>
+                </svg>
+              </span>
             </button>
           </div>
         </div>
 
-        <div class="hero-visual">
-          <div class="studio-mockup">
-            <div class="studio-header">
-              <span class="studio-title"
-                >Session: bloop-demo-session.bloop.app</span
-              >
-            </div>
-            <div class="studio-console">
-              <div class="console-line">
-                <span class="timestamp">[00:00:01]</span>
-                <span class="info">🎧 BPM: 120 | Key: A Minor</span>
+        <!-- Hero Visual - 3D Rotating Mockup -->
+        <div class="hero-visual" ref="heroVisualRef">
+          <div class="visual-glow"></div>
+          <div class="studio-mockup" ref="mockupRef">
+            <div class="mockup-header">
+              <div class="mockup-dots">
+                <span></span><span></span><span></span>
               </div>
-              <div class="console-line">
-                <span class="timestamp">[00:00:05]</span>
-                <span class="success">🎹 Piano Roll activé</span>
+              <span class="mockup-title">BLOOP Studio</span>
+            </div>
+            <div class="mockup-content">
+              <div class="waveform-container">
+                <div v-for="i in 40" :key="i" class="wave-bar" :style="{ '--i': i }"></div>
               </div>
-              <div class="console-line">
-                <span class="timestamp">[00:00:12]</span>
-                <span class="info">🎚️ Reverb ajoutée sur Piste 4</span>
-              </div>
-              <div class="console-line">
-                <span class="timestamp">[00:00:19]</span>
-                <span class="success">🎙️ Enregistrement vocal démarré</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features">
-      <div class="container">
-        <h2 class="section-title">Pourquoi choisir BLOOP ?</h2>
-        <div class="features-grid">
-          <div class="feature-card">
-            <div class="feature-icon">
-              <i class="fas fa-bolt"></i>
-            </div>
-            <h3>Performances audio pro</h3>
-            <p>
-              Latence ultra faible, rendu en temps réel, et moteur audio stable
-              pour une expérience studio fluide.
-            </p>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon">
-              <i class="fas fa-cloud"></i>
-            </div>
-            <h3>100% Cloud</h3>
-            <p>
-              Accède à tous tes projets où que tu sois, depuis n'importe quel
-              appareil, sans installation.
-            </p>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon">
-              <i class="fas fa-sliders-h"></i>
-            </div>
-            <h3>Interface intuitive</h3>
-            <p>
-              Un environnement pensé pour la créativité : simple, rapide, sans
-              distraction.
-            </p>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon">
-              <i class="fas fa-users"></i>
-            </div>
-            <h3>Collaboration en direct</h3>
-            <p>
-              Crée à plusieurs en temps réel. Invite des amis ou collègues à
-              rejoindre ta session instantanément.
-            </p>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon">
-              <i class="fas fa-microphone-alt"></i>
-            </div>
-            <h3>Enregistrement multi-pistes</h3>
-            <p>
-              Enregistre voix, instruments et midi directement depuis ton
-              navigateur, sans plugin.
-            </p>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon">
-              <i class="fas fa-infinity"></i>
-            </div>
-            <h3>Pistes et presets illimités</h3>
-            <p>
-              Compose sans contrainte : ajoute autant de pistes, effets et
-              instruments que tu veux.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section class="pricing">
-      <div class="container">
-        <h2 class="section-title">Nos formules de création</h2>
-        <div class="pricing-grid">
-          <div class="pricing-card">
-            <div class="pricing-header">
-              <h3>Freenium</h3>
-              <div class="price">
-                <span class="currency">€</span>
-                <span class="amount">0</span>
-                <span class="period">/mois</span>
-              </div>
-            </div>
-            <ul class="pricing-features">
-              <li><i class="fas fa-check"></i> Accès à l’espace MAO limité.</li>
-              <li><i class="fas fa-check"></i> Plus de 20000 boucles</li>
-              <li>
-                <i class="fas fa-check"></i> Plus de 500 instruments et sons
-              </li>
-              <li><i class="fas fa-check"></i> Espace communautaire</li>
-            </ul>
-            <button class="btn btn-outline">Démarrer gratuitement</button>
-          </div>
-
-          <div class="pricing-card popular">
-            <div class="popular-badge">Le plus populaire</div>
-            <div class="pricing-header">
-              <h3>Medium</h3>
-              <div class="price">
-                <span class="currency">€</span>
-                <span class="amount">9.99</span>
-                <span class="period">/mois</span>
-              </div>
-            </div>
-            <ul class="pricing-features">
-              <li>
-                <i class="fas fa-check"></i> Accès illimité à l’espace MAO
-              </li>
-              <li><i class="fas fa-check"></i> Plus de 30000 boucles</li>
-              <li><i class="fas fa-check"></i> Partage et collaboration</li>
-              <li><i class="fas fa-check"></i> Espace communautaire enrichi</li>
-              <li><i class="fas fa-check"></i> Support prioritaire</li>
-            </ul>
-            <button class="btn btn-primary">Choisir ce plan</button>
-          </div>
-
-          <div class="pricing-card">
-            <div class="pricing-header">
-              <h3>Prenium</h3>
-              <div class="price">
-                <span class="currency">€</span>
-                <span class="amount">14.99</span>
-                <span class="period">/mois</span>
-              </div>
-            </div>
-            <ul class="pricing-features">
-              <li>
-                <i class="fas fa-check"></i> Accès illimité à l’espace MAO
-              </li>
-              <li><i class="fas fa-check"></i> Collaboration avancée</li>
-              <li>
-                <i class="fas fa-check"></i> Real Time vocal tuning et + de 40
-                effets
-              </li>
-              <li><i class="fas fa-check"></i> Espace communautaire premium</li>
-              <li>
-                <i class="fas fa-check"></i> Diffusion de podcast sur Spotify
-              </li>
-            </ul>
-            <button class="btn btn-outline">Choisir ce plan</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <LandingIncluded />
-
-    <!-- Community Section -->
-    <section class="community">
-      <div class="container">
-        <div class="community-content">
-          <div class="community-text">
-            <h2>Rejoignez la communauté BLOOP</h2>
-            <p>
-              Des milliers de beatmakers, producteurs et musiciens créent déjà
-              avec BLOOP. Échange, collabore et progresse au sein d’un
-              écosystème 100% dédié à la création sonore.
-            </p>
-
-            <div class="community-stats">
-              <div class="community-stat">
-                <i class="fab fa-discord"></i>
-                <span>+8 000 membres sur Discord</span>
-              </div>
-              <div class="community-stat">
-                <i class="fas fa-music"></i>
-                <span>Sessions collaboratives en continu</span>
-              </div>
-            </div>
-
-            <button class="btn btn-secondary">
-              <i class="fab fa-discord"></i>
-              Rejoindre la communauté
-            </button>
-          </div>
-
-          <div class="community-visual">
-            <div class="testimonial">
-              <div class="testimonial-content">
-                <p>
-                  "BLOOP m’a permis de produire un EP complet depuis mon ordi
-                  portable, sans rien installer. Une vraie révolution."
-                </p>
-                <div class="testimonial-author">
-                  <div class="author-avatar">
-                    <i class="fas fa-user-music"></i>
-                  </div>
-                  <div class="author-info">
-                    <span class="author-name">LunaBeats</span>
-                    <span class="author-role">Productrice indépendante</span>
+              <div class="track-lanes">
+                <div v-for="track in mockupTracks" :key="track.name" class="track">
+                  <span class="track-name">{{ track.name }}</span>
+                  <div class="track-blocks">
+                    <div
+                      v-for="(block, idx) in track.blocks"
+                      :key="idx"
+                      class="track-block"
+                      :style="{
+                        left: block.start + '%',
+                        width: block.width + '%',
+                        '--color': track.color,
+                      }"
+                    ></div>
                   </div>
                 </div>
               </div>
+              <div class="mockup-controls">
+                <div class="control-btn play">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                </div>
+                <div class="timeline">
+                  <div class="timeline-progress"></div>
+                  <div class="timeline-head"></div>
+                </div>
+                <span class="time-display">02:34 / 04:12</span>
+              </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== FEATURES SECTION ==================== -->
+    <section class="features" id="features" ref="featuresRef">
+      <div class="section-container">
+        <div class="section-header">
+          <span class="section-tag">Fonctionnalites</span>
+          <h2 class="section-title">
+            <SplitText text="Tout ce dont vous avez besoin" animation-type="slide" trigger-start="top 85%" />
+          </h2>
+          <p class="section-subtitle">Des outils professionnels accessibles a tous les createurs</p>
+        </div>
+
+        <div class="features-grid" ref="featuresGridRef">
+          <div
+            v-for="(feature, idx) in features"
+            :key="feature.title"
+            class="feature-card"
+            :ref="(el) => setFeatureCardRef(el, idx)"
+            :style="{ '--color': feature.color }"
+          >
+            <div class="feature-morph">
+              <MorphShape :size="60" :color="feature.color" from-shape="circle" to-shape="square" :scrub="1" />
+            </div>
+            <div class="feature-icon">
+              <component :is="feature.icon" />
+            </div>
+            <h3 class="feature-title">{{ feature.title }}</h3>
+            <p class="feature-description">{{ feature.description }}</p>
+            <div class="feature-glow"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== HOW IT WORKS SECTION ==================== -->
+    <section class="how-it-works" id="gallery" ref="howItWorksRef">
+      <div class="section-container">
+        <div class="section-header">
+          <span class="section-tag">Simple & Rapide</span>
+          <h2 class="section-title">
+            <SplitText text="Comment ca marche ?" animation-type="fade" trigger-start="top 85%" />
+          </h2>
+        </div>
+
+        <div class="steps-container" ref="stepsContainerRef">
+          <!-- SVG Line that draws itself -->
+          <svg class="steps-line-svg" ref="stepsLineSvgRef" viewBox="0 0 4 300" preserveAspectRatio="none">
+            <line class="line-bg" x1="2" y1="0" x2="2" y2="300" />
+            <line class="line-progress" ref="lineProgressRef" x1="2" y1="0" x2="2" y2="300" />
+          </svg>
+
+          <div v-for="(step, index) in steps" :key="step.title" class="step-item" :data-index="index">
+            <div class="step-number">{{ String(index + 1).padStart(2, '0') }}</div>
+            <div class="step-content">
+              <h3 class="step-title">{{ step.title }}</h3>
+              <p class="step-description">{{ step.description }}</p>
+            </div>
+            <div class="step-visual">
+              <div class="step-icon">
+                <component :is="step.icon" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== PRICING SECTION ==================== -->
+    <section class="pricing" id="about" ref="pricingRef">
+      <div class="section-container">
+        <div class="section-header">
+          <span class="section-tag">Tarifs</span>
+          <h2 class="section-title">
+            <SplitText text="Choisissez votre formule" animation-type="rotate3d" trigger-start="top 85%" />
+          </h2>
+          <p class="section-subtitle">Commencez gratuitement, evoluez selon vos besoins</p>
+        </div>
+
+        <div class="pricing-grid" ref="pricingGridRef">
+          <div
+            v-for="(plan, idx) in plans"
+            :key="plan.name"
+            class="pricing-card"
+            :class="{ popular: plan.popular }"
+            :ref="(el) => setPricingCardRef(el, idx)"
+          >
+            <div v-if="plan.popular" class="popular-badge">
+              <span>Plus populaire</span>
+            </div>
+            <div class="plan-header">
+              <h3 class="plan-name">{{ plan.name }}</h3>
+              <div class="plan-price">
+                <span class="currency">EUR</span>
+                <span class="amount">
+                  <CountUp :target="parseFloat(plan.price)" :decimals="plan.price.includes('.') ? 2 : 0" />
+                </span>
+                <span class="period">/mois</span>
+              </div>
+              <p class="plan-description">{{ plan.description }}</p>
+            </div>
+            <ul class="plan-features">
+              <li v-for="feature in plan.features" :key="feature" class="plan-feature">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>{{ feature }}</span>
+              </li>
+            </ul>
+            <button class="plan-btn" :class="{ primary: plan.popular }">
+              {{ plan.cta }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== INCLUDED SECTION ==================== -->
+    <LandingIncluded />
+
+    <!-- ==================== CTA SECTION ==================== -->
+    <section class="cta-section" id="support" ref="ctaRef">
+      <div class="cta-bg">
+        <div class="cta-gradient"></div>
+        <div class="cta-particles" ref="ctaParticlesRef">
+          <div v-for="n in 20" :key="n" class="cta-particle" :style="getParticleStyle(n)"></div>
+        </div>
+      </div>
+      <div class="section-container">
+        <div class="cta-content" ref="ctaContentRef">
+          <h2 class="cta-title">
+            <SplitText text="Pret a creer ?" animation-type="wave" trigger-start="top 80%" />
+          </h2>
+          <p class="cta-description">
+            Rejoignez des milliers de createurs qui utilisent BLOOP pour donner vie a leurs idees musicales.
+          </p>
+          <div class="cta-actions">
+            <router-link to="/app" class="btn-cta primary large">
+              <span class="btn-shine"></span>
+              <span class="btn-content">
+                <span>Lancer le studio</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </span>
+            </router-link>
+          </div>
+          <div class="cta-trust">
+            <div class="trust-avatars">
+              <img
+                v-for="(avatar, index) in trustAvatars"
+                :key="index"
+                :src="avatar"
+                :alt="`Créateur ${index + 1}`"
+                class="trust-avatar"
+              />
+            </div>
+            <span>+<CountUp :target="20000" :separator="' '" /> createurs nous font confiance</span>
           </div>
         </div>
       </div>
@@ -287,570 +279,1596 @@
   </main>
 </template>
 
-<script>
-import LandingIncluded from "./LandingIncluded.vue";
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, h, inject, type ComponentPublicInstance } from 'vue'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import LandingIncluded from './LandingIncluded.vue'
+import SplitText from './effects/SplitText.vue'
+import CountUp from './effects/CountUp.vue'
+import MorphShape from './effects/MorphShape.vue'
 
-export default {
-  name: "HelloWorld",
-  components: {
-    LandingIncluded,
+gsap.registerPlugin(ScrollTrigger)
+
+const scrollTo = inject<(target: string | number | HTMLElement, options?: object) => void>('scrollTo')
+
+// Refs
+const heroRef = ref<HTMLElement | null>(null)
+const heroBadgeRef = ref<HTMLElement | null>(null)
+const heroDescRef = ref<HTMLElement | null>(null)
+const heroStatsRef = ref<HTMLElement | null>(null)
+const heroActionsRef = ref<HTMLElement | null>(null)
+const heroVisualRef = ref<HTMLElement | null>(null)
+const mockupRef = ref<HTMLElement | null>(null)
+const featuresGridRef = ref<HTMLElement | null>(null)
+const featureCardRefs = ref<HTMLElement[]>([])
+const stepsContainerRef = ref<HTMLElement | null>(null)
+const lineProgressRef = ref<SVGLineElement | null>(null)
+const pricingGridRef = ref<HTMLElement | null>(null)
+const pricingCardRefs = ref<HTMLElement[]>([])
+const ctaRef = ref<HTMLElement | null>(null)
+const ctaContentRef = ref<HTMLElement | null>(null)
+const ctaParticlesRef = ref<HTMLElement | null>(null)
+
+const setFeatureCardRef = (el: Element | ComponentPublicInstance | null, index: number) => {
+  if (el) featureCardRefs.value[index] = el as HTMLElement
+}
+
+const setPricingCardRef = (el: Element | ComponentPublicInstance | null, index: number) => {
+  if (el) pricingCardRefs.value[index] = el as HTMLElement
+}
+
+// Data
+const trustAvatars = [
+  'https://i.pravatar.cc/150?img=1',
+  'https://i.pravatar.cc/150?img=5',
+  'https://i.pravatar.cc/150?img=8',
+  'https://i.pravatar.cc/150?img=12',
+]
+
+const stats = [
+  { value: '+20k', raw: 20000, suffix: '+', label: 'Createurs' },
+  { value: '100%', raw: 100, suffix: '%', label: 'Cloud' },
+  { value: 'infinity', label: 'Possibilites' },
+]
+
+const mockupTracks = [
+  {
+    name: 'Drums',
+    color: '#ffd269',
+    blocks: [
+      { start: 5, width: 25 },
+      { start: 35, width: 30 },
+      { start: 70, width: 25 },
+    ],
   },
-};
+  {
+    name: 'Bass',
+    color: '#91a5f9',
+    blocks: [
+      { start: 10, width: 20 },
+      { start: 40, width: 35 },
+    ],
+  },
+  {
+    name: 'Synth',
+    color: '#7cc8f5',
+    blocks: [
+      { start: 0, width: 15 },
+      { start: 20, width: 25 },
+      { start: 55, width: 40 },
+    ],
+  },
+  { name: 'Vocals', color: '#60bd61', blocks: [{ start: 25, width: 45 }] },
+]
+
+// Icons
+const WaveformIcon = () =>
+  h(
+    'svg',
+    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    [h('path', { d: 'M2 12h2l2-7 3 14 3-10 2 6 2-3h6' })],
+  )
+
+const CloudIcon = () =>
+  h(
+    'svg',
+    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    [h('path', { d: 'M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z' })],
+  )
+
+const LayoutIcon = () =>
+  h(
+    'svg',
+    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    [
+      h('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2, ry: 2 }),
+      h('line', { x1: 3, y1: 9, x2: 21, y2: 9 }),
+      h('line', { x1: 9, y1: 21, x2: 9, y2: 9 }),
+    ],
+  )
+
+const UsersIcon = () =>
+  h(
+    'svg',
+    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    [
+      h('path', { d: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' }),
+      h('circle', { cx: 9, cy: 7, r: 4 }),
+      h('path', { d: 'M23 21v-2a4 4 0 0 0-3-3.87' }),
+      h('path', { d: 'M16 3.13a4 4 0 0 1 0 7.75' }),
+    ],
+  )
+
+const MicIcon = () =>
+  h(
+    'svg',
+    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    [
+      h('path', { d: 'M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z' }),
+      h('path', { d: 'M19 10v2a7 7 0 0 1-14 0v-2' }),
+      h('line', { x1: 12, y1: 19, x2: 12, y2: 23 }),
+      h('line', { x1: 8, y1: 23, x2: 16, y2: 23 }),
+    ],
+  )
+
+const InfinityIcon = () =>
+  h(
+    'svg',
+    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    [h('path', { d: 'M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z' })],
+  )
+
+const UserPlusIcon = () =>
+  h(
+    'svg',
+    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    [
+      h('path', { d: 'M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2' }),
+      h('circle', { cx: 8.5, cy: 7, r: 4 }),
+      h('line', { x1: 20, y1: 8, x2: 20, y2: 14 }),
+      h('line', { x1: 23, y1: 11, x2: 17, y2: 11 }),
+    ],
+  )
+
+const SlidersIcon = () =>
+  h(
+    'svg',
+    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    [
+      h('line', { x1: 4, y1: 21, x2: 4, y2: 14 }),
+      h('line', { x1: 4, y1: 10, x2: 4, y2: 3 }),
+      h('line', { x1: 12, y1: 21, x2: 12, y2: 12 }),
+      h('line', { x1: 12, y1: 8, x2: 12, y2: 3 }),
+      h('line', { x1: 20, y1: 21, x2: 20, y2: 16 }),
+      h('line', { x1: 20, y1: 12, x2: 20, y2: 3 }),
+      h('line', { x1: 1, y1: 14, x2: 7, y2: 14 }),
+      h('line', { x1: 9, y1: 8, x2: 15, y2: 8 }),
+      h('line', { x1: 17, y1: 16, x2: 23, y2: 16 }),
+    ],
+  )
+
+const RocketIcon = () =>
+  h(
+    'svg',
+    { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': 2 },
+    [
+      h('path', {
+        d: 'M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z',
+      }),
+      h('path', { d: 'M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z' }),
+      h('path', { d: 'M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0' }),
+      h('path', { d: 'M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5' }),
+    ],
+  )
+
+const features = [
+  {
+    icon: WaveformIcon,
+    title: 'Audio professionnel',
+    description: "Qualite studio avec notre moteur audio haute fidelite et nos effets professionnels.",
+    color: '#ffd269',
+  },
+  {
+    icon: CloudIcon,
+    title: '100% Cloud',
+    description: "Vos projets sauvegardes automatiquement, accessibles depuis n'importe ou.",
+    color: '#91a5f9',
+  },
+  {
+    icon: LayoutIcon,
+    title: 'Interface intuitive',
+    description: 'Une experience utilisateur pensee pour la creativite, pas la complexite.',
+    color: '#7cc8f5',
+  },
+  {
+    icon: UsersIcon,
+    title: 'Collaboration live',
+    description: 'Creez ensemble en temps reel, ou que vous soyez dans le monde.',
+    color: '#60bd61',
+  },
+  {
+    icon: MicIcon,
+    title: 'Multi-pistes',
+    description: "Enregistrez et mixez autant de pistes que votre creativite l'exige.",
+    color: '#f59e0b',
+  },
+  {
+    icon: InfinityIcon,
+    title: 'Sans limites',
+    description: 'Pistes, presets et exports illimites pour une creation sans frontieres.',
+    color: '#ec4899',
+  },
+]
+
+const steps = [
+  {
+    icon: UserPlusIcon,
+    title: 'Creez votre compte',
+    description: 'Inscription gratuite en quelques secondes. Commencez a creer immediatement.',
+  },
+  {
+    icon: SlidersIcon,
+    title: 'Configurez votre studio',
+    description: 'Choisissez vos instruments, effets et configurez votre espace de travail ideal.',
+  },
+  {
+    icon: RocketIcon,
+    title: 'Lancez-vous !',
+    description: 'Creez, collaborez et partagez vos creations avec le monde entier.',
+  },
+]
+
+const plans = [
+  {
+    name: 'Freemium',
+    price: '0',
+    description: 'Pour decouvrir BLOOP',
+    popular: false,
+    features: ['Accès à l’espace MAO limité', 'Plus de 20 000 boucles', 'Plus de 500 instruments et sons', 'Espace communautaire'],
+    cta: 'Commencer gratuitement',
+  },
+  {
+    name: 'Medium',
+    price: '9.99',
+    description: 'Pour les createurs serieux',
+    popular: true,
+    features: [
+      'Accès illimité à l’espace MAO',
+      'Plus de 30 000 boucles',
+      'Partage et collaboration',
+      'Espace communautaire enrichi',
+      'Support prioritaire',
+    ],
+    cta: 'Essai gratuit 14 jours',
+  },
+  {
+    name: 'Premium',
+    price: '19.99',
+    description: 'Pour les professionnels',
+    popular: false,
+    features: ['Accès illimité à l’espace MAO', 'Collaboration avancée', 'Real-time vocal tuning et + de 40 effets', 'Espace communautaire premiumc', 'Diffusion de podcast sur Spotify'],
+    cta: 'Contacter les ventes',
+  },
+]
+
+// Helper functions
+const getParticleStyle = (_n: number) => {
+  const random = (min: number, max: number) => Math.random() * (max - min) + min
+  return {
+    '--x': random(5, 95) + '%',
+    '--y': random(10, 90) + '%',
+    '--size': random(4, 12) + 'px',
+    '--duration': random(3, 8) + 's',
+    '--delay': random(0, 5) + 's',
+  }
+}
+
+const scrollToFeatures = () => {
+  if (scrollTo) {
+    scrollTo('#features', { duration: 1.2 })
+  } else {
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+  }
+}
+
+// GSAP Animations
+const initHeroAnimations = () => {
+  const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
+
+  // Initial states
+  gsap.set([heroBadgeRef.value, heroDescRef.value, heroStatsRef.value, heroActionsRef.value], {
+    opacity: 0,
+    y: 30,
+  })
+  gsap.set(heroVisualRef.value, { opacity: 0, x: 100, rotateY: -15 })
+
+  // Badge animation
+  tl.to(heroBadgeRef.value, { opacity: 1, y: 0, duration: 0.6 }, 0.3)
+
+  // Description
+  tl.to(heroDescRef.value, { opacity: 1, y: 0, duration: 0.6 }, 0.8)
+
+  // Stats
+  tl.to(heroStatsRef.value, { opacity: 1, y: 0, duration: 0.6 }, 1)
+
+  // Actions
+  tl.to(heroActionsRef.value, { opacity: 1, y: 0, duration: 0.6 }, 1.2)
+
+  // Visual with 3D rotation
+  tl.to(
+    heroVisualRef.value,
+    {
+      opacity: 1,
+      x: 0,
+      rotateY: 0,
+      duration: 1.2,
+      ease: 'power2.out',
+    },
+    0.5,
+  )
+
+  // Mockup 3D rotation on scroll
+  if (mockupRef.value && heroRef.value) {
+    gsap.to(mockupRef.value, {
+      rotateY: 15,
+      rotateX: -5,
+      scale: 0.95,
+      scrollTrigger: {
+        trigger: heroRef.value,
+        start: 'top top',
+        end: 'bottom top',
+        scrub: 1,
+      },
+    })
+  }
+}
+
+const initFeaturesAnimations = () => {
+  if (!featuresGridRef.value) return
+
+  featureCardRefs.value.forEach((card) => {
+    if (!card) return
+
+    gsap.from(card, {
+      y: 80,
+      opacity: 0,
+      scale: 0.9,
+      borderRadius: '50%',
+      scrollTrigger: {
+        trigger: card,
+        start: 'top 85%',
+        end: 'top 50%',
+        scrub: 1,
+      },
+    })
+
+    // Icon rotation on scroll
+    const icon = card.querySelector('.feature-icon')
+    if (icon) {
+      gsap.to(icon, {
+        rotation: 360,
+        scale: 1.1,
+        scrollTrigger: {
+          trigger: card,
+          start: 'top 80%',
+          end: 'top 30%',
+          scrub: 2,
+        },
+      })
+    }
+  })
+}
+
+const initStepsAnimations = () => {
+  if (!stepsContainerRef.value || !lineProgressRef.value) return
+
+  // Self-drawing line
+  const lineLength = 300
+  gsap.set(lineProgressRef.value, { strokeDasharray: lineLength, strokeDashoffset: lineLength })
+
+  gsap.to(lineProgressRef.value, {
+    strokeDashoffset: 0,
+    scrollTrigger: {
+      trigger: stepsContainerRef.value,
+      start: 'top 70%',
+      end: 'bottom 50%',
+      scrub: 1,
+    },
+  })
+
+  // Step items animation
+  const stepItems = stepsContainerRef.value.querySelectorAll('.step-item')
+  stepItems.forEach((step, idx) => {
+    const stepNumber = step.querySelector('.step-number')
+
+    gsap.from(step, {
+      opacity: 0,
+      x: idx % 2 === 0 ? -50 : 50,
+      scrollTrigger: {
+        trigger: step,
+        start: 'top 80%',
+        end: 'top 50%',
+        scrub: 1,
+      },
+    })
+
+    // Step number activation
+    gsap.to(stepNumber, {
+      backgroundColor: '#ffd269',
+      color: '#060b17',
+      scale: 1.1,
+      boxShadow: '0 0 30px rgba(255, 210, 105, 0.5)',
+      scrollTrigger: {
+        trigger: step,
+        start: 'top 60%',
+        end: 'top 40%',
+        scrub: 1,
+      },
+    })
+  })
+}
+
+const initPricingAnimations = () => {
+  if (!pricingGridRef.value) return
+
+  pricingCardRefs.value.forEach((card) => {
+    if (!card) return
+
+    // Cards emerge from depth
+    gsap.from(card, {
+      z: -300,
+      opacity: 0,
+      rotateY: 30,
+      scale: 0.8,
+      scrollTrigger: {
+        trigger: card,
+        start: 'top 85%',
+        end: 'top 50%',
+        scrub: 1,
+      },
+    })
+
+    // Popular card special glow
+    if (card.classList.contains('popular')) {
+      gsap.to(card, {
+        boxShadow: '0 0 60px rgba(255, 210, 105, 0.4)',
+        scrollTrigger: {
+          trigger: card,
+          start: 'top 70%',
+          end: 'top 40%',
+          scrub: 1,
+        },
+      })
+    }
+  })
+}
+
+const initCtaAnimations = () => {
+  if (!ctaContentRef.value || !ctaParticlesRef.value) return
+
+  // CTA content dramatic reveal
+  gsap.from(ctaContentRef.value.querySelector('.cta-title'), {
+    scale: 2,
+    opacity: 0,
+    filter: 'blur(20px)',
+    scrollTrigger: {
+      trigger: ctaRef.value,
+      start: 'top 70%',
+      end: 'top 30%',
+      scrub: 1,
+    },
+  })
+
+  gsap.from(ctaContentRef.value.querySelector('.cta-description'), {
+    y: 50,
+    opacity: 0,
+    scrollTrigger: {
+      trigger: ctaRef.value,
+      start: 'top 60%',
+      end: 'top 30%',
+      scrub: 1,
+    },
+  })
+
+  gsap.from(ctaContentRef.value.querySelector('.cta-actions'), {
+    scale: 0,
+    rotation: -180,
+    scrollTrigger: {
+      trigger: ctaRef.value,
+      start: 'top 50%',
+      end: 'top 20%',
+      scrub: 1,
+    },
+  })
+
+  // Trust avatars stagger
+  const avatars = ctaContentRef.value.querySelectorAll('.trust-avatar')
+  gsap.from(avatars, {
+    x: -30,
+    opacity: 0,
+    stagger: 0.1,
+    scrollTrigger: {
+      trigger: ctaContentRef.value.querySelector('.cta-trust'),
+      start: 'top 80%',
+    },
+  })
+
+  // Particles converge toward center
+  const particles = ctaParticlesRef.value.querySelectorAll('.cta-particle')
+  particles.forEach((particle) => {
+    gsap.to(particle, {
+      x: '50vw',
+      y: '50%',
+      scale: 0,
+      opacity: 0,
+      scrollTrigger: {
+        trigger: ctaRef.value,
+        start: 'top 50%',
+        end: 'bottom bottom',
+        scrub: 2,
+      },
+    })
+  })
+}
+
+onMounted(() => {
+  // Delay to ensure DOM is ready
+  setTimeout(() => {
+    initHeroAnimations()
+    initFeaturesAnimations()
+    initStepsAnimations()
+    initPricingAnimations()
+    initCtaAnimations()
+  }, 100)
+})
+
+onUnmounted(() => {
+  ScrollTrigger.getAll().forEach((trigger) => trigger.kill())
+})
 </script>
 
 <style scoped>
-.main-section {
-  /* background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%); */
-  color: #fff;
+/* Base styles */
+.landing-main {
+  position: relative;
   overflow-x: hidden;
+  overflow-y: visible;
+  color: var(--color-white);
 }
 
-/* Hero Section */
+.section-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* ==================== HERO SECTION ==================== */
 .hero {
   position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
-  overflow: hidden;
-}
-
-.hero-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.3;
-}
-
-.floating-cubes {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.cube {
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  background: #ffd269;
-  transform: rotate(45deg);
-  animation: float 6s ease-in-out infinite;
-}
-
-.cube-1 {
-  top: 20%;
-  left: 10%;
-  animation-delay: 0s;
-}
-.cube-2 {
-  top: 60%;
-  left: 20%;
-  animation-delay: 2s;
-}
-.cube-3 {
-  top: 30%;
-  right: 15%;
-  animation-delay: 4s;
-}
-.cube-4 {
-  bottom: 20%;
-  left: 30%;
-  animation-delay: 1s;
-}
-.cube-5 {
-  bottom: 40%;
-  right: 10%;
-  animation-delay: 3s;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: rotate(45deg) translateY(0px);
-  }
-  50% {
-    transform: rotate(45deg) translateY(-20px);
-  }
+  padding: 8rem 0 4rem;
+  perspective: 1000px;
 }
 
 .hero-container {
-  max-width: 1200px;
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4rem;
   align-items: center;
-  position: relative;
-  z-index: 1;
 }
 
+/* Hero Content */
 .hero-content {
-  animation: slideInLeft 1s ease-out;
+  transform-style: preserve-3d;
 }
 
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 210, 105, 0.1);
+  border: 1px solid rgba(255, 210, 105, 0.2);
+  border-radius: 50px;
+  font-size: 0.85rem;
+  color: var(--color-accent);
+  margin-bottom: 1.5rem;
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
     opacity: 1;
-    transform: translateX(0);
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
   }
 }
 
 .hero-title {
-  font-size: 3.5rem;
+  font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 700;
+  line-height: 1.1;
   margin-bottom: 1.5rem;
-  line-height: 1.2;
+  color: var(--color-white);
 }
 
-.title-highlight {
+.title-line {
   display: block;
-  background: linear-gradient(45deg, #ffd269, #ffd269);
+}
+
+.title-line.highlight {
+  position: relative;
+  display: inline-block;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-secondary) 50%, var(--color-accent) 100%);
+  background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  animation: gradient-shift 5s ease infinite;
 }
 
-.title-main {
-  display: block;
-  color: #fff;
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .hero-description {
-  font-size: 1.3rem;
-  color: #ccc;
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.7);
   margin-bottom: 2rem;
-  line-height: 1.6;
+  max-width: 500px;
 }
 
+/* Hero Stats */
 .hero-stats {
   display: flex;
-  gap: 2rem;
-  margin-bottom: 2rem;
+  gap: 2.5rem;
+  margin-bottom: 2.5rem;
 }
 
-.stat {
-  text-align: center;
+.stat-item {
+  display: flex;
+  flex-direction: column;
 }
 
-.stat-number {
-  display: block;
+.stat-value {
   font-size: 2rem;
-  font-weight: bold;
-  color: #ffd269;
+  font-weight: 700;
+  color: var(--color-accent);
 }
 
 .stat-label {
-  font-size: 0.9rem;
-  color: #999;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.hero-buttons {
+/* Hero Actions */
+.hero-actions {
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.btn {
+.btn-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
   padding: 1rem 2rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
-  cursor: pointer;
+  border-radius: 12px;
+  text-decoration: none;
   transition: all 0.3s ease;
+  overflow: hidden;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-cta.primary {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #e5bc5c 100%);
+  color: var(--color-black);
+  box-shadow: 0 4px 20px rgba(255, 210, 105, 0.3);
+}
+
+.btn-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-cta.primary:hover .btn-shine {
+  left: 100%;
+}
+
+.btn-cta.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(255, 210, 105, 0.4);
+}
+
+.btn-cta.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-white);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-cta.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  text-decoration: none;
 }
 
-.btn-primary {
-  background: linear-gradient(45deg, #ffd269, #ffd269);
-  color: #060b17;
+.btn-cta.large {
+  padding: 1.25rem 2.5rem;
+  font-size: 1.1rem;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: #fff;
-  border: 2px solid #ffd269;
-}
-
-.btn-secondary:hover {
-  background: #ffd269;
-  transform: translateY(-2px);
-}
-
+/* Hero Visual */
 .hero-visual {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem 1rem;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.visual-glow {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(circle at center, rgba(255, 210, 105, 0.15) 0%, transparent 60%);
+  filter: blur(40px);
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
 }
 
 .studio-mockup {
-  background-color: #111827;
-  color: #f9fafb;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  width: 100%;
-  max-width: 500px;
-  font-family: "Courier New", Courier, monospace;
+  position: relative;
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.9) 0%, rgba(6, 11, 23, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
-.studio-header {
-  background-color: #1f2937;
+.mockup-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mockup-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.mockup-dots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.mockup-dots span:nth-child(1) {
+  background: #ff5f57;
+}
+.mockup-dots span:nth-child(2) {
+  background: #febc2e;
+}
+.mockup-dots span:nth-child(3) {
+  background: #28c840;
+}
+
+.mockup-title {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.mockup-content {
+  padding: 1.5rem;
+}
+
+/* Waveform */
+.waveform-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 80px;
+  margin-bottom: 1.5rem;
   padding: 1rem;
-  border-bottom: 1px solid #374151;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
 }
 
-.studio-title {
-  font-size: 0.95rem;
-  color: #93c5fd;
+.wave-bar {
+  width: 4px;
+  height: 50%;
+  background: linear-gradient(180deg, var(--color-accent) 0%, var(--color-secondary) 100%);
+  border-radius: 2px;
+  animation: wave-dance 1.2s ease-in-out infinite;
+  animation-delay: calc(var(--i) * 0.05s);
+  transform-origin: bottom;
 }
 
-.studio-console {
-  padding: 1rem;
+@keyframes wave-dance {
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Track lanes */
+.track-lanes {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  background-color: #0f172a;
-  min-height: 200px;
-}
-
-.console-line {
-  display: flex;
   gap: 0.5rem;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  word-break: break-word;
+  margin-bottom: 1.5rem;
 }
 
-.timestamp {
-  color: #6b7280;
-  font-weight: 500;
-  flex-shrink: 0;
+.track {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
 }
 
-.info {
-  color: #f3f4f6;
+.track-name {
+  width: 60px;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
 }
 
-.success {
-  color: #ffd269;
+.track-blocks {
+  flex: 1;
+  position: relative;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
 }
 
-.warning {
-  color: #facc15;
+.track-block {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  background: var(--color);
+  border-radius: 3px;
+  opacity: 0.7;
+  animation: block-pulse 3s ease-in-out infinite;
 }
 
-.error {
-  color: #f87171;
+@keyframes block-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.9;
+  }
 }
 
-/* Features Section */
-.features {
-  padding: 6rem 0;
-  /* background: rgba(255, 255, 255, 0.02); */
+/* Mockup controls */
+.mockup-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
+.control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  color: var(--color-black);
+}
+
+.timeline {
+  flex: 1;
+  position: relative;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.timeline-progress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-secondary));
+  border-radius: 2px;
+  animation: progress-move 8s linear infinite;
+}
+
+@keyframes progress-move {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+.timeline-head {
+  position: absolute;
+  left: 60%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  background: var(--color-accent);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px var(--color-accent);
+  animation: head-move 8s linear infinite;
+}
+
+@keyframes head-move {
+  0% {
+    left: 0%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.time-display {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==================== SECTION STYLES ==================== */
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.section-tag {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 210, 105, 0.1);
+  border: 1px solid rgba(255, 210, 105, 0.2);
+  border-radius: 50px;
+  font-size: 0.85rem;
+  color: var(--color-accent);
+  margin-bottom: 1rem;
 }
 
 .section-title {
-  text-align: center;
-  font-size: 2.5rem;
+  font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700;
-  margin-bottom: 3rem;
-  color: #fff;
+  color: var(--color-white);
+  margin-bottom: 1rem;
+}
+
+.section-subtitle {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ==================== FEATURES SECTION ==================== */
+.features {
+  padding: 8rem 0;
+  position: relative;
 }
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 2rem;
+  perspective: 1000px;
 }
 
 .feature-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
+  position: relative;
   padding: 2rem;
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: transform 0.3s ease;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  overflow: hidden;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: border-color 0.3s ease;
 }
 
 .feature-card:hover {
-  transform: translateY(-5px);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.feature-card:hover .feature-glow {
+  opacity: 1;
+}
+
+.feature-morph {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  opacity: 0.3;
+}
+
+.feature-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at top left, var(--color), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .feature-icon {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(45deg, #ffd269, #ffd269);
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1rem;
-  font-size: 1.5rem;
-  color: #fff;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  color: var(--color);
+  transition: all 0.3s ease;
+  will-change: transform;
 }
 
-.feature-card h3 {
-  font-size: 1.3rem;
-  margin-bottom: 1rem;
-  color: #fff;
+.feature-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-white);
+  margin-bottom: 0.75rem;
 }
 
-.feature-card p {
-  color: #ccc;
+.feature-description {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.6);
   line-height: 1.6;
 }
 
-/* Pricing Section */
+/* ==================== HOW IT WORKS ==================== */
+.how-it-works {
+  padding: 8rem 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(255, 210, 105, 0.02) 50%, transparent 100%);
+}
+
+.steps-container {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+  padding-left: 100px;
+}
+
+.steps-line-svg {
+  position: absolute;
+  left: 40px;
+  top: 0;
+  width: 4px;
+  height: 100%;
+}
+
+.line-bg {
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 2;
+}
+
+.line-progress {
+  stroke: url(#lineGradient);
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.step-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 80px 1fr auto;
+  gap: 2rem;
+  padding: 2rem 0;
+  will-change: transform, opacity;
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  will-change: transform, background-color, color;
+}
+
+.step-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.step-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-white);
+  margin-bottom: 0.5rem;
+}
+
+.step-description {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.6;
+}
+
+.step-visual {
+  display: flex;
+  align-items: center;
+}
+
+.step-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  color: var(--color-accent);
+}
+
+/* ==================== PRICING SECTION ==================== */
 .pricing {
-  padding: 6rem 0;
+  padding: 8rem 0;
+  perspective: 1000px;
 }
 
 .pricing-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
   max-width: 1000px;
   margin: 0 auto;
 }
 
 .pricing-card {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
-  padding: 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
-  transition: transform 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.pricing-card:hover {
-  transform: translateY(-5px);
+  padding: 2.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .pricing-card.popular {
-  border: 2px solid #ffd269;
+  background: linear-gradient(145deg, rgba(255, 210, 105, 0.1) 0%, rgba(255, 210, 105, 0.02) 100%);
+  border-color: rgba(255, 210, 105, 0.3);
   transform: scale(1.05);
+}
+
+.pricing-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .popular-badge {
   position: absolute;
-  top: -10px;
+  top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: #ffd269;
-  color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.9rem;
+  padding: 0.5rem 1.5rem;
+  background: linear-gradient(135deg, var(--color-accent) 0%, #e5bc5c 100%);
+  border-radius: 50px;
+  font-size: 0.8rem;
   font-weight: 600;
+  color: var(--color-black);
 }
 
-.pricing-header h3 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  color: #fff;
-}
-
-.price {
+.plan-header {
+  text-align: center;
   margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.plan-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-white);
+  margin-bottom: 1rem;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
 }
 
 .currency {
-  font-size: 1.2rem;
-  color: #ffd269;
-  vertical-align: top;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-accent);
 }
 
 .amount {
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 700;
-  color: #ffd269;
+  color: var(--color-white);
+  line-height: 1;
 }
 
 .period {
   font-size: 1rem;
-  color: #ccc;
+  color: rgba(255, 255, 255, 0.5);
 }
 
-.pricing-features {
+.plan-description {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.plan-features {
   list-style: none;
-  margin-bottom: 2rem;
+  padding: 0;
+  margin: 0 0 2rem;
 }
 
-.pricing-features li {
-  padding: 0.5rem 0;
-  color: #ccc;
+.plan-feature {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
 }
 
-.pricing-features i {
-  color: #ffd269;
+.plan-feature svg {
+  color: var(--color-accent);
+  flex-shrink: 0;
 }
 
-.btn-outline {
-  background: transparent;
-  color: #ffd269;
-  border: 2px solid #ffd269;
-}
-
-.btn-outline:hover {
-  background: #ffd269;
-  color: #fff;
-}
-
-/* Community Section */
-.community {
-  padding: 6rem 0;
-  /* background: rgba(255, 255, 255, 0.02); */
-}
-
-.community-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
-}
-
-.community-text h2 {
-  font-size: 2.5rem;
-  margin-bottom: 1.5rem;
-  color: #fff;
-}
-
-.community-text p {
-  font-size: 1.2rem;
-  color: #ccc;
-  line-height: 1.6;
-  margin-bottom: 2rem;
-}
-
-.community-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.community-stat {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  color: #ccc;
-}
-
-.community-stat i {
-  color: #ffd269;
-  font-size: 1.2rem;
-}
-
-.testimonial {
+.plan-btn {
+  width: 100%;
+  padding: 1rem;
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
-  padding: 2rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: var(--color-white);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.testimonial-content p {
-  font-style: italic;
-  margin-bottom: 1.5rem;
-  color: #fff;
+.plan-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-.testimonial-author {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.plan-btn.primary {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #e5bc5c 100%);
+  border: none;
+  color: var(--color-black);
 }
 
-.author-avatar {
-  width: 50px;
-  height: 50px;
-  background: #ffd269;
+.plan-btn.primary:hover {
+  box-shadow: 0 4px 20px rgba(255, 210, 105, 0.3);
+  transform: translateY(-2px);
+}
+
+/* ==================== CTA SECTION ==================== */
+.cta-section {
+  position: relative;
+  padding: 8rem 0;
+  overflow: hidden;
+}
+
+.cta-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.cta-gradient {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(255, 210, 105, 0.1) 0%, transparent 60%);
+}
+
+.cta-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.cta-particle {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  height: var(--size);
+  background: var(--color-accent);
   border-radius: 50%;
+  opacity: 0.3;
+  animation: particle-float var(--duration) ease-in-out infinite;
+  animation-delay: var(--delay);
+  will-change: transform;
+}
+
+@keyframes particle-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+  }
+}
+
+.cta-content {
+  position: relative;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.cta-title {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  color: var(--color-white);
+  margin-bottom: 1rem;
+  will-change: transform, opacity, filter;
+}
+
+.cta-description {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 2.5rem;
+  line-height: 1.7;
+}
+
+.cta-actions {
+  margin-bottom: 3rem;
+}
+
+.cta-trust {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-}
-
-.author-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.author-name {
-  font-weight: 600;
-  color: #fff;
-}
-
-.author-role {
+  gap: 1rem;
+  color: rgba(255, 255, 255, 0.5);
   font-size: 0.9rem;
-  color: #ccc;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+.trust-avatars {
+  display: flex;
+  margin-right: 0.5rem;
+}
+
+.trust-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--color-black);
+  margin-left: -10px;
+  object-fit: cover;
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-secondary) 100%);
+}
+
+.trust-avatar:first-child {
+  margin-left: 0;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 1024px) {
   .hero-container {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 3rem;
     text-align: center;
   }
 
-  .pricing-card,
-  .pricing-card.popular {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .hero-content {
+    order: 1;
   }
 
-  .hero-title {
-    font-size: 2.5rem;
+  .hero-visual {
+    order: 2;
+    max-width: 500px;
+    margin: 0 auto;
   }
 
-  .hero-buttons {
-    justify-content: center;
+  .hero-description {
+    max-width: 100%;
   }
 
   .hero-stats {
     justify-content: center;
   }
 
-  .community-content {
+  .hero-actions {
+    justify-content: center;
+  }
+
+  .steps-container {
+    padding-left: 80px;
+  }
+
+  .step-item {
+    grid-template-columns: 60px 1fr;
+    gap: 1.5rem;
+  }
+
+  .step-visual {
+    display: none;
+  }
+
+  .steps-line-svg {
+    left: 20px;
+  }
+
+  .step-number {
+    width: 60px;
+    height: 60px;
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 6rem 0 3rem;
+  }
+
+  .hero-title {
+    font-size: 2.25rem;
+  }
+
+  .hero-stats {
+    flex-direction: row;
+    gap: 1.5rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-cta {
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+  }
+
+  .features,
+  .how-it-works,
+  .pricing,
+  .cta-section {
+    padding: 5rem 0;
+  }
+
+  .features-grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
-    text-align: center;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
   }
 
   .pricing-card.popular {
     transform: none;
+  }
+
+  .section-container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-badge {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .section-title {
+    font-size: 1.75rem;
+  }
+
+  .steps-container {
+    padding-left: 0;
+  }
+
+  .step-item {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .steps-line-svg {
+    display: none;
+  }
+
+  .step-number {
+    margin: 0 auto 1rem;
+  }
+
+  .cta-trust {
+    flex-direction: column;
   }
 }
 </style>
