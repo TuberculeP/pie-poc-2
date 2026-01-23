@@ -63,7 +63,7 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
   });
 
   const volume = computed<number>({
-    get: () => project.value.volume,
+    get: () => project.value.volume ?? DEFAULT_VOLUME,
     set: (newVolume: number) => {
       project.value.volume = newVolume;
       project.value.updatedAt = new Date();
