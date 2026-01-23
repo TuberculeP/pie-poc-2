@@ -55,6 +55,7 @@ jobs:
       - name: Start the server
         env:
           POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: npm run start &
 
       - name: Check server is running
