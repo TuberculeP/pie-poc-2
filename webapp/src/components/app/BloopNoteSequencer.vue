@@ -1,7 +1,5 @@
 <template>
   <div class="piano-roll-container">
-    <!-- Gestion des séquences -->
-    <BloopSequenceTabs />
     <!-- Header avec les mesures -->
     <div v-if="sequencerStore.activeSequence" class="header-section">
       <div class="note-labels-header"></div>
@@ -226,8 +224,6 @@ import {
   computed,
   onMounted,
   onUnmounted,
-  defineEmits,
-  defineProps,
   watch,
 } from "vue";
 import { GridLayout, GridItem } from "grid-layout-plus";
@@ -235,7 +231,6 @@ import type { MidiNote, NoteName } from "../../lib/utils/types";
 import { useMIDIStore } from "../../stores/MIDIStore";
 import { useProjectStore } from "../../stores/projectStore";
 import { useSequencerStore } from "../../stores/sequencerStore";
-import BloopSequenceTabs from "./BloopSequenceTabs.vue";
 
 // Props
 interface Props {

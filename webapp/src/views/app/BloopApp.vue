@@ -6,15 +6,30 @@ import { storeToRefs } from "pinia";
 import BloopSmplr from "../../components/app/instruments/BloopSmplr.vue";
 import AppLayout from "../../layouts/AppLayout.vue";
 import BloopNoteSequencer from "../../components/app/BloopNoteSequencer.vue";
+import BloopArrangementView from "../../components/app/BloopArrangementView.vue";
+import BloopSequenceTabs from "../../components/app/BloopSequenceTabs.vue";
 import type { MidiNote, NoteName } from "../../lib/utils/types";
 import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
+import { useSequencerStore } from "../../stores/sequencerStore";
 
 // Route pour récupérer les query params
 const route = useRoute();
 
 // Computed pour récupérer le projectId depuis les query params
 const projectId = computed(() => route.query.projectId as string | undefined);
+
+// Store du séquenceur
+const sequencerStore = useSequencerStore();
+
+// Mode de vue (Pattern ou Arrangement)
+const viewMode = ref<'pattern' | 'arrangement'>('pattern');
+
+// Fonction pour basculer vers le mode Pattern et sélectionner une séquence
+const editSequence = (sequenceId: string) => {
+  sequencerStore.setActiveSequence(sequenceId);
+  viewMode.value = 'pattern';
+};
 
 const mainStore = useMainStore();
 const { isLoaded, loadPercentage } = storeToRefs(mainStore);
@@ -106,8 +121,25 @@ const onNoteEnd = (
               ?.component
           "
         />
+
+        <!-- Tabs avec switch Pattern/Arrangement -->
+        <BloopSequenceTabs
+          v-model="viewMode"
+          @edit-sequence="editSequence"
+        />
+
+        <!-- Vue Pattern (Piano Roll) -->
         <BloopNoteSequencer
+          v-if="viewMode === 'pattern'"
           :project-id="projectId"
+          @note-start="onNoteStart"
+          @note-end="onNoteEnd"
+        />
+
+        <!-- Vue Arrangement (Playlist FL Studio style) -->
+        <BloopArrangementView
+          v-if="viewMode === 'arrangement'"
+          @edit-sequence="editSequence"
           @note-start="onNoteStart"
           @note-end="onNoteEnd"
         />
