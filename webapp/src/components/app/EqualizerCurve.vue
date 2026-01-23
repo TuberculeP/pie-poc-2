@@ -1,355 +1,233 @@
 <template>
   <div class="equalizer-container">
-    <h3>Égaliseur</h3>
+    <h3>Égaliseur 5 bandes</h3>
     <canvas
       ref="canvas"
       class="eq-canvas"
-      width="480"
-      height="200"
-      @mousedown="handleMouseDown"
-      @mousemove="handleMouseMove"
-      @mouseup="handleMouseUp"
-      @mouseleave="handleMouseLeave"
-    ></canvas>
-    <div class="eq-info">Draggez les points pour ajuster les fréquences</div>
+      :width="WIDTH"
+      :height="HEIGHT"
+      @mousedown="onMouseDown"
+      @mousemove="onMouseMove"
+      @mouseup="onMouseUp"
+      @mouseleave="onMouseUp"
+    />
+    <div class="eq-info">
+      Draggez les points pour ajuster (±{{ MAX_GAIN }}dB)
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useSequencerStore } from "../../stores/sequencerStore";
+import {
+  EQ_BAND_COLORS,
+  EQ_GAIN_MAX,
+  EQ_GAIN_MIN,
+} from "../../lib/audio/config";
 
 const canvas = ref<HTMLCanvasElement | null>(null);
 const store = useSequencerStore();
-let isDrawing = false;
-let draggedPointIndex = -1;
 
-interface ControlPoint {
-  freq: number;
-  gain: number;
-  label: string;
-}
+let isDragging = false;
+let draggedId: string | null = null;
 
-// Points de contrôle pour la courbe (bass, mid, treble)
-const controlPoints = ref<ControlPoint[]>([
-  { freq: 200, gain: 0, label: "Bass" },
-  { freq: 1000, gain: 0, label: "Mid" },
-  { freq: 3000, gain: 0, label: "Treble" },
-]);
+const WIDTH = 560;
+const HEIGHT = 220;
+const PADDING = 45;
+const GRAPH_W = WIDTH - PADDING * 2;
+const GRAPH_H = HEIGHT - PADDING * 2;
+const POINT_R = 8;
+const MAX_GAIN = EQ_GAIN_MAX;
+const MIN_GAIN = EQ_GAIN_MIN;
+const FREQS = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
+const GAINS = [-18, -12, -6, 0, 6, 12, 18];
 
-const width = 480;
-const height = 200;
-const padding = 40;
-const graphWidth = width - padding * 2;
-const graphHeight = height - padding * 2;
-const pointRadius = 6;
+const bands = computed(() => store.eqBands);
 
-// Échelle logarithmique pour les fréquences
-const logScale = (freq: number): number => {
-  const minFreq = 20;
-  const maxFreq = 20000;
-  return (
-    (Math.log10(freq) - Math.log10(minFreq)) /
-    (Math.log10(maxFreq) - Math.log10(minFreq))
+const logScale = (freq: number) =>
+  (Math.log10(freq) - Math.log10(20)) / (Math.log10(20000) - Math.log10(20));
+
+const freqToX = (freq: number) => PADDING + logScale(freq) * GRAPH_W;
+const gainToY = (gain: number) =>
+  HEIGHT - PADDING - ((gain - MIN_GAIN) / (MAX_GAIN - MIN_GAIN)) * GRAPH_H;
+const yToGain = (y: number) =>
+  Math.max(
+    MIN_GAIN,
+    Math.min(
+      MAX_GAIN,
+      ((HEIGHT - PADDING - y) / GRAPH_H) * (MAX_GAIN - MIN_GAIN) + MIN_GAIN,
+    ),
   );
-};
 
-const freqToX = (freq: number): number => {
-  return padding + logScale(freq) * graphWidth;
-};
-
-const gainToY = (gain: number): number => {
-  // Gain de -12 à +12 dB, au centre = 0dB
-  const normalized = (gain + 12) / 24; // 0 à 1
-  return height - padding - normalized * graphHeight;
-};
-
-const xToFreq = (x: number): number => {
-  const minFreq = 20;
-  const maxFreq = 20000;
-  const normalized = (x - padding) / graphWidth;
-  return minFreq * Math.pow(maxFreq / minFreq, normalized);
-};
-
-const yToGain = (y: number): number => {
-  const normalized = (height - padding - y) / graphHeight;
-  const gain = normalized * 24 - 12; // -12 à +12 dB
-  return Math.max(-12, Math.min(12, gain));
-};
-
-// Mettre à jour les points de contrôle à partir du store
-const updatePointsFromStore = () => {
-  controlPoints.value[0].gain = store.bass ?? 0;
-  controlPoints.value[1].gain = store.mid ?? 0;
-  controlPoints.value[2].gain = store.treble ?? 0;
-};
-
-// Mettre à jour le store à partir des points de contrôle
-const updateStoreFromPoints = () => {
-  store.bass = Math.round(controlPoints.value[0].gain * 100) / 100;
-  store.mid = Math.round(controlPoints.value[1].gain * 100) / 100;
-  store.treble = Math.round(controlPoints.value[2].gain * 100) / 100;
-};
-
-watch(
-  () => [store.bass, store.mid, store.treble],
-  () => {
-    updatePointsFromStore();
-    if (canvas.value) drawCurve();
-  },
-);
-
-const handleMouseDown = (e: MouseEvent) => {
+const onMouseDown = (e: MouseEvent) => {
   if (!canvas.value) return;
-
   const rect = canvas.value.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
 
-  // Vérifier si on a cliqué sur un point de contrôle
-  for (let i = 0; i < controlPoints.value.length; i++) {
-    const point = controlPoints.value[i];
-    const px = freqToX(point.freq);
-    const py = gainToY(point.gain);
-    const distance = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
-
-    if (distance < pointRadius * 1.5) {
-      isDrawing = true;
-      draggedPointIndex = i;
+  for (const band of bands.value) {
+    const dist = Math.hypot(
+      x - freqToX(band.frequency),
+      y - gainToY(band.gain),
+    );
+    if (dist < POINT_R * 2) {
+      isDragging = true;
+      draggedId = band.id;
       break;
     }
   }
 };
 
-const handleMouseMove = (e: MouseEvent) => {
-  if (!canvas.value || !isDrawing || draggedPointIndex === -1) return;
-
+const onMouseMove = (e: MouseEvent) => {
+  if (!canvas.value || !isDragging || !draggedId) return;
   const rect = canvas.value.getBoundingClientRect();
-  //   const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-
-  // Mettre à jour le gain du point (la fréquence reste fixe)
-  const newGain = yToGain(y);
-  controlPoints.value[draggedPointIndex].gain = Math.max(
-    -12,
-    Math.min(12, newGain),
+  store.updateEQBand(
+    draggedId,
+    Math.round(yToGain(e.clientY - rect.top) * 10) / 10,
   );
-
-  updateStoreFromPoints();
-  drawCurve();
 };
 
-const handleMouseUp = () => {
-  isDrawing = false;
-  draggedPointIndex = -1;
+const onMouseUp = () => {
+  isDragging = false;
+  draggedId = null;
 };
 
-const handleMouseLeave = () => {
-  isDrawing = false;
-  draggedPointIndex = -1;
-};
-
-const drawCurve = () => {
-  if (!canvas.value) return;
-
-  const ctx = canvas.value.getContext("2d");
+const draw = () => {
+  const ctx = canvas.value?.getContext("2d");
   if (!ctx) return;
 
-  // Fond
+  // Background
   ctx.fillStyle = "#061b33";
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  // Grille
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+  // Grid
+  ctx.strokeStyle = "rgba(255,255,255,0.08)";
   ctx.lineWidth = 1;
-
-  // Lignes verticales (fréquences)
-  const freqs = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
-  freqs.forEach((freq) => {
-    const x = freqToX(freq);
+  FREQS.forEach((f) => {
     ctx.beginPath();
-    ctx.moveTo(x, padding);
-    ctx.lineTo(x, height - padding);
+    ctx.moveTo(freqToX(f), PADDING);
+    ctx.lineTo(freqToX(f), HEIGHT - PADDING);
     ctx.stroke();
   });
 
-  // Ligne horizontale au centre (0dB)
-  const centerY = gainToY(0);
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+  // 0dB line
+  ctx.strokeStyle = "rgba(255,255,255,0.25)";
   ctx.beginPath();
-  ctx.moveTo(padding, centerY);
-  ctx.lineTo(width - padding, centerY);
+  ctx.moveTo(PADDING, gainToY(0));
+  ctx.lineTo(WIDTH - PADDING, gainToY(0));
   ctx.stroke();
 
-  // Autres lignes horizontales (-12, -6, 6, 12)
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-  [-12, -6, 6, 12].forEach((gain) => {
-    const y = gainToY(gain);
+  // Other gain lines
+  ctx.strokeStyle = "rgba(255,255,255,0.05)";
+  GAINS.filter((g) => g !== 0).forEach((g) => {
     ctx.beginPath();
-    ctx.moveTo(padding, y);
-    ctx.lineTo(width - padding, y);
+    ctx.moveTo(PADDING, gainToY(g));
+    ctx.lineTo(WIDTH - PADDING, gainToY(g));
     ctx.stroke();
   });
 
-  // Dessiner la courbe interpolée avec Bézier
-  ctx.strokeStyle = "rgba(100, 200, 255, 0.8)";
+  // Curve
+  const sorted = [...bands.value].sort((a, b) => a.frequency - b.frequency);
+  const points: { x: number; y: number }[] = [];
+
+  for (let x = PADDING; x <= freqToX(sorted[0].frequency); x += 2) {
+    points.push({ x, y: gainToY(sorted[0].gain) });
+  }
+
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const x0 = freqToX(sorted[i].frequency);
+    const x1 = freqToX(sorted[i + 1].frequency);
+    for (let x = x0; x <= x1; x += 2) {
+      const t = (x - x0) / (x1 - x0);
+      const eased = t * t * (3 - 2 * t);
+      points.push({
+        x,
+        y: gainToY(
+          sorted[i].gain + (sorted[i + 1].gain - sorted[i].gain) * eased,
+        ),
+      });
+    }
+  }
+
+  const last = sorted[sorted.length - 1];
+  for (let x = freqToX(last.frequency); x <= WIDTH - PADDING; x += 2) {
+    points.push({ x, y: gainToY(last.gain) });
+  }
+
+  ctx.strokeStyle = "rgba(100,200,255,0.6)";
   ctx.lineWidth = 2;
   ctx.beginPath();
-
-  // Créer des points pour la courbe Bézier
-  const curvePoints: Array<{ x: number; y: number }> = [];
-
-  // Ajouter points avant le premier point de contrôle
-  for (let x = padding; x <= freqToX(controlPoints.value[0].freq); x += 1) {
-    // const freq = xToFreq(x);
-    const gain = controlPoints.value[0].gain;
-    curvePoints.push({ x, y: gainToY(gain) });
-  }
-
-  // Ajouter points entre bass et mid avec interpolation lisse
-  for (
-    let x = freqToX(controlPoints.value[0].freq);
-    x <= freqToX(controlPoints.value[1].freq);
-    x += 1
-  ) {
-    const freq = xToFreq(x);
-    const t =
-      (Math.log10(freq) - Math.log10(controlPoints.value[0].freq)) /
-      (Math.log10(controlPoints.value[1].freq) -
-        Math.log10(controlPoints.value[0].freq));
-    // Interpolation lissée avec easing
-    const easedT = t * t * (3 - 2 * t); // Smoothstep
-    const gain =
-      controlPoints.value[0].gain +
-      (controlPoints.value[1].gain - controlPoints.value[0].gain) * easedT;
-    curvePoints.push({ x, y: gainToY(gain) });
-  }
-
-  // Ajouter points entre mid et treble avec interpolation lisse
-  for (
-    let x = freqToX(controlPoints.value[1].freq);
-    x <= freqToX(controlPoints.value[2].freq);
-    x += 1
-  ) {
-    const freq = xToFreq(x);
-    const t =
-      (Math.log10(freq) - Math.log10(controlPoints.value[1].freq)) /
-      (Math.log10(controlPoints.value[2].freq) -
-        Math.log10(controlPoints.value[1].freq));
-    // Interpolation lissée avec easing
-    const easedT = t * t * (3 - 2 * t); // Smoothstep
-    const gain =
-      controlPoints.value[1].gain +
-      (controlPoints.value[2].gain - controlPoints.value[1].gain) * easedT;
-    curvePoints.push({ x, y: gainToY(gain) });
-  }
-
-  // Ajouter points après le dernier point de contrôle
-  for (
-    let x = freqToX(controlPoints.value[2].freq);
-    x <= width - padding;
-    x += 1
-  ) {
-    const gain = controlPoints.value[2].gain;
-    curvePoints.push({ x, y: gainToY(gain) });
-  }
-
-  // Dessiner la courbe avec quadraticCurveTo pour une courbe lisse
-  if (curvePoints.length > 0) {
-    ctx.moveTo(curvePoints[0].x, curvePoints[0].y);
-    for (let i = 1; i < curvePoints.length - 1; i++) {
-      const xc = (curvePoints[i].x + curvePoints[i + 1].x) / 2;
-      const yc = (curvePoints[i].y + curvePoints[i + 1].y) / 2;
-      ctx.quadraticCurveTo(curvePoints[i].x, curvePoints[i].y, xc, yc);
-    }
-    // Dernier point
-    ctx.lineTo(
-      curvePoints[curvePoints.length - 1].x,
-      curvePoints[curvePoints.length - 1].y,
-    );
-  }
-
+  points.forEach((p, i) =>
+    i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y),
+  );
   ctx.stroke();
 
-  // Dessiner les points de contrôle
-  controlPoints.value.forEach((point, index) => {
-    const x = freqToX(point.freq);
-    const y = gainToY(point.gain);
+  // Fill under curve
+  ctx.fillStyle = "rgba(100,200,255,0.1)";
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, gainToY(0));
+  points.forEach((p) => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(points[points.length - 1].x, gainToY(0));
+  ctx.closePath();
+  ctx.fill();
 
-    // Ombre
-    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+  // Control points
+  bands.value.forEach((band) => {
+    const x = freqToX(band.frequency);
+    const y = gainToY(band.gain);
+    const color = EQ_BAND_COLORS[band.id] || "#4dabf7";
+    const active = draggedId === band.id;
+
+    if (active) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 15;
+    }
+
+    ctx.fillStyle = active ? color : `${color}cc`;
     ctx.beginPath();
-    ctx.arc(x, y, pointRadius + 1, 0, Math.PI * 2);
+    ctx.arc(x, y, active ? POINT_R + 2 : POINT_R, 0, Math.PI * 2);
     ctx.fill();
 
-    // Cercle
-    ctx.fillStyle =
-      draggedPointIndex === index
-        ? "rgba(255, 100, 100, 1)"
-        : "rgba(100, 200, 255, 1)";
-    ctx.beginPath();
-    ctx.arc(x, y, pointRadius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Bordure
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.strokeStyle = "rgba(255,255,255,0.9)";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(x, y, pointRadius, 0, Math.PI * 2);
+    ctx.arc(x, y, active ? POINT_R + 2 : POINT_R, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.shadowBlur = 0;
 
     // Label
-    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-    ctx.font = "11px sans-serif";
+    ctx.fillStyle = color;
+    ctx.font = "bold 11px sans-serif";
     ctx.textAlign = "center";
+    ctx.fillText(band.label, x, y - POINT_R - 14);
+    ctx.fillStyle = "rgba(255,255,255,0.8)";
+    ctx.font = "10px sans-serif";
     ctx.fillText(
-      `${point.label} ${point.gain > 0 ? "+" : ""}${Math.round(point.gain * 10) / 10}dB`,
+      `${band.gain > 0 ? "+" : ""}${band.gain.toFixed(1)}dB`,
       x,
-      y - pointRadius - 8,
+      y - POINT_R - 3,
     );
   });
 
-  // Axes et labels
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-  ctx.lineWidth = 1;
-
-  // Axe vertical gauche
-  ctx.beginPath();
-  ctx.moveTo(padding - 5, padding);
-  ctx.lineTo(padding - 5, height - padding);
-  ctx.stroke();
-
-  // Axe horizontal bas
-  ctx.beginPath();
-  ctx.moveTo(padding, height - padding + 5);
-  ctx.lineTo(width - padding, height - padding + 5);
-  ctx.stroke();
-
-  // Labels d'axes
-  ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-  ctx.font = "10px sans-serif";
+  // Axis labels
+  ctx.fillStyle = "rgba(255,255,255,0.5)";
+  ctx.font = "9px sans-serif";
   ctx.textAlign = "center";
-
-  // Fréquences
-  freqs.forEach((freq) => {
-    const x = freqToX(freq);
-    const label = freq < 1000 ? `${freq}Hz` : `${(freq / 1000).toFixed(1)}kHz`;
-    ctx.fillText(label, x, height - padding + 18);
+  FREQS.forEach((f) => {
+    const label =
+      f < 1000 ? `${f}` : `${(f / 1000).toFixed(f >= 10000 ? 0 : 1)}k`;
+    ctx.fillText(label, freqToX(f), HEIGHT - PADDING + 15);
   });
 
-  // Gains
   ctx.textAlign = "right";
-  [-12, -6, 0, 6, 12].forEach((gain) => {
-    const y = gainToY(gain);
-    const label = gain > 0 ? `+${gain}` : `${gain}`;
-    ctx.fillText(label + "dB", padding - 12, y + 3);
-  });
+  GAINS.forEach((g) =>
+    ctx.fillText(`${g > 0 ? "+" : ""}${g}`, PADDING - 8, gainToY(g) + 3),
+  );
 };
 
-onMounted(() => {
-  updatePointsFromStore();
-  drawCurve();
-});
+watch(() => store.eqBands, draw, { deep: true });
+onMounted(draw);
 </script>
 
 <style scoped lang="scss">
@@ -358,7 +236,6 @@ onMounted(() => {
   flex-direction: column;
   gap: 12px;
   align-items: center;
-  width: 100%;
 
   h3 {
     margin: 0;

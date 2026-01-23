@@ -5,16 +5,15 @@ import type {
   SequencerProject,
   MidiNote,
   LegacySequenceData,
+  EQBand,
 } from "../lib/utils/types";
+import { cloneEQBands } from "../lib/audio/config";
 
 const STORAGE_KEY = "bloop-sequencer-project";
 const DEFAULT_COLS = 64;
 const DEFAULT_TEMPO = 120;
 const DEFAULT_VOLUME = 100;
 const DEFAULT_REVERB = 20;
-const DEFAULT_BASS = 0;
-const DEFAULT_MID = 0;
-const DEFAULT_TREBLE = 0;
 
 export const useSequencerStore = defineStore("sequencerStore", () => {
   // État du projet
@@ -22,14 +21,12 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     sequences: [],
     activeSequenceId: null,
     projectName: "Mon Projet",
-    version: "2.0",
+    version: "2.1",
     createdAt: new Date(),
     updatedAt: new Date(),
     volume: DEFAULT_VOLUME,
     reverb: DEFAULT_REVERB,
-    bass: DEFAULT_BASS,
-    mid: DEFAULT_MID,
-    treble: DEFAULT_TREBLE,
+    eqBands: cloneEQBands(),
   });
 
   // Computed pour la séquence active
@@ -81,28 +78,38 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     },
   });
 
-  const bass = computed<number>({
-    get: () => project.value.bass ?? DEFAULT_BASS,
-    set: (newBass: number) => {
-      project.value.bass = newBass;
+  const eqBands = computed<EQBand[]>({
+    get: () => project.value.eqBands ?? cloneEQBands(),
+    set: (newBands: EQBand[]) => {
+      project.value.eqBands = newBands;
       project.value.updatedAt = new Date();
     },
   });
 
-  const mid = computed<number>({
-    get: () => project.value.mid ?? DEFAULT_MID,
-    set: (newMid: number) => {
-      project.value.mid = newMid;
+  const updateEQBand = (bandId: string, gain: number) => {
+    const bands = project.value.eqBands ?? cloneEQBands();
+    const band = bands.find((b: EQBand) => b.id === bandId);
+    if (band) {
+      band.gain = gain;
+      project.value.eqBands = bands;
       project.value.updatedAt = new Date();
-    },
+    }
+  };
+
+  // Legacy getters pour compatibilité
+  const bass = computed<number>(() => {
+    const band = eqBands.value.find((b) => b.id === "bass");
+    return band?.gain ?? 0;
   });
 
-  const treble = computed<number>({
-    get: () => project.value.treble ?? DEFAULT_TREBLE,
-    set: (newTreble: number) => {
-      project.value.treble = newTreble;
-      project.value.updatedAt = new Date();
-    },
+  const mid = computed<number>(() => {
+    const band = eqBands.value.find((b) => b.id === "mid");
+    return band?.gain ?? 0;
+  });
+
+  const treble = computed<number>(() => {
+    const band = eqBands.value.find((b) => b.id === "brilliance");
+    return band?.gain ?? 0;
   });
 
   const cols = computed<number>(
@@ -508,17 +515,44 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     return oldY; // Retourner l'ancienne valeur si hors limites
   };
 
+  // Migrer l'ancien système EQ (bass/mid/treble) vers le nouveau (eqBands)
+  const migrateEQFromLegacy = (data: any): EQBand[] => {
+    const bands = cloneEQBands();
+    if (data.bass !== undefined) {
+      const bassBand = bands.find((b: EQBand) => b.id === "bass");
+      if (bassBand) bassBand.gain = data.bass;
+    }
+    if (data.mid !== undefined) {
+      const midBand = bands.find((b: EQBand) => b.id === "mid");
+      if (midBand) midBand.gain = data.mid;
+    }
+    if (data.treble !== undefined) {
+      const trebleBand = bands.find((b: EQBand) => b.id === "brilliance");
+      if (trebleBand) trebleBand.gain = data.treble;
+    }
+    return bands;
+  };
+
   // Charger les données d'un projet (fonction publique)
   const loadProjectData = (data: any): void => {
+    // Déterminer les bandes EQ (nouveau système ou migration)
+    let eqBands: EQBand[];
+    if (data.eqBands && Array.isArray(data.eqBands)) {
+      eqBands = data.eqBands;
+    } else {
+      eqBands = migrateEQFromLegacy(data);
+    }
+
     const newProject: SequencerProject = {
       sequences: data.sequences || [],
       activeSequenceId: data.activeSequenceId || null,
       projectName: data.projectName || "Projet Importé",
-      version: data.version || "2.0",
+      version: data.version || "2.1",
       createdAt: new Date(data.createdAt || new Date()),
       updatedAt: new Date(data.updatedAt || new Date()),
-      volume: data.volume || DEFAULT_VOLUME,
-      reverb: data.reverb || DEFAULT_REVERB,
+      volume: data.volume ?? DEFAULT_VOLUME,
+      reverb: data.reverb ?? DEFAULT_REVERB,
+      eqBands,
     };
 
     // Détecter si c'est un projet avec l'ancien système de notes
@@ -605,6 +639,9 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     cols,
     volume,
     reverb,
+    eqBands,
+    updateEQBand,
+    // Legacy (read-only)
     bass,
     mid,
     treble,

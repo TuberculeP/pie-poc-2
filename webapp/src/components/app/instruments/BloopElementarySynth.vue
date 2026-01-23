@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from "vue";
 import { useElementaryStore } from "../../../stores/elementaryStore";
-import { useSequencerStore } from "../../../stores/sequencerStore";
+import { useAudioBusStore } from "../../../stores/audioBusStore";
 import { el } from "@elemaudio/core";
 import { useMIDIStore } from "../../../stores/MIDIStore";
 import { ref } from "vue";
@@ -11,7 +11,7 @@ import { computed } from "vue";
 import BloopPotard from "../BloopPotard.vue";
 
 const elementaryStore = useElementaryStore();
-const sequencerStore = useSequencerStore();
+const audioBusStore = useAudioBusStore();
 const midiStore = useMIDIStore();
 
 type Voice = {
@@ -27,8 +27,6 @@ const adsr = reactive({
   release: 5,
 });
 
-let masterGain = 1; // Variable pour stocker le gain maître
-
 function computeFrequency(midiNote: number) {
   return 440 * 2 ** ((midiNote - 69) / 12);
 }
@@ -42,10 +40,6 @@ const computedVoices = computed(() =>
       +adsr.decay,
       +adsr.sustain,
       +adsr.release,
-      //   el.const({ key: `${voice.key}:a`, value: 0 }),
-      //   el.const({ key: `${voice.key}:d`, value: 0 }),
-      //   el.const({ key: `${voice.key}:s`, value: 1 }),
-      //   el.const({ key: `${voice.key}:r`, value: 10 }),
       el.const({ key: `${voice.key}:gate`, value: 0.2 * voice.gate }),
     );
 
@@ -57,29 +51,16 @@ const computedVoices = computed(() =>
 );
 
 watch(computedVoices, () => {
-  const out = el.mul(
-    el.const({ key: "masterGain", value: masterGain }),
-    el.add(...computedVoices.value),
-  );
+  const out = el.add(...computedVoices.value);
   elementaryStore.getCore().render(out, out);
 });
 
-// Écouter les changements du volume global
-watch(
-  () => sequencerStore.volume,
-  (newVolume) => {
-    // Pour Elementary, on peut utiliser 0 directement car ce n'est pas exponentialRampToValueAtTime
-    masterGain = newVolume / 100; // Convertir 0-100 en 0-1
-  },
-);
-
-// Fonctions de cleanup pour désenregistrer les callbacks
 let unregisterNoteOn: (() => void) | null = null;
 let unregisterNoteOff: (() => void) | null = null;
 
 onMounted(() => {
-  // S'abonner aux événements de notes du MIDIStore (clavier + séquenceur)
   unregisterNoteOn = midiStore.onNotePlayed((note, _key) => {
+    audioBusStore.ensureAudioContextResumed();
     const midiNoteNumber = midiNoteToNumber(note.scale);
     const key = "v" + midiNoteNumber;
     const freq = computeFrequency(midiNoteNumber);
@@ -99,7 +80,6 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  // Nettoyer les callbacks pour éviter les fuites mémoire
   if (unregisterNoteOn) {
     unregisterNoteOn();
   }
@@ -108,7 +88,6 @@ onBeforeUnmount(() => {
   }
 });
 
-// Fonction pour convertir le nom de note en numéro MIDI
 const midiNoteToNumber = (noteName: string): number => {
   const noteToNumber: Record<string, number> = {
     C: 0,
@@ -126,7 +105,7 @@ const midiNoteToNumber = (noteName: string): number => {
   };
 
   const match = noteName.match(/^([A-G]#?)(\d+)$/);
-  if (!match) return 60; // C4 par défaut
+  if (!match) return 60;
 
   const [, note, octave] = match;
   return (parseInt(octave) + 1) * 12 + noteToNumber[note];

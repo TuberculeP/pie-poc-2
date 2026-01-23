@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from "vue";
 import { ref, computed } from "vue";
-import { Soundfont, Reverb } from "smplr";
-import { watch } from "vue";
+import { Soundfont } from "smplr";
 import { useMIDIStore } from "../../../stores/MIDIStore";
-import { useSequencerStore } from "../../../stores/sequencerStore";
+import { useAudioBusStore } from "../../../stores/audioBusStore";
 
 const currentNotes = ref<{ note: string; stopFn: () => void; id: number }[]>(
   [],
 );
 
-// Stores pour accéder aux événements MIDI et au volume global
 const midiStore = useMIDIStore();
-const sequencerStore = useSequencerStore();
+const audioBusStore = useAudioBusStore();
 
-// Fonctions de cleanup pour désenregistrer les callbacks
+const { audioContext, inputBus } = audioBusStore;
+
 let unregisterNoteOn: (() => void) | null = null;
 let unregisterNoteOff: (() => void) | null = null;
 
@@ -151,124 +150,24 @@ const soundfontList = [
 
 const selectedSoundfont = ref("marimba");
 
-// Créer un AudioContext partagé avec gain node
-const audioContext = new AudioContext();
-const masterGainNode = audioContext.createGain();
-masterGainNode.connect(audioContext.destination);
-masterGainNode.gain.value = 1;
-
-// Créer la reverb et attendre qu'elle soit chargée
-const reverb = new Reverb(audioContext);
-let reverbReady = false;
-let reverbAddedToSoundfont = false; // Flag pour savoir si addEffect a réussi
-
-// Attendre 1200ms pour que la Reverb se charge
-setTimeout(() => {
-  reverbReady = true;
-}, 1200);
-
-// Écouter les changements du volume global
-watch(
-  () => sequencerStore.volume,
-  (newVolume) => {
-    const normalizedVolume = newVolume / 100;
-    if (normalizedVolume === 0) {
-      masterGainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
-    } else {
-      masterGainNode.gain.exponentialRampToValueAtTime(
-        normalizedVolume,
-        audioContext.currentTime + 0.05,
-      );
-    }
-  },
-);
-
 const soundfont = computed(
   () =>
     new Soundfont(audioContext, {
       instrument: selectedSoundfont.value,
+      destination: inputBus,
     }),
 );
 
-// Écouter les changements d'instrument
-watch(
-  () => selectedSoundfont.value,
-  () => {
-    reverbAddedToSoundfont = false;
-
-    setTimeout(() => {
-      if (soundfont.value && soundfont.value.output && reverbReady) {
-        try {
-          soundfont.value.output.addEffect("reverb", reverb, 0);
-          reverbAddedToSoundfont = true;
-
-          const normalizedReverb = sequencerStore.reverb / 100;
-          soundfont.value.output.sendEffect("reverb", normalizedReverb);
-        } catch (e) {
-          console.error("Erreur lors de l'ajout de la reverb:", e);
-        }
-      }
-    }, 50);
-  },
-);
-
-// Écouter les changements de reverb et mettre à jour l'effet
-watch(
-  () => sequencerStore.reverb,
-  (newReverb) => {
-    if (!reverbAddedToSoundfont) return;
-
-    const normalizedReverb = newReverb / 100;
-    try {
-      if (soundfont.value && soundfont.value.output) {
-        soundfont.value.output.sendEffect("reverb", normalizedReverb);
-      }
-    } catch (error) {
-      console.error("Erreur reverb:", error);
-    }
-  },
-  { immediate: true },
-);
-
 onMounted(() => {
-  // Ajouter la reverb à la soundfont au démarrage
-  const addReverbWithPolling = () => {
-    const startTime = Date.now();
-    const timeoutMs = 5000;
-    const pollIntervalMs = 100;
-
-    const pollInterval = setInterval(() => {
-      if (soundfont.value && soundfont.value.output && reverbReady) {
-        clearInterval(pollInterval);
-        try {
-          soundfont.value.output.addEffect("reverb", reverb, 0);
-          reverbAddedToSoundfont = true;
-
-          const normalizedReverb = sequencerStore.reverb / 100;
-          soundfont.value.output.sendEffect("reverb", normalizedReverb);
-        } catch (e) {
-          console.error("Erreur lors de l'ajout de la reverb:", e);
-        }
-      } else if (Date.now() - startTime > timeoutMs) {
-        clearInterval(pollInterval);
-        console.warn("Timeout: reverb n'a pas pu être ajoutée");
-      }
-    }, pollIntervalMs);
-  };
-
-  addReverbWithPolling();
-
-  // S'abonner aux événements de notes du MIDIStore (clavier + séquenceur)
   unregisterNoteOn = midiStore.onNotePlayed((note, _key) => {
-    // Convertir la note en format MIDI (ex: "C4" → "C4")
-    const midiNote = note.scale; // note.scale contient "C4", "D4", etc.
+    audioBusStore.ensureAudioContextResumed();
+    const midiNote = note.scale;
     const stopFn = soundfont.value.start({ note: midiNote });
 
-    // Ajouter un ID unique pour différencier les instances multiples de la même note
     const noteInstance = {
       note: midiNote,
       stopFn,
-      id: Date.now() + Math.random(), // ID unique pour chaque instance
+      id: Date.now() + Math.random(),
     };
 
     currentNotes.value.push(noteInstance);
@@ -276,8 +175,6 @@ onMounted(() => {
 
   unregisterNoteOff = midiStore.onNoteStopped((note, _key) => {
     const midiNote = note.scale;
-
-    // Trouver la première instance de cette note (FIFO - First In, First Out)
     const noteIndex = currentNotes.value.findIndex((n) => n.note === midiNote);
 
     if (noteIndex !== -1) {
@@ -289,7 +186,6 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  // Nettoyer les callbacks pour éviter les fuites mémoire
   if (unregisterNoteOn) {
     unregisterNoteOn();
   }

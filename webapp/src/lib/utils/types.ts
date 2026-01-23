@@ -54,6 +54,14 @@ export interface Sequence {
   reverb: number;
 }
 
+export interface EQBand {
+  id: string;
+  frequency: number;
+  gain: number;
+  type: "lowshelf" | "peaking" | "highshelf";
+  label: string;
+}
+
 export interface SequencerProject {
   sequences: Sequence[];
   activeSequenceId: string | null;
@@ -63,6 +71,8 @@ export interface SequencerProject {
   updatedAt: Date;
   volume: number;
   reverb: number;
+  eqBands?: EQBand[];
+  // Legacy support
   bass?: number;
   mid?: number;
   treble?: number;
