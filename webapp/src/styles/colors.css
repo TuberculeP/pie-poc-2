@@ -1,68 +1,83 @@
 /* Design System Colors */
 :root {
   /* Primaire (Default, Hover, Active) */
-  --color-primary: #4f709b;
-  --color-primary-hover: #3e5a7f;
-  --color-primary-active: #2d4460;
+  --color-primary: #440319;
+  --color-primary-hover: #60112c;
+  --color-primary-active: #320917;
 
   /* Secondaire (Default, Hover, Active) */
-  --color-secondary: #91a5f9;
-  --color-secondary-hover: #7a93f8;
-  --color-secondary-active: #5567ae;
-
+  --color-secondary: #ffb2ae;
+  --color-secondary-hover: #ffccc9;
+  --color-secondary-active: #eb8e89;
   /* Borders */
-  --color-border-secondary: rgba(145, 165, 249, 0.5);
-  --color-border-secondary-hover: rgba(145, 165, 249, 0.7);
+  --color-border-secondary: rgba(122, 15, 62, 0.5);
+  --color-border-secondary-hover: rgba(155, 36, 88, 0.7);
 
   /* Black (Default, Hover, Active) */
-  --color-black: #060b17;
-  --color-black-hover: #040810;
-  --color-black-active: #020408;
+  --color-black: #232323;
+  --color-black-hover: #1c1c1c;
+  --color-black-active: #1c1c1c;
 
   /* White (Default, Hover, Active, Light) */
-  --color-white: #f5f5f5;
-  --color-white-hover: #e8e8e8;
-  --color-white-active: #dcdcdc;
-  --color-white-light: #e6e7e8;
+  --color-white: #f2efe8;
+  --color-white-hover: #e9e7e2;
+  --color-white-active: #f7f1e3;
+  --color-white-light: #f2efe8;
 
   /* Accent (Default, Hover, Active) */
-  --color-accent: #ffd269;
-  --color-accent-hover: #ffc94a;
-  --color-accent-active: #b38d34;
+  --color-accent: #fff7ab;
+  --color-accent-hover: #fff16e;
+  --color-accent-active: #e9dd64;
+  /* Accent 2 (Default, Hover, Active) */
+  --color-accent2: #ff3fb4;
+  --color-accent2-hover: #ff62c2;
+  --color-accent2-active: #ed2aa1;
+  /* Accent 3 (Default, Hover, Active) */
+  --color-accent3: #7a0f3e;
+  --color-accent3-hover: #9b2458;
+  --color-accent3-active: #b2175b;
 
   /* Status Success (Default, Hover, Active) */
-  --color-success: #7cc8f5;
-  --color-success-hover: #61bdf3;
-  --color-success-active: #4484aa;
+  --color-success: #c77dff;
+  --color-success-hover: #d49bff;
+  --color-success-active: #bb64fe;
 
   /* Status Validate (Default, Hover, Active) */
-  --color-validate: #60bd61;
-  --color-validate-hover: #40b041;
-  --color-validate-active: #2d7b2e;
+  --color-validate: #fff07a;
+  --color-validate-hover: #fff397;
+  --color-validate-active: #fbe962;
 
   /* Status Error (Default, Hover, Active) */
-  --color-error: #ee3535;
-  --color-error-hover: #ea0c0c;
-  --color-error-active: #a40808;
+  --color-error: #d7266d;
+  --color-error-hover: #d53777;
+  --color-error-active: #b31353;
 
   /* Status Warning (Default, Hover, Active) */
-  --color-warning: #fdf2e8;
-  --color-warning-hover: #ed9140;
-  --color-warning-active: #e97a19;
+  --color-warning: #ffb703;
+  --color-warning-hover: #ffcb49;
+  --color-warning-active: #c99000;
 
-  /* Backgrounds */
-  --color-bg-primary: #f0f2f7;
-  --color-bg-secondary: #e6eaff;
-  --color-bg-error: #fde7e7;
-  --color-bg-warning: #fdf2e8;
-  --color-bg-success: #ecf7ec;
+  /* Backgrounds Light (Tinted with primary colors) */
+  --color-bg-primary: #f4eef5;
+  --color-bg-secondary: #f0e8f2;
+  --color-bg-accent: #fffbf0;
+  --color-bg-accent2: #fef0f9;
+  --color-bg-accent3: #fff4f3;
+  --color-bg-success: #f8f0ff;
+  --color-bg-validate: #fffef5;
+  --color-bg-error: #fef3f7;
+  --color-bg-warning: #fff8f0;
 
-  /* Dark Backgrounds */
-  --color-bg-primary-dark: #0a0e16;
-  --color-bg-secondary-dark: #1a1e2a;
-  --color-bg-error-dark: #3a2323;
-  --color-bg-warning-dark: #3a2f23;
-  --color-bg-success-dark: #233a2f;
+  /* Dark Backgrounds (Tinted with primary colors) */
+  --color-bg-primary-dark: #1a0e15;
+  --color-bg-secondary-dark: #2d0f20;
+  --color-bg-accent-dark: #1a1508;
+  --color-bg-accent2-dark: #2a0f1f;
+  --color-bg-accent3-dark: #2a1416;
+  --color-bg-success-dark: #1f1430;
+  --color-bg-validate-dark: #1a1a0a;
+  --color-bg-error-dark: #2d0f1a;
+  --color-bg-warning-dark: #2a1a08;
 }
 
 /* Utility classes for quick usage */
@@ -116,6 +131,26 @@
   color: var(--color-accent-active);
 }
 
+.color-accent2 {
+  color: var(--color-accent2);
+}
+.color-accent2-hover {
+  color: var(--color-accent2-hover);
+}
+.color-accent2-active {
+  color: var(--color-accent2-active);
+}
+
+.color-accent3 {
+  color: var(--color-accent3);
+}
+.color-accent3-hover {
+  color: var(--color-accent3-hover);
+}
+.color-accent3-active {
+  color: var(--color-accent3-active);
+}
+
 .color-success {
   color: var(--color-success);
 }
@@ -154,6 +189,14 @@
   background-color: var(--color-accent);
 }
 
+.bg-accent2 {
+  background-color: var(--color-accent2);
+}
+
+.bg-accent3 {
+  background-color: var(--color-accent3);
+}
+
 .bg-success {
   background-color: var(--color-success);
 }
@@ -173,6 +216,15 @@
 }
 .bg-layout-secondary {
   background-color: var(--color-bg-secondary);
+}
+.bg-layout-accent {
+  background-color: var(--color-bg-accent);
+}
+.bg-layout-accent2 {
+  background-color: var(--color-bg-accent2);
+}
+.bg-layout-accent3 {
+  background-color: var(--color-bg-accent3);
 }
 .bg-layout-error {
   background-color: var(--color-bg-error);

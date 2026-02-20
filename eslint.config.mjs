@@ -80,9 +80,11 @@ const webappConfig = {
 export default [
   {
     ignores: [
-      "node_modules/**",
-      "dist/**",
-      "build/**",
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/.nuxt/**",
+      "**/.output/**",
       ".git/**",
       "coverage/**",
       "*.min.js",

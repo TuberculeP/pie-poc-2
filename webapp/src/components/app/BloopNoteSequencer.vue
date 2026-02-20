@@ -1,39 +1,5 @@
 <template>
   <div class="piano-roll-container">
-    <!-- DEBUG: Affichage des différences -->
-    <div
-      v-if="projectStore.debugDiff"
-      style="
-        background: #1a1a2e;
-        border: 2px solid #ff6b6b;
-        padding: 12px;
-        margin-bottom: 12px;
-        border-radius: 8px;
-        font-size: 11px;
-        max-height: 300px;
-        overflow: auto;
-      "
-    >
-      <h4 style="color: #ff6b6b; margin: 0 0 8px 0">
-        DEBUG: Différences détectées
-      </h4>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
-        <div>
-          <strong style="color: #4ecdc4">Saved State:</strong>
-          <pre style="color: #aaa; white-space: pre-wrap; font-size: 10px">{{
-            JSON.stringify(projectStore.debugDiff.saved, null, 2)
-          }}</pre>
-        </div>
-        <div>
-          <strong style="color: #ffe66d">Current State:</strong>
-          <pre style="color: #aaa; white-space: pre-wrap; font-size: 10px">{{
-            JSON.stringify(projectStore.debugDiff.current, null, 2)
-          }}</pre>
-        </div>
-      </div>
-    </div>
-    <!-- Gestion des séquences -->
-    <BloopSequenceTabs />
     <!-- Header avec les mesures -->
     <div v-if="sequencerStore.activeSequence" class="header-section">
       <div class="note-labels-header"></div>
@@ -255,21 +221,12 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ref,
-  computed,
-  onMounted,
-  onUnmounted,
-  defineEmits,
-  defineProps,
-  watch,
-} from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { GridLayout, GridItem } from "grid-layout-plus";
 import type { MidiNote, NoteName } from "../../lib/utils/types";
 import { useMIDIStore } from "../../stores/MIDIStore";
 import { useProjectStore } from "../../stores/projectStore";
 import { useSequencerStore } from "../../stores/sequencerStore";
-import BloopSequenceTabs from "./BloopSequenceTabs.vue";
 import BloopEffectsTabs from "./BloopEffectsTabs.vue";
 
 // Props
@@ -1063,7 +1020,6 @@ onMounted(() => {
 .piano-roll-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background-color: var(--color-bg-primary-dark);
   font-family: "Arial", sans-serif;
 }
@@ -1127,16 +1083,15 @@ onMounted(() => {
 
 .main-section {
   display: flex;
-  flex: 1;
-  overflow: hidden;
-  max-height: 65vh; /* Limiter la hauteur pour éviter le scroll global avec plus de notes */
+  height: 500px; /* Hauteur fixe pour le piano roll */
 }
 
 .note-labels {
   width: 80px;
   background-color: #333;
   border-right: 2px solid #444;
-  overflow: hidden; /* Pas de scroll indépendant */
+  overflow-y: auto; /* Scroll synchronisé avec la grille */
+  overflow-x: hidden;
 }
 
 .note-label {

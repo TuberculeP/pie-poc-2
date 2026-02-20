@@ -6,6 +6,8 @@ import { storeToRefs } from "pinia";
 import BloopSmplr from "../../components/app/instruments/BloopSmplr.vue";
 import AppLayout from "../../layouts/AppLayout.vue";
 import BloopNoteSequencer from "../../components/app/BloopNoteSequencer.vue";
+import BloopArrangementView from "../../components/app/BloopArrangementView.vue";
+import BloopSequenceTabs from "../../components/app/BloopSequenceTabs.vue";
 import type { MidiNote, NoteName } from "../../lib/utils/types";
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -22,7 +24,15 @@ const isNewProject = computed(() => route.query.new === "true");
 
 const mainStore = useMainStore();
 const { isLoaded, loadPercentage } = storeToRefs(mainStore);
-const { loadAll } = mainStore;
+
+// Mode de vue (Pattern ou Arrangement)
+const viewMode = ref<"pattern" | "arrangement">("pattern");
+
+// Fonction pour basculer vers le mode Pattern et sélectionner une séquence
+const editSequence = (sequenceId: string) => {
+  sequencerStore.setActiveSequence(sequenceId);
+  viewMode.value = "pattern";
+};
 
 const instruments = [
   {
@@ -123,7 +133,7 @@ onMounted(async () => {
       </div>
 
       <!-- Séquenceur -->
-      <div v-else>
+      <div v-else class="sequencer-wrapper">
         <!-- Sélecteur d'instruments en onglets -->
         <div class="instrument-tabs">
           <button
@@ -143,8 +153,22 @@ onMounted(async () => {
               ?.component
           "
         />
+
+        <!-- Tabs avec switch Pattern/Arrangement -->
+        <BloopSequenceTabs v-model="viewMode" @edit-sequence="editSequence" />
+
+        <!-- Vue Pattern (Piano Roll) -->
         <BloopNoteSequencer
+          v-if="viewMode === 'pattern'"
           :project-id="projectId"
+          @note-start="onNoteStart"
+          @note-end="onNoteEnd"
+        />
+
+        <!-- Vue Arrangement (Playlist FL Studio style) -->
+        <BloopArrangementView
+          v-if="viewMode === 'arrangement'"
+          @edit-sequence="editSequence"
           @note-start="onNoteStart"
           @note-end="onNoteEnd"
         />

@@ -61,28 +61,17 @@ const reverbValue = computed({
 
 <style scoped lang="scss">
 .effects-tabs-container {
-  height: 300px;
   display: flex;
   flex-direction: column;
 
   .effects-body {
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     display: flex;
     justify-content: space-between;
 
     .effects-eq {
       padding: 16px;
-
-      div {
-        padding: 16px;
-        height: 100%;
-        width: 500px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background-color: #061b33;
-        border-radius: 8px;
-      }
     }
 
     .effects-audio-channel {

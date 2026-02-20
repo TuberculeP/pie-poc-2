@@ -1,58 +1,132 @@
 <template>
-  <header class="main_header" id="header">
-    <a href="/" class="logo">
-      <img src="../../assets/logo/logo_background_yellow.svg" alt="Logo" />
-    </a>
-    <div class="toggle" @click="toggleMenu" :class="{ active: isMenuOpen }">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-    <ul :class="{ active: isMenuOpen }" @click="handleMenuClick">
-      <li><a href="#" @click="closeMenu">Produit</a></li>
-      <li><a href="#" @click="closeMenu">Galerie</a></li>
-      <li><a href="/blog" @click="closeMenu">Blog</a></li>
-      <li><a href="#" @click="closeMenu">À propos</a></li>
-      <!-- Bouton profil si connecté -->
-      <li v-if="isAuthenticated" class="profile-menu">
-        <a href="#" @click.prevent="toggleProfileMenu" class="profile-link">
-          <img
-            v-if="user?.profilePicture"
-            :src="user.profilePicture"
-            :alt="`${user?.firstName} ${user?.lastName}`"
-            class="avatar-image"
-          />
-          <div v-else class="profile-avatar">
-            {{ userInitials }}
+  <header
+    class="main-header"
+    :class="{ scrolled: isScrolled, 'menu-open': isMobileMenuOpen }"
+  >
+    <div class="header-container">
+      <!-- Logo avec animation -->
+      <router-link to="/" class="logo-wrapper">
+        <div class="logo-glow"></div>
+        <img
+          src="../../assets/logo/logo_background_yellow.svg"
+          alt="BLOOP"
+          class="logo"
+        />
+      </router-link>
+
+      <!-- Navigation principale -->
+      <nav class="main-nav" :class="{ open: isMobileMenuOpen }">
+        <ul class="nav-links">
+          <li
+            v-for="(link, index) in navLinks"
+            :key="link.name"
+            :style="{ '--delay': index * 0.1 + 's' }"
+          >
+            <a :href="link.href" class="nav-link" @click="closeMobileMenu">
+              <span class="nav-text">{{ link.name }}</span>
+              <span class="nav-underline"></span>
+            </a>
+          </li>
+        </ul>
+
+        <!-- Auth section -->
+        <div class="auth-section">
+          <!-- Si connecté -->
+          <div v-if="isAuthenticated" class="profile-wrapper">
+            <button @click.stop="toggleProfileMenu" class="profile-btn">
+              <span class="avatar-ring">
+                <span class="avatar">{{ userInitials }}</span>
+              </span>
+              <span class="profile-name">{{
+                user?.firstName || "Profil"
+              }}</span>
+              <svg
+                class="dropdown-icon"
+                :class="{ rotated: showProfileMenu }"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+
+            <Transition name="dropdown">
+              <div v-if="showProfileMenu" class="profile-dropdown">
+                <div class="dropdown-backdrop"></div>
+                <div class="dropdown-content">
+                  <router-link
+                    to="/profile"
+                    @click="closeProfileMenu"
+                    class="dropdown-item"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                      ></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <span>Mon Profil</span>
+                  </router-link>
+                  <button @click="handleLogout" class="dropdown-item logout">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Déconnexion</span>
+                  </button>
+                </div>
+              </div>
+            </Transition>
           </div>
-          <span class="profile-name">{{ user?.firstName || "Profil" }}</span>
-          <span class="dropdown-arrow">▼</span>
-        </a>
-        <div v-if="showProfileMenu" class="profile-dropdown">
-          <router-link to="/profile" @click="closeProfileMenu"
-            >Mon Profil</router-link
-          >
-          <router-link to="/messages" @click="closeProfileMenu"
-            >Mes Messages</router-link
-          >
-          <a href="#" @click.prevent="handleLogout">Déconnexion</a>
+
+          <!-- Si non connecté -->
+          <div v-else class="auth-buttons">
+            <router-link to="/login" class="btn-login">
+              <span>Connexion</span>
+            </router-link>
+            <router-link to="/register" class="btn-register">
+              <span class="btn-text">Inscription</span>
+              <span class="btn-shine"></span>
+            </router-link>
+          </div>
         </div>
-      </li>
-      <!-- Boutons connexion/inscription si non connecté -->
-      <!-- Si non connecté -->
-      <li v-else class="start-now-dropdown" @mouseleave="showAuthMenu = false">
-        <button class="start-now-btn" @click="showAuthMenu = !showAuthMenu">
-          Start now
-          <span class="dropdown-arrow">▼</span>
-        </button>
-        <div v-if="showAuthMenu" class="auth-dropdown">
-          <router-link to="/login" @click="closeMenu">Connexion</router-link>
-          <router-link to="/register" @click="closeMenu"
-            >Inscription</router-link
-          >
-        </div>
-      </li>
-    </ul>
+      </nav>
+
+      <!-- Mobile menu toggle -->
+      <button
+        class="mobile-toggle"
+        @click="toggleMobileMenu"
+        :class="{ active: isMobileMenuOpen }"
+      >
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+      </button>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="scroll-progress">
+      <div class="progress-bar" :style="{ width: scrollProgress + '%' }"></div>
+    </div>
   </header>
 </template>
 
@@ -61,22 +135,30 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../../stores/authStore";
 import apiClient from "../../lib/utils/apiClient";
-
-const props = defineProps<{
-  sticky?: boolean;
-}>();
+import gsap from "gsap";
 
 const router = useRouter();
 const authStore = useAuthStore();
-const showProfileMenu = ref(false);
-const showAuthMenu = ref(false); // ✅ ajouté
-const isMenuOpen = ref(false);
 
-// États réactifs
+// Navigation links
+const navLinks = [
+  { name: "Produit", href: "#features" },
+  { name: "Galerie", href: "#gallery" },
+  { name: "Blog", href: "/blog" },
+  { name: "À propos", href: "#about" },
+  { name: "Support", href: "#support" },
+];
+
+// State
+const isScrolled = ref(false);
+const scrollProgress = ref(0);
+const showProfileMenu = ref(false);
+const isMobileMenuOpen = ref(false);
+
+// Auth state
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const user = computed(() => authStore.user);
 
-// Initiales de l'utilisateur pour l'avatar
 const userInitials = computed(() => {
   if (!user.value) return "?";
   const firstName = user.value.firstName || "";
@@ -84,18 +166,7 @@ const userInitials = computed(() => {
   return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
 });
 
-// Gestion du menu burger
-const toggleMenu = () => {
-  isMenuOpen.value = !isMenuOpen.value;
-};
-
-const closeMenu = () => {
-  isMenuOpen.value = false;
-  showProfileMenu.value = false;
-  showAuthMenu.value = false; // ✅ ajouté
-};
-
-// Gestion du menu profil
+// Menu handlers
 const toggleProfileMenu = () => {
   showProfileMenu.value = !showProfileMenu.value;
 };
@@ -104,10 +175,20 @@ const closeProfileMenu = () => {
   showProfileMenu.value = false;
 };
 
-// Fermer le menu si on clique ailleurs
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+  document.body.style.overflow = isMobileMenuOpen.value ? "hidden" : "";
+};
+
+const closeMobileMenu = () => {
+  isMobileMenuOpen.value = false;
+  document.body.style.overflow = "";
+};
+
+// Click outside handler
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as HTMLElement;
-  if (!target.closest(".profile-menu")) {
+  if (!target.closest(".profile-wrapper")) {
     showProfileMenu.value = false;
   }
   if (!target.closest(".start-now-dropdown")) {
@@ -115,7 +196,7 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 };
 
-// Déconnexion
+// Logout handler
 const handleLogout = async () => {
   try {
     await apiClient.post("/auth/logout");
@@ -128,564 +209,604 @@ const handleLogout = async () => {
   }
 };
 
-// Vérifier l'authentification au montage
+// Check auth
 const checkAuth = async () => {
   try {
     const response = await apiClient.get<{ user: any }>("/auth/check");
     if (response.data?.user) {
       authStore.user = response.data.user;
     }
-  } catch (error) {
-    // Utilisateur non connecté
+  } catch {
     authStore.user = undefined;
   }
 };
 
-// Effet sticky du header
+// Scroll handler
 const handleScroll = () => {
-  const header = document.querySelector("header");
-  if (header) {
-    // Si la prop sticky est activée, toujours sticky
-    if (props.sticky) {
-      header.classList.add("sticky");
-      return;
-    }
-    if (window.innerWidth > 1170) {
-      header.classList.toggle("sticky", window.scrollY > 0);
-    } else {
-      header.classList.remove("sticky");
-    }
-  }
-};
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
 
-const handleResize = () => {
-  if (window.innerWidth > 1170) {
-    isMenuOpen.value = false;
-    handleScroll();
-  } else {
-    const header = document.querySelector("header");
-    if (header && !props.sticky) {
-      header.classList.remove("sticky");
-    }
-  }
-};
-
-const handleMenuClick = (event: MouseEvent) => {
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-  const clickX = event.clientX - rect.left;
-  const clickY = event.clientY - rect.top;
-
-  if (clickX <= 60 && clickY <= 60) {
-    closeMenu();
-  }
+  isScrolled.value = scrollTop > 50;
+  scrollProgress.value = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
 };
 
 onMounted(() => {
   checkAuth();
-  handleScroll(); // Appliquer le sticky immédiatement si la prop est définie
-  window.addEventListener("scroll", handleScroll);
-  window.addEventListener("resize", handleResize);
+  window.addEventListener("scroll", handleScroll, { passive: true });
   document.addEventListener("click", handleClickOutside);
+  handleScroll();
+
+  // GSAP entrance animations
+  gsap.from(".logo-wrapper", {
+    opacity: 0,
+    x: -30,
+    duration: 0.8,
+    ease: "power3.out",
+  });
+
+  gsap.from(".auth-section", {
+    opacity: 0,
+    x: 30,
+    duration: 0.8,
+    ease: "power3.out",
+  });
 });
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
   window.removeEventListener("resize", handleResize);
   document.removeEventListener("click", handleClickOutside);
+  document.body.style.overflow = "";
 });
 </script>
 
 <style scoped>
-header {
+.main-header {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  padding: 40px 100px;
   z-index: 1000;
+  padding: 1.5rem 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 11, 23, 0.9) 0%,
+    rgba(6, 11, 23, 0) 100%
+  );
+  opacity: 1;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.main-header.scrolled {
+  padding: 0.75rem 0;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.main-header.scrolled::before {
+  background: rgba(6, 11, 23, 0.85);
+  opacity: 1;
+}
+
+.header-container {
+  position: relative;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: 0.5s;
 }
 
-header .logo img {
-  width: 120px;
-}
-
-/* Toggle Button (Burger Menu) */
-.toggle {
+/* Logo */
+.logo-wrapper {
   position: relative;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  display: none;
-  flex-direction: column;
-  justify-content: space-around;
+  display: flex;
+  align-items: center;
+  z-index: 10;
 }
 
-.toggle span {
-  display: block;
-  width: 100%;
-  height: 3px;
-  background: var(--color-white);
-  border-radius: 3px;
-  transition: 0.3s ease-in-out;
+.logo-glow {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 210, 105, 0.4) 0%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  filter: blur(10px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.toggle.active span:nth-child(1) {
-  transform: rotate(45deg) translate(5px, 5px);
+.logo-wrapper:hover .logo-glow {
+  opacity: 1;
+  animation: pulse-glow 2s ease-in-out infinite;
 }
 
-.toggle.active span:nth-child(2) {
+@keyframes pulse-glow {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+.logo {
+  width: 100px;
+  height: auto;
+  transition: transform 0.3s ease;
+}
+
+.logo-wrapper:hover .logo {
+  transform: scale(1.05);
+}
+
+/* Navigation */
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li {
+  animation: fadeInDown 0.6s ease forwards;
+  animation-delay: var(--delay);
   opacity: 0;
 }
 
-.toggle.active span:nth-child(3) {
-  transform: rotate(-45deg) translate(7px, -6px);
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-header ul {
+.nav-link {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-}
-
-header ul li {
-  position: relative;
-  list-style: none;
-  margin-right: 50px;
-}
-
-header ul li a {
-  font-weight: 200;
-  position: relative;
-  display: inline-block;
-  margin: 0 15px;
+  padding: 0.75rem 1rem;
   color: var(--color-white);
   text-decoration: none;
-  transition: color 0.3s;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.3s ease;
 }
 
-header ul li a:hover {
+.nav-text {
+  position: relative;
+  z-index: 1;
+}
+
+.nav-underline {
+  position: absolute;
+  bottom: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 30px;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-accent),
+    transparent
+  );
+  border-radius: 2px;
+  transition: transform 0.3s ease;
+}
+
+.nav-link:hover {
   color: var(--color-accent);
 }
 
-header.sticky {
-  background-color: var(--color-white);
-  padding: 8px 96px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+.nav-link:hover .nav-underline {
+  transform: translateX(-50%) scaleX(1);
 }
 
-header.sticky .logo {
-  color: #000;
-}
-
-header.sticky ul li a {
-  color: #000;
-}
-
-header.sticky .toggle span {
-  background: #000;
-}
-
-/* bouton drop down */
-
-.start-now-dropdown {
-  position: relative;
-}
-
-.start-now-btn {
-  background-color: #ffd269; /* Jaune */
-  color: #060b17; /* Bleu foncé */
-  padding: 10px 16px;
-  font-weight: 600;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+/* Auth section */
+.auth-section {
   display: flex;
   align-items: center;
-  gap: 6px;
-  transition: background-color 0.2s ease;
+  gap: 1rem;
 }
 
-.start-now-btn:hover {
-  background-color: #e6bb4f;
-}
-
-.dropdown-arrow {
-  font-size: 12px;
-}
-
-.auth-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background-color: #fff;
-  border-radius: 6px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-  z-index: 1000;
-
-  min-width: 150px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.auth-dropdown a {
-  padding: 10px 14px;
-  text-decoration: none;
-  color: #060b17;
-  font-weight: 500;
-  transition: background-color 0.2s ease;
-}
-
-.auth-dropdown a:hover {
-  background-color: #f5f5f5;
-}
-
-/* Boutons d'authentification */
 .auth-buttons {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.auth-buttons .login-btn,
-.auth-buttons .register-btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 500;
+.btn-login {
+  position: relative;
+  padding: 0.6rem 1.25rem;
+  color: var(--color-white);
   text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
   transition: all 0.3s ease;
-  margin: 0;
+  overflow: hidden;
 }
 
-.auth-buttons .login-btn {
-  color: var(--color-white);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+.btn-login::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 50%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.auth-buttons .login-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--color-white);
+.btn-login:hover {
+  border-color: rgba(255, 210, 105, 0.5);
+  color: var(--color-accent);
 }
 
-.auth-buttons .register-btn {
-  background: var(--color-accent);
+.btn-login:hover::before {
+  opacity: 1;
+}
+
+.btn-register {
+  position: relative;
+  padding: 0.6rem 1.5rem;
+  background: linear-gradient(
+    135deg,
+    var(--color-accent) 0%,
+    var(--color-accent2) 100%
+  );
   color: var(--color-black);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 210, 105, 0.3);
 }
 
-.auth-buttons .register-btn:hover {
-  background: var(--color-accent-hover);
+.btn-text {
+  position: relative;
+  z-index: 1;
 }
 
-/* Menu de profil */
-.profile-menu {
+.btn-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.btn-register:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(255, 210, 105, 0.4);
+}
+
+.btn-register:hover .btn-shine {
+  left: 100%;
+}
+
+/* Profile menu */
+.profile-wrapper {
   position: relative;
 }
 
-.profile-link {
+.profile-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50px;
+  color: var(--color-white);
+  cursor: pointer;
   transition: all 0.3s ease;
   margin: 0 !important;
 }
 
-.profile-link:hover {
+.profile-btn:hover {
   background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 210, 105, 0.3);
 }
 
-.profile-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--color-accent);
+.avatar-ring {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--color-white);
 }
 
-.avatar-image {
-  width: 40px;
-  height: 40px;
+.avatar-ring::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    135deg,
+    var(--color-accent),
+    var(--color-secondary)
+  );
   border-radius: 50%;
-  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.profile-btn:hover .avatar-ring::before {
+  opacity: 1;
+}
+
+.avatar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(
+    135deg,
+    var(--color-accent) 0%,
+    var(--color-accent-hover) 100%
+  );
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--color-black);
 }
 
 .profile-name {
   font-weight: 500;
+  font-size: 0.9rem;
 }
 
-.dropdown-arrow {
-  font-size: 10px;
+.dropdown-icon {
   transition: transform 0.3s ease;
 }
 
-.profile-menu:hover .dropdown-arrow {
+.dropdown-icon.rotated {
   transform: rotate(180deg);
 }
 
+/* Profile dropdown */
 .profile-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 0.75rem);
   right: 0;
-  background: var(--color-white);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 180px;
-  padding: 8px 0;
-  z-index: 1000;
-  margin-top: 8px;
+  min-width: 200px;
+  z-index: 100;
 }
 
-.profile-dropdown::before {
-  content: "";
+.dropdown-backdrop {
   position: absolute;
-  top: -6px;
-  right: 20px;
-  width: 12px;
-  height: 12px;
-  background: var(--color-white);
-  transform: rotate(45deg);
-  box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.1);
+  inset: 0;
+  background: rgba(6, 11, 23, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
-.profile-dropdown a {
-  display: block;
-  padding: 12px 16px;
-  color: #333;
+.dropdown-content {
+  position: relative;
+  padding: 0.5rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  border: none;
+  color: var(--color-white);
   text-decoration: none;
-  font-weight: 400;
-  transition: background 0.2s ease;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.profile-dropdown a:hover {
-  background: #f5f5f5;
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.1);
   color: var(--color-accent);
 }
 
-/* Styles sticky pour le profil */
-header.sticky .auth-buttons .login-btn {
-  color: #000;
-  border-color: rgba(0, 0, 0, 0.2);
+.dropdown-item.logout:hover {
+  background: rgba(238, 53, 53, 0.1);
+  color: var(--color-error);
 }
 
-header.sticky .auth-buttons .login-btn:hover {
-  background: rgba(0, 0, 0, 0.1);
-  color: #000;
+/* Dropdown animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-header.sticky .profile-link {
-  color: #000;
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
 }
 
-header.sticky .profile-link:hover {
-  background: rgba(0, 0, 0, 0.1);
+/* Mobile toggle */
+.mobile-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  z-index: 100;
 }
 
-/* Media Queries */
-@media screen and (max-width: 1170px) {
-  header {
-    padding: 20px 50px;
+.toggle-line {
+  width: 24px;
+  height: 2px;
+  background: var(--color-white);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.mobile-toggle.active .toggle-line:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.mobile-toggle.active .toggle-line:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.mobile-toggle.active .toggle-line:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Scroll progress */
+.scroll-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-accent),
+    var(--color-secondary)
+  );
+  transition: width 0.1s linear;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .nav-links {
+    gap: 0.25rem;
   }
 
-  .toggle {
+  .nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0 1.5rem;
+  }
+
+  .mobile-toggle {
     display: flex;
   }
 
-  header ul {
+  .main-nav {
     position: fixed;
     top: 0;
-    left: 0;
+    right: -100%;
     width: 100%;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.95);
+    background: linear-gradient(
+      180deg,
+      rgba(6, 11, 23, 0.98) 0%,
+      rgba(4, 13, 26, 0.98) 100%
+    );
+    backdrop-filter: blur(20px);
     flex-direction: column;
-    align-items: center;
     justify-content: center;
-    transform: translateY(-100vh);
-    transition: transform 0.3s ease-in-out;
-    backdrop-filter: blur(10px);
+    gap: 3rem;
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  header ul::before {
-    content: "✕";
-    position: absolute;
-    top: 30px;
-    left: 30px;
-    font-size: 2rem;
-    color: #fff;
-    cursor: pointer;
-    z-index: 1001;
-    transition: color 0.3s;
+  .main-nav.open {
+    right: 0;
   }
 
-  header ul::before:hover {
-    color: var(--color-accent);
-  }
-
-  header ul.active {
-    transform: translateY(0);
-  }
-
-  header ul li {
-    margin: 20px 0;
-  }
-
-  header ul li a {
-    font-size: 1.5rem;
-    font-weight: 300;
-    color: #fff;
-    margin: 0;
-  }
-
-  header.sticky ul {
-    background: rgba(255, 255, 255, 0.95);
-  }
-
-  header.sticky ul::before {
-    color: #000;
-  }
-
-  header.sticky ul::before:hover {
-    color: var(--color-accent);
-  }
-
-  header.sticky ul li a {
-    color: #000;
-  }
-
-  /* Styles mobile pour l'authentification */
-  .auth-buttons {
+  .nav-links {
     flex-direction: column;
     gap: 1rem;
     margin: 20px 0;
   }
 
-  .auth-buttons .login-btn,
-  .auth-buttons .register-btn {
-    padding: 12px 24px;
-    font-size: 1.2rem;
-    width: 200px;
-    text-align: center;
+  .nav-link {
+    font-size: 1.5rem;
+    padding: 1rem;
   }
 
-  .auth-buttons .login-btn {
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+  .auth-section {
+    flex-direction: column;
+    gap: 1rem;
   }
 
-  .auth-buttons .login-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+  .auth-buttons {
+    flex-direction: column;
+    gap: 1rem;
   }
 
-  /* Menu profil mobile */
-  .profile-menu {
-    margin: 20px 0;
-  }
-
-  .profile-link {
-    font-size: 1.2rem;
-    padding: 12px 16px;
-    color: #fff;
-  }
-
-  .profile-dropdown {
-    position: static;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    margin-top: 10px;
-    border-radius: 8px;
-  }
-
-  .profile-dropdown::before {
-    display: none;
-  }
-
-  .profile-dropdown a {
-    color: #fff;
-    font-size: 1.1rem;
-  }
-
-  .profile-dropdown a:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--color-accent);
-  }
-
-  /* Styles sticky mobile pour profil */
-  header.sticky .auth-buttons .login-btn {
-    color: #000;
-    border-color: rgba(0, 0, 0, 0.2);
-  }
-
-  header.sticky .auth-buttons .login-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
-    color: #000;
-  }
-
-  header.sticky .profile-link {
-    color: #000;
-  }
-
-  header.sticky .profile-dropdown a {
-    color: #000;
-  }
-
-  header.sticky .profile-dropdown a:hover {
-    background: rgba(0, 0, 0, 0.1);
-    color: var(--color-accent);
-  }
-}
-@media screen and (max-width: 1170px) {
-  header .logo {
-    display: none;
-  }
-  header {
-    display: flex;
-    justify-content: end;
-  }
-}
-
-@media screen and (max-width: 570px) {
-  header {
-    padding: 20px 30px;
-  }
-
-  header ul {
-    width: auto;
-    margin: 0 auto;
-  }
-
-  .toggle {
-    width: 25px;
-    height: 25px;
-  }
-
-  header ul li a {
-    font-size: 1.3rem;
-  }
-
-  .auth-buttons .login-btn,
-  .auth-buttons .register-btn {
-    padding: 10px 20px;
-    font-size: 1.1rem;
-    width: 180px;
+  .btn-login,
+  .btn-register {
+    padding: 1rem 2rem;
+    font-size: 1rem;
   }
 
   .profile-name {
-    display: none;
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-container {
+    padding: 0 1rem;
   }
 
-  .profile-dropdown {
-    min-width: 160px;
+  .logo {
+    width: 80px;
   }
 }
 
