@@ -42,7 +42,10 @@ export default function customSession() {
     secret: "you'll never guess this (poulet froid)",
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false },
+    cookie: {
+      secure: false,
+      maxAge: DEFAULT_TLL * 1000, // 1 jour en ms (aligné avec le TTL du store)
+    },
     store,
   });
 }
