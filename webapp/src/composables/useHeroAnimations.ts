@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted } from "vue";
 import gsap from "gsap";
 import type { AnimationConfig } from "../types/landing";
 
