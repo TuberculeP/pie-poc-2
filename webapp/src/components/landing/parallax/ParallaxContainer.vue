@@ -112,7 +112,12 @@ onMounted(() => {
   width: 100%;
   min-height: 100vh;
   overflow: visible;
-  background: linear-gradient(180deg, #170209 0%, #21030d 50%, #320917 100%);
+  background: linear-gradient(
+    180deg,
+    var(--color-bg-primary-dark) 0%,
+    var(--color-bg-secondary-dark) 50%,
+    var(--color-primary-active) 100%
+  );
 }
 
 .parallax-viewport {
