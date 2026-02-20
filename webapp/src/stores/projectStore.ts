@@ -3,11 +3,22 @@ import { ref } from "vue";
 import apiClient from "../lib/utils/apiClient";
 import type { NoteName, SequencerProject } from "../lib/utils/types";
 
+// Fonction utilitaire pour supprimer les timestamps de la comparaison
+const stripTimestamps = (obj: any): any => {
+  return JSON.parse(
+    JSON.stringify(obj, (key, value) =>
+      key === "updatedAt" || key === "createdAt" ? undefined : value,
+    ),
+  );
+};
+
 export const useProjectStore = defineStore("project", () => {
   const isSaving = ref(false);
+  const isLoading = ref(false); // Flag pour ignorer les changements pendant le chargement
   const currentProjectId = ref<string | null>(null); // ID du projet actuellement chargé
   const hasUnsavedChanges = ref(false); // Changements non sauvegardés
   const lastSavedState = ref<string | null>(null); // Hash de la dernière sauvegarde
+  const debugDiff = ref<{ saved: any; current: any } | null>(null); // DEBUG
 
   // Structure JSON complète du projet musical (avec support multi-séquences)
   const generateProjectData = (
@@ -198,10 +209,10 @@ export const useProjectStore = defineStore("project", () => {
         currentProjectId.value = data.body.id;
       }
 
-      // Marquer comme sauvegardé et sauvegarder l'état actuel
+      // Marquer comme sauvegardé et sauvegarder l'état actuel (sans timestamps)
       hasUnsavedChanges.value = false;
       lastSavedState.value = JSON.stringify({
-        sequencerProject,
+        sequencerProject: stripTimestamps(sequencerProject),
         enableKeyboardSimulation,
       });
 
@@ -280,6 +291,7 @@ export const useProjectStore = defineStore("project", () => {
     nextNoteId: any,
   ): Promise<{ success: boolean; error?: string }> => {
     try {
+      isLoading.value = true;
       const result = await getProject(projectId);
 
       if (result.success && result.data) {
@@ -307,24 +319,27 @@ export const useProjectStore = defineStore("project", () => {
           // Sauvegarder l'ID du projet actuellement chargé
           currentProjectId.value = projectId;
 
-          // Marquer comme sauvegardé et sauvegarder l'état chargé
+          // Marquer comme sauvegardé et sauvegarder l'état chargé (sans timestamps)
           hasUnsavedChanges.value = false;
           lastSavedState.value = JSON.stringify({
-            sequencerProject: sequencerState,
+            sequencerProject: stripTimestamps(sequencerStore.project),
             enableKeyboardSimulation: enableKeyboardSimulation.value,
           });
 
+          isLoading.value = false;
           // eslint-disable-next-line no-console
           console.log("✅ Projet chargé depuis l'URL:", projectId);
           return { success: true };
         }
       }
 
+      isLoading.value = false;
       return {
         success: false,
         error: result.error || "Projet non trouvé",
       };
     } catch (error) {
+      isLoading.value = false;
       // eslint-disable-next-line no-console
       console.error("❌ Erreur lors du chargement du projet:", error);
       return {
@@ -346,19 +361,34 @@ export const useProjectStore = defineStore("project", () => {
     sequencerProject: SequencerProject,
     enableKeyboardSimulation: boolean,
   ) => {
+    // Ignorer les changements pendant le chargement d'un projet
+    if (isLoading.value) {
+      return;
+    }
+
+    // Comparer sans les timestamps (modifiés automatiquement, pas de vrais changements)
     const currentState = JSON.stringify({
-      sequencerProject,
+      sequencerProject: stripTimestamps(sequencerProject),
       enableKeyboardSimulation,
     });
 
     if (lastSavedState.value && currentState !== lastSavedState.value) {
       hasUnsavedChanges.value = true;
+      // DEBUG: stocker les différences
+      debugDiff.value = {
+        saved: JSON.parse(lastSavedState.value),
+        current: { sequencerProject, enableKeyboardSimulation },
+      };
+      // eslint-disable-next-line no-console
+      console.log("⚠️ Différences détectées:", debugDiff.value);
     } else if (
       !lastSavedState.value &&
       sequencerProject.sequences.some((seq) => seq.layout.length > 0)
     ) {
       // Nouveau projet avec des modifications par rapport à l'état initial
       hasUnsavedChanges.value = true;
+    } else {
+      debugDiff.value = null;
     }
   };
 
@@ -375,6 +405,7 @@ export const useProjectStore = defineStore("project", () => {
     isSaving,
     currentProjectId,
     hasUnsavedChanges,
+    debugDiff,
     saveProjectOnline,
     getProjects,
     getProject,
