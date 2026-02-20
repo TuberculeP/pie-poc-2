@@ -68,12 +68,14 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from "vue";
+import { reactive, computed } from "vue";
 import apiClient from "../../lib/utils/apiClient";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "../../stores/authStore";
 import type { User } from "../../lib/utils/types";
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const redirect = router.currentRoute.value.query.redirect as string;
 const form = reactive({
@@ -81,17 +83,8 @@ const form = reactive({
   password: "",
 });
 
-const googleAuthEnabled = ref(false);
-const googleAuthUrl = ref("/api/auth/google");
-
-onMounted(async () => {
-  const config = await apiClient.get<{ googleAuthEnabled: boolean }>(
-    "/auth/config",
-  );
-  if (config.data) {
-    googleAuthEnabled.value = config.data.googleAuthEnabled;
-  }
-});
+const googleAuthEnabled = computed(() => authStore.googleAuthEnabled);
+const googleAuthUrl = "/api/auth/google";
 
 async function submitForm() {
   const result = await apiClient.post<{ user: User }>("/auth/login", form);
