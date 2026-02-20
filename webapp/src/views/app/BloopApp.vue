@@ -8,11 +8,12 @@ import AppLayout from "../../layouts/AppLayout.vue";
 import BloopNoteSequencer from "../../components/app/BloopNoteSequencer.vue";
 import type { MidiNote, NoteName } from "../../lib/utils/types";
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useProjectStore } from "../../stores/projectStore";
 import { useSequencerStore } from "../../stores/sequencerStore";
 
 const route = useRoute();
+const router = useRouter();
 const projectStore = useProjectStore();
 const sequencerStore = useSequencerStore();
 
@@ -84,6 +85,13 @@ const onNoteEnd = (
 
 // Initialisation au montage
 onMounted(async () => {
+  // Si l'audio n'est pas chargé, c'est un rechargement de page
+  // -> rediriger vers le sélecteur pour le "first click" qui débloque l'audio
+  if (!isLoaded.value) {
+    router.replace({ name: "app-main" });
+    return;
+  }
+
   // Si c'est un nouveau projet, reset le store
   if (isNewProject.value) {
     projectStore.createNewProject();
@@ -97,9 +105,6 @@ onMounted(async () => {
     });
     sequencerStore.createSequence("Ma première séquence");
   }
-
-  // Charger l'audio
-  await loadAll();
 });
 </script>
 
