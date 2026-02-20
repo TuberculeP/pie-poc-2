@@ -9,6 +9,10 @@ import appRouter from "./app";
 
 const router = Router();
 
+router.get("/health", (_, res) => {
+  res.status(200).send("OK");
+});
+
 router.get("/", (_, res) => {
   const fooRepository = pg.getRepository(Foo);
   const foos = fooRepository.find();
