@@ -46,6 +46,36 @@ export const useMIDIStore = defineStore("midiStore", () => {
     },
   };
 
+  // Calcule la fréquence d'une note à partir de son nom (ex: "C4", "A#3")
+  const noteNameToFrequency = (noteName: string): number => {
+    const notePattern = /^([A-G]#?)(\d)$/;
+    const match = noteName.match(notePattern);
+    if (!match) return 440; // Fallback A4
+
+    const [, note, octaveStr] = match;
+    const octave = parseInt(octaveStr);
+
+    // Demi-tons depuis C0 pour chaque note
+    const noteOffsets: Record<string, number> = {
+      C: 0,
+      "C#": 1,
+      D: 2,
+      "D#": 3,
+      E: 4,
+      F: 5,
+      "F#": 6,
+      G: 7,
+      "G#": 8,
+      A: 9,
+      "A#": 10,
+      B: 11,
+    };
+
+    const semitonesFromC0 = octave * 12 + noteOffsets[note];
+    const semitonesFromA4 = semitonesFromC0 - 57; // A4 = 57 demi-tons depuis C0
+    return 440 * Math.pow(2, semitonesFromA4 / 12);
+  };
+
   const currentKeyToNoteMap = computed<Record<string, Note>>(
     () => keyToNoteMap[keyboardConfiguration.value],
   );
@@ -134,6 +164,33 @@ export const useMIDIStore = defineStore("midiStore", () => {
     }
   };
 
+  // Simule une note directement par son nom (supporte toutes les notes A0-C8)
+  const playNoteByName = (noteName: string): void => {
+    const frequency = noteNameToFrequency(noteName);
+    const note: Note = {
+      frequency,
+      key: noteName,
+      color: noteName.includes("#") ? "black" : "white",
+      scale: noteName,
+    };
+    onNotePlayedCallbackList.value.forEach((callback) =>
+      callback(note, noteName),
+    );
+  };
+
+  const stopNoteByName = (noteName: string): void => {
+    const frequency = noteNameToFrequency(noteName);
+    const note: Note = {
+      frequency,
+      key: noteName,
+      color: noteName.includes("#") ? "black" : "white",
+      scale: noteName,
+    };
+    onNoteStoppedCallbackList.value.forEach((callback) =>
+      callback(note, noteName),
+    );
+  };
+
   return {
     // general
     onNotePlayed: onNotePlayedCallbackRegistrer,
@@ -144,5 +201,8 @@ export const useMIDIStore = defineStore("midiStore", () => {
     // simulation clavier pour séquenceur
     simulateKeyPress,
     simulateKeyRelease,
+    // simulation par nom de note (supporte toutes les notes A0-C8)
+    playNoteByName,
+    stopNoteByName,
   };
 });

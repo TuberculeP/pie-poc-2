@@ -21,8 +21,12 @@
           :class="{
             'black-key': isBlackKey(note),
             'octave-start': isOctaveStart(note),
+            'preview-active': activePreviewNotes.has(note),
           }"
-          @click="playNote(note)"
+          @mousedown.prevent="onPianoKeyMouseDown(note)"
+          @mouseup="onPianoKeyMouseUp(note)"
+          @mouseenter="onPianoKeyMouseEnter(note)"
+          @mouseleave="onPianoKeyMouseLeave(note)"
           :title="`Note ${note} (Octave ${getOctaveNumber(note)})`"
         >
           <span class="note-name">{{ note }}</span>
@@ -108,6 +112,7 @@
             :class="{
               'black-key-row': isBlackKey(notes[row - 1]),
               'octave-start-row': isOctaveStart(notes[row - 1]),
+              'preview-highlight': activePreviewNotes.has(notes[row - 1]),
             }"
           >
             <div
@@ -383,6 +388,18 @@ const lastNoteCheckPosition = ref<number>(-1); // Dernière position où on a v�
 // État simulation clavier
 const enableKeyboardSimulation = ref<boolean>(true); // Simulation clavier activée par défaut
 
+// État preview des notes (clic sur les touches piano)
+const activePreviewNotes = ref<Set<NoteName>>(new Set());
+const isMouseDownOnPiano = ref<boolean>(false);
+
+// Fonction pour arrêter tous les previews (utilisée par handleGlobalMouseUp et onUnmounted)
+const stopAllPreviewNotes = (): void => {
+  activePreviewNotes.value.forEach((note) => {
+    midiStore.stopNoteByName(note);
+  });
+  activePreviewNotes.value.clear();
+};
+
 // État de sélection multiple
 const selectedNotes = ref<Set<string>>(new Set()); // Notes sélectionnées
 const isSelecting = ref<boolean>(false); // Mode sélection en cours
@@ -448,6 +465,12 @@ const handleGlobalMouseUp = (): void => {
     draggedNoteId.value = null;
     dragStartPositions.value.clear();
   }
+
+  // Arrêter les previews si on relâche en dehors du piano
+  if (isMouseDownOnPiano.value) {
+    isMouseDownOnPiano.value = false;
+    stopAllPreviewNotes();
+  }
 };
 
 onMounted(() => {
@@ -464,6 +487,9 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  // Nettoyer les previews en cours
+  stopAllPreviewNotes();
+
   document.removeEventListener("keydown", handleKeyDown);
   document.removeEventListener("mouseup", handleGlobalMouseUp);
 });
@@ -646,11 +672,37 @@ const deleteSelectedNotes = (): void => {
   selectedNotes.value.clear();
 };
 
-// Fonctions d'interaction
-const playNote = (note: NoteName): void => {
-  // TODO: Intégrer votre synthé ou Web Audio API
-  // eslint-disable-next-line no-console
-  console.info(`Jouer note: ${note}`);
+// Fonctions d'interaction - Preview des notes (maintenir clic + glissando)
+const playPreviewNote = (note: NoteName): void => {
+  if (activePreviewNotes.value.has(note)) return;
+  activePreviewNotes.value.add(note);
+  midiStore.playNoteByName(note);
+};
+
+const stopPreviewNote = (note: NoteName): void => {
+  if (!activePreviewNotes.value.has(note)) return;
+  activePreviewNotes.value.delete(note);
+  midiStore.stopNoteByName(note);
+};
+
+const onPianoKeyMouseDown = (note: NoteName): void => {
+  isMouseDownOnPiano.value = true;
+  playPreviewNote(note);
+};
+
+const onPianoKeyMouseUp = (note: NoteName): void => {
+  isMouseDownOnPiano.value = false;
+  stopPreviewNote(note);
+};
+
+const onPianoKeyMouseEnter = (note: NoteName): void => {
+  if (isMouseDownOnPiano.value) {
+    playPreviewNote(note);
+  }
+};
+
+const onPianoKeyMouseLeave = (note: NoteName): void => {
+  stopPreviewNote(note);
 };
 
 const addNoteAtClick = (event: MouseEvent): void => {
@@ -1022,6 +1074,8 @@ onMounted(() => {
   flex-direction: column;
   background-color: var(--color-bg-primary-dark);
   font-family: "Arial", sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .no-sequence-message {
@@ -1116,14 +1170,19 @@ onMounted(() => {
   background-color: #555;
 }
 
+.note-label.preview-active {
+  background-color: var(--color-primary) !important;
+  color: white !important;
+}
+
 .note-label.black-key {
-  background-color: #222;
-  color: #ccc;
+  background-color: #1a1a1a;
+  color: #888;
 }
 
 .note-label:not(.black-key) {
-  background-color: #444;
-  color: white;
+  background-color: #3a3a3a;
+  color: #ddd;
 }
 
 .note-name {
@@ -1155,8 +1214,8 @@ onMounted(() => {
 }
 
 .midi-note {
-  background-color: var(--color-primary);
-  border: 1px solid var(--color-primary-hover);
+  background-color: #5a9fd4;
+  border: 1px solid #6db3e8;
   border-radius: 3px;
   cursor: move;
   display: flex;
@@ -1167,17 +1226,17 @@ onMounted(() => {
 }
 
 .midi-note:hover {
-  background-color: var(--color-primary-hover);
+  background-color: #6db3e8;
   transform: scale(1.02);
 }
 
 .midi-note.note-black {
-  background-color: var(--color-accent);
-  border-color: var(--color-accent-hover);
+  background-color: #8b5cf6;
+  border-color: #a78bfa;
 }
 
 .midi-note.note-black:hover {
-  background-color: var(--color-accent-hover);
+  background-color: #a78bfa;
 }
 
 .midi-note.selected {
@@ -1246,11 +1305,15 @@ onMounted(() => {
 }
 
 .grid-row.black-key-row {
-  background-color: #151515;
+  background-color: #0d0d0d;
 }
 
 .grid-row:not(.black-key-row) {
-  background-color: var(--color-bg-primary-dark);
+  background-color: #1a1a1a;
+}
+
+.grid-row.preview-highlight {
+  background-color: rgba(51, 122, 183, 0.15) !important;
 }
 
 .grid-cell {
