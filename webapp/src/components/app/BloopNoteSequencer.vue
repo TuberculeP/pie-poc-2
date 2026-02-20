@@ -58,87 +58,87 @@
 
         <!-- Grille MIDI -->
         <div class="grid-container">
-        <GridLayout
-          :layout="layout"
-          :col-num="cols"
-          :row-height="rowHeight"
-          :max-rows="notes.length"
-          :is-draggable="true"
-          :is-resizable="true"
-          :margin="[0, 0]"
-          :vertical-compact="false"
-          :prevent-collision="false"
-          :use-css-transforms="true"
-          :responsive="false"
-          @layout-updated="onLayoutUpdated"
-          @container-resized="onContainerResized"
-          class="midi-grid"
-          @dblclick="addNoteAtClick"
-          @mousedown="startSelection"
-          @mousemove="updateSelection"
-          @mouseup="endSelection"
-        >
-          <GridItem
-            v-for="item in layout"
-            :key="item.i"
-            :x="item.x"
-            :y="item.y"
-            :w="item.w"
-            :h="item.h"
-            :i="item.i"
-            :data-id="item.i"
-            class="midi-note"
-            :class="[
-              getNoteClass(item),
-              { selected: selectedNotes.has(item.i) },
-            ]"
-            @contextmenu.prevent="deleteNote(item.i)"
-            @click="handleNoteClick($event, item)"
-            @mousedown="handleNoteMouseDown($event, item)"
+          <GridLayout
+            :layout="layout"
+            :col-num="cols"
+            :row-height="rowHeight"
+            :max-rows="notes.length"
+            :is-draggable="true"
+            :is-resizable="true"
+            :margin="[0, 0]"
+            :vertical-compact="false"
+            :prevent-collision="false"
+            :use-css-transforms="true"
+            :responsive="false"
+            @layout-updated="onLayoutUpdated"
+            @container-resized="onContainerResized"
+            class="midi-grid"
+            @dblclick="addNoteAtClick"
+            @mousedown="startSelection"
+            @mousemove="updateSelection"
+            @mouseup="endSelection"
           >
-            <span class="note-content">{{ getNoteFromY(item.y) }}</span>
-          </GridItem>
+            <GridItem
+              v-for="item in layout"
+              :key="item.i"
+              :x="item.x"
+              :y="item.y"
+              :w="item.w"
+              :h="item.h"
+              :i="item.i"
+              :data-id="item.i"
+              class="midi-note"
+              :class="[
+                getNoteClass(item),
+                { selected: selectedNotes.has(item.i) },
+              ]"
+              @contextmenu.prevent="deleteNote(item.i)"
+              @click="handleNoteClick($event, item)"
+              @mousedown="handleNoteMouseDown($event, item)"
+            >
+              <span class="note-content">{{ getNoteFromY(item.y) }}</span>
+            </GridItem>
 
-          <!-- Rectangle de sélection -->
-          <div
-            v-if="selectionRect"
-            class="selection-rectangle"
-            :style="{
-              left: `${selectionRect.x}px`,
-              top: `${selectionRect.y}px`,
-              width: `${selectionRect.width}px`,
-              height: `${selectionRect.height}px`,
-            }"
-          ></div>
-
-          <!-- Barre de progression de lecture -->
-          <div
-            v-if="isPlaying || currentPosition > 0"
-            class="playback-cursor"
-            :style="{ left: `${(precisePosition / cols) * 1280}px` }"
-          ></div>
-        </GridLayout>
-
-        <!-- Grille de fond - derrière le grid-layout -->
-        <div class="background-grid">
-          <div
-            v-for="row in notes.length"
-            :key="row"
-            class="grid-row"
-            :class="{
-              'black-key-row': isBlackKey(notes[row - 1]),
-              'octave-start-row': isOctaveStart(notes[row - 1]),
-              'preview-highlight': activePreviewNotes.has(notes[row - 1]),
-            }"
-          >
+            <!-- Rectangle de sélection -->
             <div
-              v-for="col in cols"
-              :key="`${row}-${col}`"
-              class="grid-cell"
-              :class="{ 'beat-marker': (col - 1) % 4 === 0 }"
+              v-if="selectionRect"
+              class="selection-rectangle"
+              :style="{
+                left: `${selectionRect.x}px`,
+                top: `${selectionRect.y}px`,
+                width: `${selectionRect.width}px`,
+                height: `${selectionRect.height}px`,
+              }"
             ></div>
+
+            <!-- Barre de progression de lecture -->
+            <div
+              v-if="isPlaying || currentPosition > 0"
+              class="playback-cursor"
+              :style="{ left: `${(precisePosition / cols) * 1280}px` }"
+            ></div>
+          </GridLayout>
+
+          <!-- Grille de fond - derrière le grid-layout -->
+          <div class="background-grid">
+            <div
+              v-for="row in notes.length"
+              :key="row"
+              class="grid-row"
+              :class="{
+                'black-key-row': isBlackKey(notes[row - 1]),
+                'octave-start-row': isOctaveStart(notes[row - 1]),
+                'preview-highlight': activePreviewNotes.has(notes[row - 1]),
+              }"
+            >
+              <div
+                v-for="col in cols"
+                :key="`${row}-${col}`"
+                class="grid-cell"
+                :class="{ 'beat-marker': (col - 1) % 4 === 0 }"
+              ></div>
+            </div>
           </div>
-        </div>
         </div>
       </div>
     </div>
