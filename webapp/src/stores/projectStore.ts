@@ -307,10 +307,10 @@ export const useProjectStore = defineStore("project", () => {
           // Sauvegarder l'ID du projet actuellement chargé
           currentProjectId.value = projectId;
 
-          // Marquer comme sauvegardé et sauvegarder l'état chargé
+          // Marquer comme sauvegardé et sauvegarder l'état chargé (après loadProjectData)
           hasUnsavedChanges.value = false;
           lastSavedState.value = JSON.stringify({
-            sequencerProject: sequencerState,
+            sequencerProject: sequencerStore.project,
             enableKeyboardSimulation: enableKeyboardSimulation.value,
           });
 
