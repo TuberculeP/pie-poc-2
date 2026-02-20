@@ -1,5 +1,37 @@
 <template>
   <div class="piano-roll-container">
+    <!-- DEBUG: Affichage des différences -->
+    <div
+      v-if="projectStore.debugDiff"
+      style="
+        background: #1a1a2e;
+        border: 2px solid #ff6b6b;
+        padding: 12px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+        font-size: 11px;
+        max-height: 300px;
+        overflow: auto;
+      "
+    >
+      <h4 style="color: #ff6b6b; margin: 0 0 8px 0">
+        DEBUG: Différences détectées
+      </h4>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+        <div>
+          <strong style="color: #4ecdc4">Saved State:</strong>
+          <pre style="color: #aaa; white-space: pre-wrap; font-size: 10px">{{
+            JSON.stringify(projectStore.debugDiff.saved, null, 2)
+          }}</pre>
+        </div>
+        <div>
+          <strong style="color: #ffe66d">Current State:</strong>
+          <pre style="color: #aaa; white-space: pre-wrap; font-size: 10px">{{
+            JSON.stringify(projectStore.debugDiff.current, null, 2)
+          }}</pre>
+        </div>
+      </div>
+    </div>
     <!-- Gestion des séquences -->
     <BloopSequenceTabs />
     <!-- Header avec les mesures -->
@@ -217,6 +249,8 @@
         >
       </div>
     </div>
+
+    <BloopEffectsTabs />
   </div>
 </template>
 
@@ -236,6 +270,7 @@ import { useMIDIStore } from "../../stores/MIDIStore";
 import { useProjectStore } from "../../stores/projectStore";
 import { useSequencerStore } from "../../stores/sequencerStore";
 import BloopSequenceTabs from "./BloopSequenceTabs.vue";
+import BloopEffectsTabs from "./BloopEffectsTabs.vue";
 
 // Props
 interface Props {
@@ -461,6 +496,11 @@ const handleGlobalMouseUp = (): void => {
 onMounted(() => {
   // Initialiser le store du séquenceur
   sequencerStore.initialize();
+
+  setTimeout(() => {
+    sequencerStore.volume = 50;
+    console.log("Volume forcé à 50%");
+  }, 1000);
 
   document.addEventListener("keydown", handleKeyDown);
   document.addEventListener("mouseup", handleGlobalMouseUp);

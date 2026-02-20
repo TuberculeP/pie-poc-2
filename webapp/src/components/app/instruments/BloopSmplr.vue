@@ -2,17 +2,18 @@
 import { onMounted, onBeforeUnmount } from "vue";
 import { ref, computed } from "vue";
 import { Soundfont } from "smplr";
-import { watch } from "vue";
 import { useMIDIStore } from "../../../stores/MIDIStore";
+import { useAudioBusStore } from "../../../stores/audioBusStore";
 
 const currentNotes = ref<{ note: string; stopFn: () => void; id: number }[]>(
   [],
 );
 
-// Store MIDI pour écouter les événements clavier/séquenceur
 const midiStore = useMIDIStore();
+const audioBusStore = useAudioBusStore();
 
-// Fonctions de cleanup pour désenregistrer les callbacks
+const { audioContext, inputBus } = audioBusStore;
+
 let unregisterNoteOn: (() => void) | null = null;
 let unregisterNoteOff: (() => void) | null = null;
 
@@ -148,30 +149,25 @@ const soundfontList = [
 ];
 
 const selectedSoundfont = ref("marimba");
+
 const soundfont = computed(
   () =>
-    new Soundfont(new AudioContext(), {
+    new Soundfont(audioContext, {
       instrument: selectedSoundfont.value,
+      destination: inputBus,
     }),
 );
 
-watch(soundfont, (_, old) => {
-  old.disconnect();
-  currentNotes.value = [];
-});
-
 onMounted(() => {
-  // S'abonner aux événements de notes du MIDIStore (clavier + séquenceur)
   unregisterNoteOn = midiStore.onNotePlayed((note, _key) => {
-    // Convertir la note en format MIDI (ex: "C4" → "C4")
-    const midiNote = note.scale; // note.scale contient "C4", "D4", etc.
+    audioBusStore.ensureAudioContextResumed();
+    const midiNote = note.scale;
     const stopFn = soundfont.value.start({ note: midiNote });
 
-    // Ajouter un ID unique pour différencier les instances multiples de la même note
     const noteInstance = {
       note: midiNote,
       stopFn,
-      id: Date.now() + Math.random(), // ID unique pour chaque instance
+      id: Date.now() + Math.random(),
     };
 
     currentNotes.value.push(noteInstance);
@@ -179,8 +175,6 @@ onMounted(() => {
 
   unregisterNoteOff = midiStore.onNoteStopped((note, _key) => {
     const midiNote = note.scale;
-
-    // Trouver la première instance de cette note (FIFO - First In, First Out)
     const noteIndex = currentNotes.value.findIndex((n) => n.note === midiNote);
 
     if (noteIndex !== -1) {
@@ -192,7 +186,6 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  // Nettoyer les callbacks pour éviter les fuites mémoire
   if (unregisterNoteOn) {
     unregisterNoteOn();
   }
@@ -203,7 +196,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <p>Smplr</p>
+  <p>Sampler</p>
   <select v-model="selectedSoundfont">
     <option v-for="item in soundfontList" :value="item" :key="item">
       {{ item }}

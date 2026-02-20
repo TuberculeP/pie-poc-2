@@ -47,3 +47,4 @@ logs
 *.db
 
 /public/uploads/**
+.env*

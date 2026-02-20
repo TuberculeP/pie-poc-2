@@ -50,6 +50,16 @@ export interface Sequence {
   cols: number;
   createdAt: Date;
   updatedAt: Date;
+  volume: number;
+  reverb: number;
+}
+
+export interface EQBand {
+  id: string;
+  frequency: number;
+  gain: number;
+  type: "lowshelf" | "peaking" | "highshelf";
+  label: string;
 }
 
 export interface SequencerProject {
@@ -59,6 +69,13 @@ export interface SequencerProject {
   version: string;
   createdAt: Date;
   updatedAt: Date;
+  volume: number;
+  reverb: number;
+  eqBands?: EQBand[];
+  // Legacy support
+  bass?: number;
+  mid?: number;
+  treble?: number;
 }
 
 // Format de sauvegarde compatible avec l'ancien système

@@ -1,9 +1,12 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import LandingIndex from "./views/landing/LandingIndex.vue";
+import ProjectSelectorView from "./views/app/ProjectSelectorView.vue";
 import BloopApp from "./views/app/BloopApp.vue";
 import LoginView from "./views/auth/LoginView.vue";
 import RegisterView from "./views/auth/RegisterView.vue";
+import ForgotPasswordView from "./views/auth/ForgotPasswordView.vue";
+import ResetPasswordView from "./views/auth/ResetPasswordView.vue";
 
 import { useAuthStore } from "./stores/authStore";
 import apiClient from "./lib/utils/apiClient";
@@ -31,9 +34,20 @@ import MessagesView from "./views/messages/MessagesView.vue";
 
 const routes = [
   { path: "/", component: LandingIndex, name: "landing-main" },
-  { path: "/app", component: BloopApp, name: "app-main" },
+  { path: "/app", component: ProjectSelectorView, name: "app-main" },
+  { path: "/app/sequencer", component: BloopApp, name: "app-sequencer" },
   { path: "/login", component: LoginView, name: "app-login" },
   { path: "/register", component: RegisterView, name: "app-register" },
+  {
+    path: "/forgot-password",
+    component: ForgotPasswordView,
+    name: "app-forgot-password",
+  },
+  {
+    path: "/reset-password",
+    component: ResetPasswordView,
+    name: "app-reset-password",
+  },
   { path: "/blog", component: BlogApp, name: "app-blog" },
   {
     path: "/blog/search",
