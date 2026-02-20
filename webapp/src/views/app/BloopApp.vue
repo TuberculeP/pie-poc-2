@@ -7,14 +7,18 @@ import BloopSmplr from "../../components/app/instruments/BloopSmplr.vue";
 import AppLayout from "../../layouts/AppLayout.vue";
 import BloopNoteSequencer from "../../components/app/BloopNoteSequencer.vue";
 import type { MidiNote, NoteName } from "../../lib/utils/types";
-import { ref, computed } from "vue";
-import { useRoute } from "vue-router";
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useProjectStore } from "../../stores/projectStore";
+import { useSequencerStore } from "../../stores/sequencerStore";
 
-// Route pour récupérer les query params
 const route = useRoute();
+const router = useRouter();
+const projectStore = useProjectStore();
+const sequencerStore = useSequencerStore();
 
-// Computed pour récupérer le projectId depuis les query params
 const projectId = computed(() => route.query.projectId as string | undefined);
+const isNewProject = computed(() => route.query.new === "true");
 
 const mainStore = useMainStore();
 const { isLoaded, loadPercentage } = storeToRefs(mainStore);
@@ -78,15 +82,48 @@ const onNoteEnd = (
     currentInstrumentRef.value.stopSequencerNote(note.i);
   }
 };
+
+// Initialisation au montage
+onMounted(async () => {
+  // Si l'audio n'est pas chargé, c'est un rechargement de page
+  // -> rediriger vers le sélecteur pour le "first click" qui débloque l'audio
+  if (!isLoaded.value) {
+    router.replace({ name: "app-main" });
+    return;
+  }
+
+  // Si c'est un nouveau projet, reset le store
+  if (isNewProject.value) {
+    projectStore.createNewProject();
+    sequencerStore.loadProjectData({
+      sequences: [],
+      activeSequenceId: null,
+      projectName: "Nouveau projet",
+      version: "2.1",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    sequencerStore.createSequence("Ma première séquence");
+  }
+});
 </script>
 
 <template>
   <AppLayout>
     <div>
-      <h1>App</h1>
-      <p>App loading current state : {{ loadPercentage }}%</p>
-      <button @click="loadAll">Start app</button>
-      <div v-if="isLoaded">
+      <!-- Écran de chargement -->
+      <div v-if="!isLoaded" class="loading-screen">
+        <p>Chargement de l'application... {{ loadPercentage }}%</p>
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            :style="{ width: `${loadPercentage}%` }"
+          ></div>
+        </div>
+      </div>
+
+      <!-- Séquenceur -->
+      <div v-else>
         <!-- Sélecteur d'instruments en onglets -->
         <div class="instrument-tabs">
           <button
@@ -159,5 +196,31 @@ const onNoteEnd = (
   right: 0;
   height: 2px;
   background-color: var(--color-accent);
+}
+
+/* Écran de chargement */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: 20px;
+  color: var(--color-text-secondary);
+}
+
+.progress-bar {
+  width: 300px;
+  height: 8px;
+  background: var(--color-bg-primary-dark);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 4px;
+  transition: width 0.3s ease;
 }
 </style>
