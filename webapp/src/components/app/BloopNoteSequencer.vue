@@ -12,36 +12,52 @@
 
     <!-- Corps principal -->
     <div v-if="sequencerStore.activeSequence" class="main-section">
-      <!-- Labels des notes (piano keys) -->
-      <div ref="noteLabelsRef" class="note-labels">
-        <div
-          v-for="note in notes"
-          :key="note"
-          class="note-label"
-          :class="{
-            'black-key': isBlackKey(note),
-            'octave-start': isOctaveStart(note),
-            'preview-active': activePreviewNotes.has(note),
-          }"
-          @mousedown.prevent="onPianoKeyMouseDown(note)"
-          @mouseup="onPianoKeyMouseUp(note)"
-          @mouseenter="onPianoKeyMouseEnter(note)"
-          @mouseleave="onPianoKeyMouseLeave(note)"
-          :title="`Note ${note} (Octave ${getOctaveNumber(note)})`"
-        >
-          <span class="note-name">{{ note }}</span>
-          <span v-if="isOctaveStart(note)" class="octave-number">{{
-            getOctaveNumber(note)
-          }}</span>
+      <!-- Wrapper scrollable pour piano + grille -->
+      <div class="scroll-wrapper">
+        <!-- Labels des notes (piano keys) - Blanches puis Noires séparément -->
+        <div class="note-labels">
+          <!-- Touches blanches (z-index bas, pleine largeur) -->
+          <div
+            v-for="note in whiteKeys"
+            :key="note"
+            class="note-label white-key"
+            :class="{
+              'octave-start': isOctaveStart(note),
+              'preview-active': activePreviewNotes.has(note),
+            }"
+            :style="getWhiteKeyStyle(note)"
+            @mousedown.prevent="onPianoKeyMouseDown(note)"
+            @mouseup="onPianoKeyMouseUp(note)"
+            @mouseenter="onPianoKeyMouseEnter(note)"
+            @mouseleave="onPianoKeyMouseLeave(note)"
+            :title="`Note ${note} (Octave ${getOctaveNumber(note)})`"
+          >
+            <span class="note-name">{{ note }}</span>
+            <span v-if="isOctaveStart(note)" class="octave-number">{{
+              getOctaveNumber(note)
+            }}</span>
+          </div>
+          <!-- Touches noires (z-index haut, alignées sur la grille) -->
+          <div
+            v-for="note in blackKeys"
+            :key="note"
+            class="note-label black-key"
+            :class="{
+              'preview-active': activePreviewNotes.has(note),
+            }"
+            :style="getBlackKeyStyle(note)"
+            @mousedown.prevent="onPianoKeyMouseDown(note)"
+            @mouseup="onPianoKeyMouseUp(note)"
+            @mouseenter="onPianoKeyMouseEnter(note)"
+            @mouseleave="onPianoKeyMouseLeave(note)"
+            :title="`Note ${note}`"
+          >
+            <span class="note-name">{{ note }}</span>
+          </div>
         </div>
-      </div>
 
-      <!-- Grille MIDI -->
-      <div
-        ref="gridContainerRef"
-        class="grid-container"
-        @scroll="syncVerticalScroll"
-      >
+        <!-- Grille MIDI -->
+        <div class="grid-container">
         <GridLayout
           :layout="layout"
           :col-num="cols"
@@ -122,6 +138,7 @@
               :class="{ 'beat-marker': (col - 1) % 4 === 0 }"
             ></div>
           </div>
+        </div>
         </div>
       </div>
     </div>
@@ -252,106 +269,34 @@ const midiStore = useMIDIStore();
 const projectStore = useProjectStore();
 const sequencerStore = useSequencerStore();
 
-// Configuration étendue des notes (piano 88 touches : A0 à C8)
-const notes: NoteName[] = [
-  // Octave 8
-  "C8",
-  // Octave 7
-  "B7",
-  "A#7",
-  "A7",
-  "G#7",
-  "G7",
-  "F#7",
-  "F7",
-  "E7",
-  "D#7",
-  "D7",
-  "C#7",
-  "C7",
-  // Octave 6
-  "B6",
-  "A#6",
-  "A6",
-  "G#6",
-  "G6",
-  "F#6",
-  "F6",
-  "E6",
-  "D#6",
-  "D6",
-  "C#6",
-  "C6",
-  // Octave 5
-  "B5",
-  "A#5",
-  "A5",
-  "G#5",
-  "G5",
-  "F#5",
-  "F5",
-  "E5",
-  "D#5",
-  "D5",
-  "C#5",
-  "C5",
-  // Octave 4 (Do central)
-  "B4",
-  "A#4",
-  "A4",
-  "G#4",
-  "G4",
-  "F#4",
-  "F4",
-  "E4",
-  "D#4",
-  "D4",
-  "C#4",
-  "C4",
-  // Octave 3
-  "B3",
-  "A#3",
-  "A3",
-  "G#3",
-  "G3",
-  "F#3",
-  "F3",
-  "E3",
-  "D#3",
-  "D3",
-  "C#3",
-  "C3",
-  // Octave 2
-  "B2",
-  "A#2",
-  "A2",
-  "G#2",
-  "G2",
-  "F#2",
-  "F2",
-  "E2",
-  "D#2",
-  "D2",
-  "C#2",
-  "C2",
-  // Octave 1
-  "B1",
-  "A#1",
-  "A1",
-  "G#1",
-  "G1",
-  "F#1",
-  "F1",
-  "E1",
-  "D#1",
-  "D1",
-  "C#1",
-  "C1",
-  // Octave 0 (notes les plus graves)
-  "B0",
-  "A#0",
-  "A0",
-];
+// Configuration des notes : 10 octaves complètes (C9 à C0) = 120 notes
+// Chaque octave = 12 notes, total = 10 × 12 = 120
+const generateNotes = (): NoteName[] => {
+  const noteOrder = [
+    "B",
+    "A#",
+    "A",
+    "G#",
+    "G",
+    "F#",
+    "F",
+    "E",
+    "D#",
+    "D",
+    "C#",
+    "C",
+  ];
+  const result: NoteName[] = [];
+  // De l'octave 9 (aigu) à l'octave 0 (grave)
+  for (let octave = 9; octave >= 0; octave--) {
+    for (const note of noteOrder) {
+      result.push(`${note}${octave}` as NoteName);
+    }
+  }
+  return result;
+};
+
+const notes: NoteName[] = generateNotes();
 
 // Configuration de la grille
 const rowHeight: number = 18; // Réduit légèrement pour que tout tienne mieux
@@ -418,18 +363,6 @@ const dragStartPositions = ref<Map<string, { x: number; y: number }>>(
   new Map(),
 ); // Positions initiales des notes
 const draggedNoteId = ref<string | null>(null); // ID de la note qui initie le drag
-
-// Références pour synchroniser les scrolls
-const noteLabelsRef = ref<HTMLElement | null>(null);
-const gridContainerRef = ref<HTMLElement | null>(null);
-
-// Synchroniser le scroll vertical entre les labels et la grille
-const syncVerticalScroll = (event: Event): void => {
-  const target = event.target as HTMLElement;
-  if (target === gridContainerRef.value && noteLabelsRef.value) {
-    noteLabelsRef.value.scrollTop = target.scrollTop;
-  }
-};
 
 // Contrôle clavier avec event listener natif
 const handleKeyDown = (event: KeyboardEvent): void => {
@@ -517,6 +450,58 @@ const isOctaveStart = (note: NoteName): boolean => {
 const getOctaveNumber = (note: NoteName): number => {
   const match = note.match(/(\d+)$/);
   return match ? parseInt(match[1]) : 4;
+};
+
+// Listes séparées des touches blanches et noires
+const whiteKeys = computed(() => notes.filter((n) => !isBlackKey(n)));
+const blackKeys = computed(() => notes.filter((n) => isBlackKey(n)));
+
+// Multiplicateurs de hauteur pour les touches blanches (total = 12 lignes par octave)
+const whiteKeyMultipliers: Record<string, number> = {
+  C: 1.5,
+  D: 2,
+  E: 1.5,
+  F: 1.5,
+  G: 2,
+  A: 2,
+  B: 1.5,
+};
+
+// Style pour les touches blanches (empilées avec multiplicateurs)
+const getWhiteKeyStyle = (note: NoteName) => {
+  const whiteKeyIndex = whiteKeys.value.indexOf(note);
+  const noteName = note.replace(/\d+$/, "");
+
+  // Calculer la position top en accumulant les hauteurs des touches blanches précédentes
+  let top = 0;
+  for (let i = 0; i < whiteKeyIndex; i++) {
+    const prevNote = whiteKeys.value[i];
+    const prevName = prevNote.replace(/\d+$/, "");
+    top += whiteKeyMultipliers[prevName] * rowHeight;
+  }
+
+  return {
+    position: "absolute" as const,
+    top: `${top}px`,
+    height: `${whiteKeyMultipliers[noteName] * rowHeight}px`,
+    width: "100%",
+    left: "0",
+    zIndex: 1,
+  };
+};
+
+// Style pour les touches noires (alignées sur la grille)
+const getBlackKeyStyle = (note: NoteName) => {
+  const noteIndex = notes.indexOf(note);
+
+  return {
+    position: "absolute" as const,
+    top: `${noteIndex * rowHeight}px`,
+    height: `${rowHeight}px`,
+    width: "55%",
+    left: "0",
+    zIndex: 2,
+  };
 };
 
 const getNoteClass = (item: MidiNote) => {
@@ -858,6 +843,9 @@ const stopPlayback = (): void => {
   // Vider la liste des notes actives
   activeNotes.value.clear();
 
+  // Retirer l'effet visuel sur le piano
+  activePreviewNotes.value.clear();
+
   pausePlayback();
   currentPosition.value = 0;
   precisePosition.value = 0;
@@ -886,6 +874,9 @@ const playNotesAtPosition = (position: number): void => {
     // Retirer la note des notes actives
     activeNotes.value.delete(note.i);
 
+    // Retirer l'effet visuel sur le piano
+    activePreviewNotes.value.delete(noteName);
+
     // Événement : Note se termine (pour les instruments internes)
     emit("noteEnd", note, noteName, position);
     _markNoteAsPlaying(note.i, false);
@@ -907,6 +898,9 @@ const playNotesAtPosition = (position: number): void => {
 
     // Marquer la note comme active
     activeNotes.value.add(note.i);
+
+    // Ajouter l'effet visuel sur le piano
+    activePreviewNotes.value.add(noteName);
 
     // Événement : Note commence (pour les instruments internes)
     emit("noteStart", note, noteName, position);
@@ -1109,8 +1103,8 @@ onMounted(() => {
 
 .note-labels-header {
   width: 80px;
-  background-color: #333;
-  border-right: 2px solid #444;
+  background-color: #2a2a2a;
+  border-right: 2px solid #333;
 }
 
 .timeline-header {
@@ -1140,69 +1134,97 @@ onMounted(() => {
   height: 500px; /* Hauteur fixe pour le piano roll */
 }
 
+.scroll-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: auto;
+}
+
 .note-labels {
+  flex-shrink: 0;
   width: 80px;
-  background-color: #333;
-  border-right: 2px solid #444;
-  overflow-y: auto; /* Scroll synchronisé avec la grille */
-  overflow-x: hidden;
+  background-color: #2a2a2a;
+  border-right: 2px solid #333;
+  position: relative;
+  min-height: 2160px; /* 120 notes × 18px */
 }
 
 .note-label {
-  height: 18px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 0 4px;
   font-size: 9px;
   font-weight: bold;
-  border-bottom: 1px solid #444;
   cursor: pointer;
   transition: background-color 0.1s;
-  position: relative;
+  box-sizing: border-box;
 }
 
-.note-label.octave-start {
-  border-top: 2px solid var(--color-primary);
+/* Touches blanches - pleine largeur, z-index bas */
+.note-label.white-key {
+  background: linear-gradient(to left, #e8e8e8 0%, #f5f5f5 50%, #e0e0e0 100%);
+  color: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid #bbb;
+  border-radius: 0 0 3px 3px;
+  box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.1);
 }
 
-.note-label:hover {
-  background-color: #555;
+.note-label.white-key:hover {
+  background: linear-gradient(to left, #f0f0f0 0%, #fff 50%, #e8e8e8 100%);
 }
 
-.note-label.preview-active {
-  background-color: var(--color-primary) !important;
+.note-label.white-key.octave-start {
+  border-bottom: 2px solid #222;
+}
+
+/* Touches noires - plus étroites, z-index haut, sur la droite */
+.note-label.black-key {
+  background: linear-gradient(to bottom, #2a2a2a 0%, #1a1a1a 60%, #0a0a0a 100%);
+  color: rgba(255, 255, 255, 0.25);
+  border-radius: 0 0 2px 2px;
+  box-shadow:
+    inset 0 -3px 5px rgba(0, 0, 0, 0.4),
+    2px 2px 4px rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  padding-right: 0;
+}
+
+.note-label.black-key:hover {
+  background: linear-gradient(to bottom, #3a3a3a 0%, #2a2a2a 60%, #1a1a1a 100%);
+}
+
+/* Preview actif */
+.note-label.white-key.preview-active {
+  background: var(--color-primary) !important;
   color: white !important;
 }
 
-.note-label.black-key {
-  background-color: #1a1a1a;
-  color: #888;
-}
-
-.note-label:not(.black-key) {
-  background-color: #3a3a3a;
-  color: #ddd;
+.note-label.preview-active.black-key {
+  background: #6d28d9 !important;
+  color: white !important;
 }
 
 .note-name {
-  flex: 1;
-  text-align: left;
+  text-align: right;
+  font-size: 10px;
+}
+
+.black-key .note-name {
+  font-size: 8px;
+  text-align: center;
 }
 
 .octave-number {
-  font-size: 8px;
-  opacity: 0.7;
-  color: var(--color-primary);
-  font-weight: normal;
+  font-size: 10px;
+  color: rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+  margin-left: 3px;
 }
 
 .grid-container {
-  flex: 1;
   position: relative;
-  overflow: auto;
   background-color: var(--color-bg-primary-dark);
-  max-width: 100%;
 }
 
 .midi-grid {
@@ -1210,7 +1232,7 @@ onMounted(() => {
   z-index: 10;
   width: 1280px; /* Largeur fixe pour 16 mesures (80px * 16) */
   height: 100%;
-  min-height: 1566px; /* 87 notes * 18px de hauteur */
+  min-height: 2160px; /* 120 notes × 18px */
 }
 
 .midi-note {
@@ -1289,7 +1311,7 @@ onMounted(() => {
   bottom: 0;
   z-index: 1;
   pointer-events: none;
-  height: 1566px; /* Même hauteur que midi-grid (87 notes * 18px) */
+  height: 2160px; /* 120 notes × 18px */
   width: 1280px; /* Même largeur que midi-grid */
 }
 
@@ -1301,7 +1323,7 @@ onMounted(() => {
 }
 
 .grid-row.octave-start-row {
-  border-top: 2px solid rgba(51, 122, 183, 0.3);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.5);
 }
 
 .grid-row.black-key-row {
@@ -1343,7 +1365,7 @@ onMounted(() => {
   z-index: 20; /* Plus haut que les notes (z-index: 15) */
   pointer-events: none;
   box-shadow: 0 0 8px rgba(238, 53, 53, 0.6);
-  height: 1566px; /* Hauteur exacte de la grille (87 notes * 18px) */
+  height: 2160px; /* 120 notes × 18px */
 }
 
 .controls {
