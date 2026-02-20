@@ -23,7 +23,12 @@ const sharedConfig = {
         argsIgnorePattern: "^_",
       },
     ],
-    "prettier/prettier": "error",
+    "prettier/prettier": [
+      "error",
+      {
+        endOfLine: "auto",
+      },
+    ],
   },
 };
 
@@ -80,6 +85,9 @@ export default [
       "**/build/**",
       "**/.nuxt/**",
       "**/.output/**",
+      ".git/**",
+      "coverage/**",
+      "*.min.js",
     ],
   },
   serverConfig,

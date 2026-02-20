@@ -115,7 +115,8 @@ const handleClick = (event: MouseEvent) => {
 .base-button--accent:hover:not(:disabled) {
   background: var(--color-accent);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.4);
+  box-shadow: 0 4px 12px
+    color-mix(in srgb, var(--color-secondary) 40%, transparent);
   filter: brightness(1.1);
 }
 

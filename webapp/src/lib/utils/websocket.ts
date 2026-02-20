@@ -11,6 +11,8 @@ const socket = io({
   transports: ["websocket"],
 });
 
+export const getSocket = (): Socket => socket;
+
 export const onSocketConnected = (callback: (socket: Socket) => void) => {
   if (state.connected) {
     callback(socket);

@@ -5,38 +5,28 @@ import type {
   SequencerProject,
   MidiNote,
   LegacySequenceData,
-  Arrangement,
-  ArrangementClip,
+  EQBand,
 } from "../lib/utils/types";
+import { cloneEQBands } from "../lib/audio/config";
 
 const STORAGE_KEY = "bloop-sequencer-project";
 const DEFAULT_COLS = 64;
 const DEFAULT_TEMPO = 120;
-const DEFAULT_ARRANGEMENT_COLS = 256;
-const DEFAULT_TRACK_COUNT = 8;
-
-// Fonction pour créer un arrangement par défaut
-const createDefaultArrangement = (): Arrangement => ({
-  id: `arr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-  name: "Arrangement Principal",
-  clips: [],
-  tempo: DEFAULT_TEMPO,
-  cols: DEFAULT_ARRANGEMENT_COLS,
-  trackCount: DEFAULT_TRACK_COUNT,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-});
+const DEFAULT_VOLUME = 100;
+const DEFAULT_REVERB = 20;
 
 export const useSequencerStore = defineStore("sequencerStore", () => {
   // État du projet
   const project = ref<SequencerProject>({
     sequences: [],
-    arrangement: createDefaultArrangement(),
     activeSequenceId: null,
     projectName: "Mon Projet",
-    version: "2.0",
+    version: "2.1",
     createdAt: new Date(),
     updatedAt: new Date(),
+    volume: DEFAULT_VOLUME,
+    reverb: DEFAULT_REVERB,
+    eqBands: cloneEQBands(),
   });
 
   // Computed pour la séquence active
@@ -70,6 +60,56 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
         project.value.updatedAt = new Date();
       }
     },
+  });
+
+  const volume = computed<number>({
+    get: () => project.value.volume ?? DEFAULT_VOLUME,
+    set: (newVolume: number) => {
+      project.value.volume = newVolume;
+      project.value.updatedAt = new Date();
+    },
+  });
+
+  const reverb = computed<number>({
+    get: () => project.value.reverb ?? DEFAULT_REVERB,
+    set: (newReverb: number) => {
+      project.value.reverb = newReverb;
+      project.value.updatedAt = new Date();
+    },
+  });
+
+  const eqBands = computed<EQBand[]>({
+    get: () => project.value.eqBands ?? cloneEQBands(),
+    set: (newBands: EQBand[]) => {
+      project.value.eqBands = newBands;
+      project.value.updatedAt = new Date();
+    },
+  });
+
+  const updateEQBand = (bandId: string, gain: number) => {
+    const bands = project.value.eqBands ?? cloneEQBands();
+    const band = bands.find((b: EQBand) => b.id === bandId);
+    if (band) {
+      band.gain = gain;
+      project.value.eqBands = bands;
+      project.value.updatedAt = new Date();
+    }
+  };
+
+  // Legacy getters pour compatibilité
+  const bass = computed<number>(() => {
+    const band = eqBands.value.find((b) => b.id === "bass");
+    return band?.gain ?? 0;
+  });
+
+  const mid = computed<number>(() => {
+    const band = eqBands.value.find((b) => b.id === "mid");
+    return band?.gain ?? 0;
+  });
+
+  const treble = computed<number>(() => {
+    const band = eqBands.value.find((b) => b.id === "brilliance");
+    return band?.gain ?? 0;
   });
 
   const cols = computed<number>(
@@ -110,6 +150,8 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       cols: DEFAULT_COLS,
       createdAt: new Date(),
       updatedAt: new Date(),
+      volume: DEFAULT_VOLUME,
+      reverb: DEFAULT_REVERB,
     };
 
     project.value.sequences.push(newSequence);
@@ -169,6 +211,8 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       cols: sequence.cols,
       createdAt: new Date(),
       updatedAt: new Date(),
+      volume: sequence.volume,
+      reverb: sequence.reverb,
     };
 
     project.value.sequences.push(newSequence);
@@ -236,15 +280,6 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
         seq.createdAt = new Date(seq.createdAt);
         seq.updatedAt = new Date(seq.updatedAt);
       });
-
-      // Migration : ajouter l'arrangement si absent (ancien projet)
-      if (!data.arrangement) {
-        data.arrangement = createDefaultArrangement();
-      } else {
-        // Convertir les dates de l'arrangement
-        data.arrangement.createdAt = new Date(data.arrangement.createdAt);
-        data.arrangement.updatedAt = new Date(data.arrangement.updatedAt);
-      }
 
       project.value = data;
       return true;
@@ -480,27 +515,44 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     return oldY; // Retourner l'ancienne valeur si hors limites
   };
 
+  // Migrer l'ancien système EQ (bass/mid/treble) vers le nouveau (eqBands)
+  const migrateEQFromLegacy = (data: any): EQBand[] => {
+    const bands = cloneEQBands();
+    if (data.bass !== undefined) {
+      const bassBand = bands.find((b: EQBand) => b.id === "bass");
+      if (bassBand) bassBand.gain = data.bass;
+    }
+    if (data.mid !== undefined) {
+      const midBand = bands.find((b: EQBand) => b.id === "mid");
+      if (midBand) midBand.gain = data.mid;
+    }
+    if (data.treble !== undefined) {
+      const trebleBand = bands.find((b: EQBand) => b.id === "brilliance");
+      if (trebleBand) trebleBand.gain = data.treble;
+    }
+    return bands;
+  };
+
   // Charger les données d'un projet (fonction publique)
   const loadProjectData = (data: any): void => {
-    // Migration de l'arrangement si non présent (ancien projet)
-    const arrangementData = data.arrangement || createDefaultArrangement();
-    if (data.arrangement) {
-      arrangementData.createdAt = new Date(
-        data.arrangement.createdAt || new Date(),
-      );
-      arrangementData.updatedAt = new Date(
-        data.arrangement.updatedAt || new Date(),
-      );
+    // Déterminer les bandes EQ (nouveau système ou migration)
+    let eqBands: EQBand[];
+    if (data.eqBands && Array.isArray(data.eqBands)) {
+      eqBands = data.eqBands;
+    } else {
+      eqBands = migrateEQFromLegacy(data);
     }
 
     const newProject: SequencerProject = {
       sequences: data.sequences || [],
-      arrangement: arrangementData,
       activeSequenceId: data.activeSequenceId || null,
       projectName: data.projectName || "Projet Importé",
-      version: data.version || "2.0",
+      version: data.version || "2.1",
       createdAt: new Date(data.createdAt || new Date()),
       updatedAt: new Date(data.updatedAt || new Date()),
+      volume: data.volume ?? DEFAULT_VOLUME,
+      reverb: data.reverb ?? DEFAULT_REVERB,
+      eqBands,
     };
 
     // Détecter si c'est un projet avec l'ancien système de notes
@@ -547,6 +599,8 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
       cols: data.cols || DEFAULT_COLS,
       createdAt: new Date(data.timestamp || new Date()),
       updatedAt: new Date(),
+      volume: DEFAULT_VOLUME,
+      reverb: DEFAULT_REVERB,
     };
 
     project.value.sequences.push(newSequence);
@@ -576,455 +630,6 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
   // Auto-sauvegarde quand le project change
   watch(project, saveToLocalStorage, { deep: true });
 
-  // ==========================================
-  // FONCTIONS DE GESTION DE L'ARRANGEMENT
-  // ==========================================
-
-  // Computed pour l'arrangement
-  const arrangement = computed(() => project.value.arrangement);
-  const arrangementClips = computed(() => project.value.arrangement.clips);
-  const arrangementTempo = computed({
-    get: () => project.value.arrangement.tempo,
-    set: (newTempo: number) => {
-      project.value.arrangement.tempo = newTempo;
-      project.value.arrangement.updatedAt = new Date();
-      project.value.updatedAt = new Date();
-    },
-  });
-
-  // Générer un ID unique pour un clip
-  const generateClipId = (): string => {
-    return `clip_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  };
-
-  // Obtenir une séquence par son ID
-  const getSequenceById = (sequenceId: string): Sequence | undefined => {
-    return project.value.sequences.find((seq) => seq.id === sequenceId);
-  };
-
-  // Obtenir la longueur d'une séquence (nombre de colonnes)
-  const getSequenceLength = (sequenceId: string): number => {
-    const sequence = getSequenceById(sequenceId);
-    return sequence?.cols || DEFAULT_COLS;
-  };
-
-  // Calculer les offsets automatiques pour trimmer un clip selon ses notes
-  const calculateAutoTrimOffsets = (
-    sequence: Sequence,
-  ): { startOffset: number; endOffset: number } => {
-    if (sequence.layout.length === 0) {
-      // Pas de notes, garder tout le clip
-      return { startOffset: 0, endOffset: 0 };
-    }
-
-    // Trouver la première et dernière position de note
-    let minX = sequence.cols;
-    let maxX = 0;
-
-    for (const note of sequence.layout) {
-      if (note.x < minX) {
-        minX = note.x;
-      }
-      const noteEnd = note.x + note.w;
-      if (noteEnd > maxX) {
-        maxX = noteEnd;
-      }
-    }
-
-    // Calculer les offsets
-    const startOffset = minX;
-    const endOffset = sequence.cols - maxX;
-
-    return { startOffset, endOffset };
-  };
-
-  // Ajouter un clip à l'arrangement (avec auto-trim)
-  const addClipToArrangement = (
-    sequenceId: string,
-    x: number,
-    y: number,
-    color?: string,
-  ): string => {
-    const sequence = getSequenceById(sequenceId);
-    if (!sequence) {
-      console.error(`Sequence ${sequenceId} not found`);
-      return "";
-    }
-
-    // Calculer automatiquement les offsets pour trimmer le vide
-    const { startOffset, endOffset } = calculateAutoTrimOffsets(sequence);
-
-    const newClip: ArrangementClip = {
-      id: generateClipId(),
-      sequenceId,
-      x,
-      y,
-      color,
-      startOffset: startOffset > 0 ? startOffset : undefined,
-      endOffset: endOffset > 0 ? endOffset : undefined,
-    };
-
-    project.value.arrangement.clips.push(newClip);
-    project.value.arrangement.updatedAt = new Date();
-    project.value.updatedAt = new Date();
-
-    return newClip.id;
-  };
-
-  // Supprimer un clip de l'arrangement
-  const removeClipFromArrangement = (clipId: string): boolean => {
-    const index = project.value.arrangement.clips.findIndex(
-      (clip) => clip.id === clipId,
-    );
-    if (index === -1) return false;
-
-    project.value.arrangement.clips.splice(index, 1);
-    project.value.arrangement.updatedAt = new Date();
-    project.value.updatedAt = new Date();
-    return true;
-  };
-
-  // Déplacer un clip
-  const moveClip = (clipId: string, newX: number, newY: number): boolean => {
-    const clip = project.value.arrangement.clips.find((c) => c.id === clipId);
-    if (!clip) return false;
-
-    clip.x = Math.max(0, newX);
-    clip.y = Math.max(0, newY);
-    project.value.arrangement.updatedAt = new Date();
-    project.value.updatedAt = new Date();
-    return true;
-  };
-
-  // Couper un clip depuis la gauche (trim start)
-  const trimClipStart = (clipId: string, newStartOffset: number): boolean => {
-    const clip = project.value.arrangement.clips.find((c) => c.id === clipId);
-    if (!clip) return false;
-
-    const sequence = getSequenceById(clip.sequenceId);
-    if (!sequence) return false;
-
-    const currentStartOffset = clip.startOffset || 0;
-    const endOffset = clip.endOffset || 0;
-    const maxStartOffset = sequence.cols - endOffset - 4; // Garder au moins 4 colonnes
-
-    // Limiter le startOffset (minimum 0, maximum pour garder 4 colonnes)
-    const clampedStartOffset = Math.max(
-      0,
-      Math.min(Math.round(newStartOffset), maxStartOffset),
-    );
-
-    // Calculer la différence pour ajuster la position X en conséquence
-    const offsetDelta = clampedStartOffset - currentStartOffset;
-
-    clip.startOffset = clampedStartOffset > 0 ? clampedStartOffset : undefined;
-    clip.x = Math.max(0, clip.x + offsetDelta);
-
-    project.value.arrangement.updatedAt = new Date();
-    project.value.updatedAt = new Date();
-    return true;
-  };
-
-  // Couper un clip depuis la droite (trim end)
-  const trimClipEnd = (clipId: string, newEndOffset: number): boolean => {
-    const clip = project.value.arrangement.clips.find((c) => c.id === clipId);
-    if (!clip) return false;
-
-    const sequence = getSequenceById(clip.sequenceId);
-    if (!sequence) return false;
-
-    const startOffset = clip.startOffset || 0;
-    const maxEndOffset = sequence.cols - startOffset - 4; // Garder au moins 4 colonnes
-
-    // Limiter le endOffset
-    clip.endOffset = Math.max(
-      0,
-      Math.min(Math.round(newEndOffset), maxEndOffset),
-    );
-
-    project.value.arrangement.updatedAt = new Date();
-    project.value.updatedAt = new Date();
-    return true;
-  };
-
-  // Obtenir la durée effective d'un clip (après trim)
-  const getClipDuration = (clip: ArrangementClip): number => {
-    const sequence = getSequenceById(clip.sequenceId);
-    if (!sequence) return DEFAULT_COLS;
-
-    const startOffset = clip.startOffset || 0;
-    const endOffset = clip.endOffset || 0;
-    return sequence.cols - startOffset - endOffset;
-  };
-
-  // Obtenir le startOffset d'un clip
-  const getClipStartOffset = (clip: ArrangementClip): number => {
-    return clip.startOffset || 0;
-  };
-
-  // Dupliquer un clip
-  const duplicateClip = (
-    clipId: string,
-    offsetX: number = 0,
-  ): string | null => {
-    const clip = project.value.arrangement.clips.find((c) => c.id === clipId);
-    if (!clip) return null;
-
-    const clipDuration = getClipDuration(clip);
-
-    const newClip: ArrangementClip = {
-      id: generateClipId(),
-      sequenceId: clip.sequenceId,
-      x: clip.x + (offsetX || clipDuration),
-      y: clip.y,
-      color: clip.color,
-      startOffset: clip.startOffset,
-      endOffset: clip.endOffset,
-    };
-
-    project.value.arrangement.clips.push(newClip);
-    project.value.arrangement.updatedAt = new Date();
-    project.value.updatedAt = new Date();
-
-    return newClip.id;
-  };
-
-  // Changer la couleur d'un clip
-  const setClipColor = (clipId: string, color: string): boolean => {
-    const clip = project.value.arrangement.clips.find((c) => c.id === clipId);
-    if (!clip) return false;
-
-    clip.color = color;
-    project.value.arrangement.updatedAt = new Date();
-    project.value.updatedAt = new Date();
-    return true;
-  };
-
-  // Obtenir toutes les notes à une position donnée dans l'arrangement
-  const getArrangementNotesAtPosition = (
-    position: number,
-  ): Array<{ note: MidiNote; noteName: string }> => {
-    const result: Array<{ note: MidiNote; noteName: string }> = [];
-
-    // Pour chaque clip dans l'arrangement
-    for (const clip of project.value.arrangement.clips) {
-      const sequence = getSequenceById(clip.sequenceId);
-      if (!sequence) continue;
-
-      // Vérifier si la position est dans la plage du clip
-      const clipStart = clip.x;
-      const clipDuration = getClipDuration(clip);
-      const clipEnd = clip.x + clipDuration;
-
-      if (position >= clipStart && position < clipEnd) {
-        // Calculer la position relative dans la séquence (avec offset de début)
-        const startOffset = clip.startOffset || 0;
-        const relativePosition = position - clip.x + startOffset;
-
-        // Trouver les notes à cette position relative
-        for (const note of sequence.layout) {
-          if (note.x === relativePosition) {
-            // Créer une copie de la note avec un ID unique pour ce clip
-            const noteWithClipId: MidiNote = {
-              ...note,
-              i: `${clip.id}_${note.i}`, // ID unique combinant clip et note
-            };
-
-            // Calculer le nom de la note
-            const noteName = getNoteNameFromY(note.y);
-            result.push({ note: noteWithClipId, noteName });
-          }
-        }
-      }
-    }
-
-    return result;
-  };
-
-  // Obtenir les notes qui se terminent à une position donnée
-  const getArrangementNotesEndingAtPosition = (
-    position: number,
-  ): Array<{ note: MidiNote; noteName: string }> => {
-    const result: Array<{ note: MidiNote; noteName: string }> = [];
-
-    for (const clip of project.value.arrangement.clips) {
-      const sequence = getSequenceById(clip.sequenceId);
-      if (!sequence) continue;
-
-      const clipStart = clip.x;
-      const clipDuration = getClipDuration(clip);
-      const clipEnd = clip.x + clipDuration;
-
-      // La position doit être dans la plage du clip ou juste après
-      if (position > clipStart && position <= clipEnd) {
-        // Calculer la position relative dans la séquence (avec offset de début)
-        const startOffset = clip.startOffset || 0;
-        const relativePosition = position - clip.x + startOffset;
-
-        for (const note of sequence.layout) {
-          const noteEndPosition = note.x + note.w;
-          if (noteEndPosition === relativePosition) {
-            const noteWithClipId: MidiNote = {
-              ...note,
-              i: `${clip.id}_${note.i}`,
-            };
-            const noteName = getNoteNameFromY(note.y);
-            result.push({ note: noteWithClipId, noteName });
-          }
-        }
-      }
-    }
-
-    return result;
-  };
-
-  // Helper pour convertir Y en nom de note
-  const getNoteNameFromY = (y: number): string => {
-    const notes = [
-      "C8",
-      "B7",
-      "A#7",
-      "A7",
-      "G#7",
-      "G7",
-      "F#7",
-      "F7",
-      "E7",
-      "D#7",
-      "D7",
-      "C#7",
-      "C7",
-      "B6",
-      "A#6",
-      "A6",
-      "G#6",
-      "G6",
-      "F#6",
-      "F6",
-      "E6",
-      "D#6",
-      "D6",
-      "C#6",
-      "C6",
-      "B5",
-      "A#5",
-      "A5",
-      "G#5",
-      "G5",
-      "F#5",
-      "F5",
-      "E5",
-      "D#5",
-      "D5",
-      "C#5",
-      "C5",
-      "B4",
-      "A#4",
-      "A4",
-      "G#4",
-      "G4",
-      "F#4",
-      "F4",
-      "E4",
-      "D#4",
-      "D4",
-      "C#4",
-      "C4",
-      "B3",
-      "A#3",
-      "A3",
-      "G#3",
-      "G3",
-      "F#3",
-      "F3",
-      "E3",
-      "D#3",
-      "D3",
-      "C#3",
-      "C3",
-      "B2",
-      "A#2",
-      "A2",
-      "G#2",
-      "G2",
-      "F#2",
-      "F2",
-      "E2",
-      "D#2",
-      "D2",
-      "C#2",
-      "C2",
-      "B1",
-      "A#1",
-      "A1",
-      "G#1",
-      "G1",
-      "F#1",
-      "F1",
-      "E1",
-      "D#1",
-      "D1",
-      "C#1",
-      "C1",
-      "B0",
-      "A#0",
-      "A0",
-    ];
-    return notes[y] || "C4";
-  };
-
-  // Obtenir la longueur totale de l'arrangement (basée sur le dernier clip)
-  const getArrangementLength = (): number => {
-    if (project.value.arrangement.clips.length === 0) {
-      return project.value.arrangement.cols;
-    }
-
-    let maxEnd = 0;
-    for (const clip of project.value.arrangement.clips) {
-      const clipDuration = getClipDuration(clip);
-      const clipEnd = clip.x + clipDuration;
-      if (clipEnd > maxEnd) {
-        maxEnd = clipEnd;
-      }
-    }
-
-    return Math.max(maxEnd, project.value.arrangement.cols);
-  };
-
-  // Définir le nombre de pistes visibles
-  const setArrangementTrackCount = (count: number): void => {
-    project.value.arrangement.trackCount = Math.max(1, count);
-    project.value.arrangement.updatedAt = new Date();
-    project.value.updatedAt = new Date();
-  };
-
-  // Définir la longueur de l'arrangement
-  const setArrangementCols = (cols: number): void => {
-    project.value.arrangement.cols = Math.max(16, cols);
-    project.value.arrangement.updatedAt = new Date();
-    project.value.updatedAt = new Date();
-  };
-
-  // Créer une copie unique d'une séquence depuis un clip (Make Unique)
-  const makeClipUnique = (clipId: string): string | null => {
-    const clip = project.value.arrangement.clips.find((c) => c.id === clipId);
-    if (!clip) return null;
-
-    const originalSequence = getSequenceById(clip.sequenceId);
-    if (!originalSequence) return null;
-
-    // Créer une nouvelle séquence (copie)
-    const newSequenceId = duplicateSequence(clip.sequenceId);
-    if (!newSequenceId) return null;
-
-    // Mettre à jour le clip pour pointer vers la nouvelle séquence
-    clip.sequenceId = newSequenceId;
-    project.value.arrangement.updatedAt = new Date();
-    project.value.updatedAt = new Date();
-
-    return newSequenceId;
-  };
-
   return {
     // État
     project,
@@ -1032,6 +637,14 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
     layout,
     tempo,
     cols,
+    volume,
+    reverb,
+    eqBands,
+    updateEQBand,
+    // Legacy (read-only)
+    bass,
+    mid,
+    treble,
 
     // Actions pour les séquences
     createSequence,
@@ -1053,29 +666,5 @@ export const useSequencerStore = defineStore("sequencerStore", () => {
 
     // Initialisation
     initialize,
-
-    // Arrangement
-    arrangement,
-    arrangementClips,
-    arrangementTempo,
-    getSequenceById,
-    getSequenceLength,
-    calculateAutoTrimOffsets,
-    addClipToArrangement,
-    removeClipFromArrangement,
-    moveClip,
-    trimClipStart,
-    trimClipEnd,
-    getClipDuration,
-    getClipStartOffset,
-    duplicateClip,
-    setClipColor,
-    getArrangementNotesAtPosition,
-    getArrangementNotesEndingAtPosition,
-    getArrangementLength,
-    setArrangementTrackCount,
-    setArrangementCols,
-    makeClipUnique,
-    getNoteNameFromY,
   };
 });

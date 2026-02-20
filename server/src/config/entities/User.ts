@@ -4,7 +4,6 @@ import {
   Column,
   OneToMany,
   ManyToMany,
-  ManyToOne,
   OneToOne,
   CreateDateColumn,
   JoinTable,
@@ -12,6 +11,7 @@ import {
 import { Post } from "./Post";
 import { Subscription } from "./Subscription";
 import { DirectMessage } from "./DirectMessage";
+import { MessageLike } from "./MessageLike";
 
 @Entity()
 export class User {
@@ -21,8 +21,11 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Column({ nullable: true })
   password: string;
+
+  @Column({ nullable: true, unique: true })
+  googleId: string;
 
   @Column()
   firstName: string;
@@ -35,6 +38,9 @@ export class User {
 
   @Column({ default: "ROLE_USER" })
   role: string;
+
+  @Column({ nullable: true, type: "text" })
+  profilePicture: string;
 
   @OneToMany(() => User, (user) => user.id)
   following: User[];
@@ -53,12 +59,21 @@ export class User {
   @OneToOne(() => Subscription, (subscription) => subscription.users)
   subscription: Subscription;
 
-  @ManyToOne(() => DirectMessage, (directMessage) => directMessage.sender)
+  @OneToMany(() => DirectMessage, (directMessage) => directMessage.sender)
   sentMessages: DirectMessage[];
 
-  @ManyToOne(() => DirectMessage, (directMessage) => directMessage.receiver)
+  @OneToMany(() => DirectMessage, (directMessage) => directMessage.receiver)
   receivedMessages: DirectMessage[];
+
+  @OneToMany(() => MessageLike, (like) => like.user)
+  messageLikes: MessageLike[];
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Column({ nullable: true })
+  resetToken: string;
+
+  @Column({ nullable: true })
+  resetTokenExpiry: Date;
 }

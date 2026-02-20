@@ -12,7 +12,7 @@
 
           <h1 class="hero-title" ref="heroTitleRef">
             <SplitText
-              text="Compose, mixte, crée - sans rien installer"
+              text="Compose, mixe, crée - sans rien installer"
               tag="span"
               class="title-line"
               animation-type="rotate3d"

@@ -1,9 +1,16 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import pg from "./db.config";
 import bcrypt from "bcrypt";
 import { User } from "./entities/User";
 import _ from "lodash";
+
+const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } = process.env;
+
+export function isGoogleAuthEnabled() {
+  return !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
+}
 
 export default function initializePassport() {
   passport.use(
@@ -37,6 +44,48 @@ export default function initializePassport() {
       },
     ),
   );
+
+  if (isGoogleAuthEnabled()) {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: GOOGLE_CLIENT_ID!,
+          clientSecret: GOOGLE_CLIENT_SECRET!,
+          callbackURL: "/api/auth/google/callback",
+        },
+        async (_, __, profile, done) => {
+          try {
+            const userRepository = pg.getRepository(User);
+            let user = await userRepository.findOne({
+              where: { googleId: profile.id },
+            });
+
+            if (!user) {
+              user = await userRepository.findOne({
+                where: { email: profile.emails?.[0]?.value },
+              });
+
+              if (user) {
+                user.googleId = profile.id;
+                await userRepository.save(user);
+              } else {
+                user = new User();
+                user.googleId = profile.id;
+                user.email = profile.emails?.[0]?.value || "";
+                user.firstName = profile.name?.givenName || "";
+                user.lastName = profile.name?.familyName || "";
+                await userRepository.save(user);
+              }
+            }
+
+            done(null, user);
+          } catch (err) {
+            done(err as Error, undefined);
+          }
+        },
+      ),
+    );
+  }
 
   passport.serializeUser((user, done) => {
     done(null, user.id);

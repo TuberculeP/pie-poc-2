@@ -191,6 +191,9 @@ const handleClickOutside = (event: MouseEvent) => {
   if (!target.closest(".profile-wrapper")) {
     showProfileMenu.value = false;
   }
+  if (!target.closest(".start-now-dropdown")) {
+    showAuthMenu.value = false; // ✅ ajouté
+  }
 };
 
 // Logout handler
@@ -199,6 +202,7 @@ const handleLogout = async () => {
     await apiClient.post("/auth/logout");
     authStore.user = undefined;
     closeProfileMenu();
+    closeMenu();
     router.push("/");
   } catch (error) {
     console.error("Erreur lors de la déconnexion:", error);
@@ -250,6 +254,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
+  window.removeEventListener("resize", handleResize);
   document.removeEventListener("click", handleClickOutside);
   document.body.style.overflow = "";
 });
@@ -538,6 +543,7 @@ onUnmounted(() => {
   color: var(--color-white);
   cursor: pointer;
   transition: all 0.3s ease;
+  margin: 0 !important;
 }
 
 .profile-btn:hover {
@@ -764,7 +770,8 @@ onUnmounted(() => {
 
   .nav-links {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 1rem;
+    margin: 20px 0;
   }
 
   .nav-link {
@@ -800,6 +807,12 @@ onUnmounted(() => {
 
   .logo {
     width: 80px;
+  }
+}
+
+@media screen and (min-width: 975px) {
+  header ul.active {
+    transform: none;
   }
 }
 </style>

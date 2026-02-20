@@ -215,6 +215,8 @@
         >
       </div>
     </div>
+
+    <BloopEffectsTabs />
   </div>
 </template>
 
@@ -225,6 +227,7 @@ import type { MidiNote, NoteName } from "../../lib/utils/types";
 import { useMIDIStore } from "../../stores/MIDIStore";
 import { useProjectStore } from "../../stores/projectStore";
 import { useSequencerStore } from "../../stores/sequencerStore";
+import BloopEffectsTabs from "./BloopEffectsTabs.vue";
 
 // Props
 interface Props {
@@ -450,6 +453,11 @@ const handleGlobalMouseUp = (): void => {
 onMounted(() => {
   // Initialiser le store du séquenceur
   sequencerStore.initialize();
+
+  setTimeout(() => {
+    sequencerStore.volume = 50;
+    console.log("Volume forcé à 50%");
+  }, 1000);
 
   document.addEventListener("keydown", handleKeyDown);
   document.addEventListener("mouseup", handleGlobalMouseUp);
@@ -1012,7 +1020,6 @@ onMounted(() => {
 .piano-roll-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
   background-color: var(--color-bg-primary-dark);
   font-family: "Arial", sans-serif;
 }
@@ -1076,16 +1083,15 @@ onMounted(() => {
 
 .main-section {
   display: flex;
-  flex: 1;
-  overflow: hidden;
-  max-height: 65vh; /* Limiter la hauteur pour éviter le scroll global avec plus de notes */
+  height: 500px; /* Hauteur fixe pour le piano roll */
 }
 
 .note-labels {
   width: 80px;
   background-color: #333;
   border-right: 2px solid #444;
-  overflow: hidden; /* Pas de scroll indépendant */
+  overflow-y: auto; /* Scroll synchronisé avec la grille */
+  overflow-x: hidden;
 }
 
 .note-label {

@@ -4,7 +4,7 @@
 .post-container {
   display: flex;
   flex-direction: column;
-  background-color: var(--color-bg-primary-dark);
+  background-color: var(--color-bg-secondary-dark);
   border: 1px solid var(--color-border-secondary);
   border-radius: 8px;
   padding: 16px;
@@ -14,7 +14,8 @@
 }
 
 .post-container:hover {
-  box-shadow: 0 4px 16px rgba(0, 255, 136, 0.2);
+  box-shadow: 0 4px 16px
+    color-mix(in srgb, var(--color-secondary) 20%, transparent);
   transform: translateY(-2px);
   border: 1px solid var(--color-border-secondary-hover);
 }
@@ -22,7 +23,8 @@
 /* Style spécial pour les posts en highlight */
 .post-container.highlighted {
   border: 2px solid var(--color-accent);
-  box-shadow: 0 4px 16px rgba(0, 255, 136, 0.2);
+  box-shadow: 0 4px 16px
+    color-mix(in srgb, var(--color-secondary) 20%, transparent);
   position: relative;
 }
 
@@ -74,7 +76,8 @@
 .highlight-button.active {
   background: var(--color-accent);
   color: var(--color-white);
-  box-shadow: 0 2px 6px rgba(0, 255, 136, 0.3);
+  box-shadow: 0 2px 6px
+    color-mix(in srgb, var(--color-secondary) 30%, transparent);
 }
 
 .delete-button {
@@ -98,9 +101,81 @@
   transform: scale(1.1);
 }
 
+.author-wrapper {
+  position: relative;
+}
+
 .author {
   color: var(--color-white);
   font-size: 1.2em;
+}
+
+.author.clickable {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.author.clickable:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+/* Menu contextuel auteur */
+.author-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--color-bg-primary-dark);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+  min-width: 180px;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.author-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  color: var(--color-white);
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-align: left;
+  transition: background 0.2s ease;
+}
+
+.author-menu-item:hover {
+  background: var(--color-bg-secondary);
+}
+
+.author-menu-item i {
+  width: 16px;
+  color: var(--color-accent);
+}
+
+.author-menu-item:last-child {
+  border-top: 1px solid var(--color-border-secondary);
+}
+
+.author-menu-item:last-child i {
+  color: var(--color-secondary);
 }
 
 .date {
@@ -165,11 +240,21 @@
 }
 
 @keyframes heartBeat {
-  0% { transform: scale(1); }
-  14% { transform: scale(1.3); }
-  28% { transform: scale(1); }
-  42% { transform: scale(1.3); }
-  70% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.3);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.3);
+  }
+  70% {
+    transform: scale(1);
+  }
 }
 
 .like-count {
@@ -312,7 +397,8 @@
 .comment-input:focus {
   outline: none;
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--color-secondary) 10%, transparent);
 }
 
 .comment-input::placeholder {
@@ -374,7 +460,6 @@
 .form-group textarea {
   padding: 8px 12px;
   border: 1px solid var(--color-black);
-  border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.2s ease;
   font-family: inherit;
@@ -458,6 +543,11 @@
   display: flex;
   gap: 12px;
   align-items: stretch;
+  span {
+    i {
+      margin-right: 0.25rem;
+    }
+  }
 }
 
 .search-input {
@@ -496,6 +586,75 @@
 .search-button {
   white-space: nowrap;
   min-width: 100px;
+}
+
+/* Bouton toggle tags dans recherche */
+.toggle-tags-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  margin-top: 12px;
+  background: transparent;
+  border: 1px dashed var(--color-border-secondary);
+  border-radius: 6px;
+  color: var(--color-secondary);
+  font-size: 0.85em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-tags-button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.toggle-icon {
+  font-size: 0.7em;
+}
+
+/* Dropdown des tags dans recherche */
+.tags-dropdown {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--color-bg-secondary-dark);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.tags-loading {
+  text-align: center;
+  color: var(--color-secondary);
+  font-style: italic;
+  padding: 8px;
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.search-tag {
+  display: inline-block;
+  padding: 6px 12px;
+  background: color-mix(in srgb, var(--color-secondary) 10%, transparent);
+  border: 1px solid var(--color-accent);
+  border-radius: 16px;
+  color: var(--color-accent);
+  font-size: 0.85em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.search-tag:hover {
+  background: var(--color-accent);
+  color: var(--color-black);
+  transform: translateY(-1px);
 }
 
 .search-tips {
@@ -539,4 +698,202 @@
   .search-container {
     padding: 16px;
   }
+}
+
+/* ==========================================
+   STYLES POUR LES TAGS
+   ========================================== */
+
+/* Container pour l'input des tags */
+.tags-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Tags sélectionnés */
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Badge de tag */
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(
+    135deg,
+    var(--color-accent),
+    var(--color-secondary)
+  );
+  color: var(--color-black);
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.85em;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tag-badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px
+    color-mix(in srgb, var(--color-secondary) 30%, transparent);
+}
+
+/* Bouton pour supprimer un tag */
+.tag-remove {
+  background: none;
+  border: none;
+  color: var(--color-black);
+  cursor: pointer;
+  font-size: 1.1em;
+  line-height: 1;
+  padding: 0;
+  margin-left: 2px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.tag-remove:hover {
+  opacity: 1;
+}
+
+/* Wrapper pour l'input et les suggestions */
+.tag-input-wrapper {
+  position: relative;
+}
+
+/* Ligne input + bouton */
+.tag-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.tag-input-row input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 6px;
+  background: var(--color-bg-primary-dark);
+  color: var(--color-white);
+  font-size: 0.95em;
+  transition: all 0.2s ease;
+}
+
+.tag-input-row input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--color-secondary) 10%, transparent);
+}
+
+.tag-input-row input::placeholder {
+  color: var(--color-secondary);
+  opacity: 0.6;
+}
+
+/* Bouton "Voir les tags" */
+.show-tags-button {
+  padding: 10px 16px;
+  background: var(--color-bg-primary-dark);
+  border: 1px solid var(--color-accent);
+  border-radius: 6px;
+  color: var(--color-accent);
+  font-size: 0.85em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.show-tags-button:hover {
+  background: var(--color-accent);
+  color: var(--color-black);
+}
+
+.show-tags-button.active {
+  background: var(--color-accent);
+  color: var(--color-black);
+}
+
+/* Liste des suggestions */
+.tag-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-bg-primary-dark);
+  border: 1px solid var(--color-border-secondary);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Style pour afficher tous les tags (double-clic) */
+.tag-suggestions.show-all {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px;
+  max-height: 250px;
+}
+
+.tag-suggestions.show-all .tag-suggestion-item {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--color-accent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--color-secondary) 10%, transparent);
+  font-size: 0.85em;
+}
+
+.tag-suggestion-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  color: var(--color-white);
+  transition: all 0.15s ease;
+  border-bottom: 1px solid var(--color-border-secondary);
+}
+
+.tag-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.tag-suggestion-item:hover {
+  background: var(--color-accent);
+  color: var(--color-accent-hover);
+}
+
+/* Tags affichés dans les posts */
+.post-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.post-tag {
+  display: inline-block;
+  color: var(--color-accent);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: 500;
+  border: 1px solid var(--color-accent);
+  transition: all 0.2s ease;
+}
+
+.post-tag:hover {
+  background: var(--color-accent);
+  color: var(--color-black);
+  cursor: pointer;
 }

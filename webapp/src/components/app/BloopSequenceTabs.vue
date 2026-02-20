@@ -2,27 +2,7 @@
   <div class="sequence-tabs-container">
     <!-- Header avec les onglets -->
     <div class="tabs-header">
-      <!-- Mode Switch (Pattern / Arrangement) -->
-      <div class="mode-switch">
-        <button
-          class="mode-btn"
-          :class="{ active: viewMode === 'pattern' }"
-          @click="setViewMode('pattern')"
-          title="Mode Pattern - Éditer les notes"
-        >
-          Pattern
-        </button>
-        <button
-          class="mode-btn"
-          :class="{ active: viewMode === 'arrangement' }"
-          @click="setViewMode('arrangement')"
-          title="Mode Arrangement - Placer les clips"
-        >
-          Arrangement
-        </button>
-      </div>
-
-      <div class="tabs-list" v-if="viewMode === 'pattern'">
+      <div class="tabs-list">
         <!-- Onglets des séquences -->
         <div
           v-for="sequence in sequencerStore.project.sequences"
@@ -53,17 +33,6 @@
         >
           +
         </button>
-      </div>
-
-      <!-- Info arrangement en mode arrangement -->
-      <div class="arrangement-info" v-if="viewMode === 'arrangement'">
-        <span class="info-label">Arrangement</span>
-        <span class="info-tempo"
-          >{{ sequencerStore.arrangementTempo }} BPM</span
-        >
-        <span class="info-clips"
-          >{{ sequencerStore.arrangementClips.length }} clips</span
-        >
       </div>
 
       <!-- Contrôles de projet -->
@@ -164,35 +133,8 @@ import { useSequencerStore } from "../../stores/sequencerStore";
 import { useProjectStore } from "../../stores/projectStore";
 import type { Sequence } from "../../lib/utils/types";
 
-// Props
-interface Props {
-  modelValue?: "pattern" | "arrangement";
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  modelValue: "pattern",
-});
-
-// Emits
-const emit = defineEmits<{
-  "update:modelValue": [value: "pattern" | "arrangement"];
-  editSequence: [sequenceId: string];
-}>();
-
 const sequencerStore = useSequencerStore();
 const projectStore = useProjectStore();
-
-// Mode de vue (Pattern ou Arrangement)
-const viewMode = computed({
-  get: () => props.modelValue,
-  set: (value: "pattern" | "arrangement") => {
-    emit("update:modelValue", value);
-  },
-});
-
-const setViewMode = (mode: "pattern" | "arrangement") => {
-  viewMode.value = mode;
-};
 
 // Nom du projet (computed pour synchro)
 const projectName = computed({
@@ -397,61 +339,6 @@ onUnmounted(() => {
   justify-content: space-between;
   padding: 0 15px;
   height: 50px;
-  gap: 15px;
-}
-
-/* Mode Switch */
-.mode-switch {
-  display: flex;
-  background-color: #1a1a1a;
-  border-radius: 6px;
-  padding: 2px;
-  gap: 2px;
-}
-
-.mode-btn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  transition: all 0.2s;
-  background-color: transparent;
-  color: #888;
-}
-
-.mode-btn:hover {
-  color: #ccc;
-}
-
-.mode-btn.active {
-  background-color: var(--color-primary);
-  color: white;
-}
-
-/* Arrangement Info */
-.arrangement-info {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  flex: 1;
-  padding: 0 10px;
-}
-
-.info-label {
-  font-size: 14px;
-  font-weight: bold;
-  color: var(--color-primary);
-}
-
-.info-tempo,
-.info-clips {
-  font-size: 12px;
-  color: #888;
-  background-color: #333;
-  padding: 4px 8px;
-  border-radius: 4px;
 }
 
 .tabs-list {

@@ -4,6 +4,7 @@ import { Foo } from "../config/entities/Foo";
 import authRouter from "./auth";
 import postsRouter from "./network/posts";
 import tagsRouter from "./network/tags";
+import messagesRouter from "./network/messages";
 import appRouter from "./app";
 
 const router = Router();
@@ -20,6 +21,9 @@ router.get("/", (_, res) => {
 router.use("/auth", authRouter);
 router.use("/posts", postsRouter);
 router.use("/tags", tagsRouter);
+router.use("/messages", messagesRouter);
 router.use("/app", appRouter);
+
+router.use("/auth", authRouter);
 
 export default router;

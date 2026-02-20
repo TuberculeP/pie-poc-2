@@ -5,6 +5,7 @@ import { getAllPosts } from "../../services/posts";
 import BlogPost from "../../components/blog/BlogPost.vue";
 import BaseButton from "../../components/ui/BaseButton.vue";
 import type { Post } from "../../lib/utils/types";
+import LandingHeader from "../../components/landing/LandingHeader.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -19,14 +20,29 @@ const getSearchQuery = () => {
   return (route.query.q as string) || "";
 };
 
-// Filtrer les posts selon la recherche
+// Helper pour obtenir le nom d'un tag (string ou objet)
+const getTagName = (tag: string | { name: string }): string => {
+  return typeof tag === "string" ? tag : tag.name;
+};
+
+// Filtrer les posts selon la recherche (body + tags)
 const filteredPosts = computed(() => {
   if (!searchQuery.value.trim()) return [];
 
   const query = searchQuery.value.toLowerCase().trim();
-  return allPosts.value.filter((post) =>
-    post.body.toLowerCase().includes(query),
-  );
+  return allPosts.value.filter((post) => {
+    // Recherche dans le contenu
+    const bodyMatch = post.body.toLowerCase().includes(query);
+
+    // Recherche dans les tags
+    const tagsMatch =
+      post.tags?.some((tag) => {
+        const tagName = getTagName(tag);
+        return tagName.toLowerCase().includes(query);
+      }) || false;
+
+    return bodyMatch || tagsMatch;
+  });
 });
 
 // Statistiques de recherche
@@ -79,6 +95,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <LandingHeader />
   <div class="search-results-container">
     <!-- Header avec informations de recherche -->
     <div class="search-header">
@@ -98,7 +115,6 @@ onMounted(() => {
         ← Nouvelle recherche
       </BaseButton>
     </div>
-
     <!-- Statistiques et état -->
     <div class="search-stats">
       <div v-if="loading" class="loading">
@@ -120,7 +136,9 @@ onMounted(() => {
       </div>
 
       <div v-else-if="!searchStats.hasResults" class="no-results">
-        <div class="empty-icon">😔</div>
+        <div class="empty-icon">
+          <i class="fas fa-search"></i>
+        </div>
         <h3>Aucun résultat trouvé</h3>
         <p>
           Aucun post ne correspond à votre recherche "<strong>{{
@@ -166,6 +184,7 @@ onMounted(() => {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+  margin-top: 100px;
 }
 
 .search-header {

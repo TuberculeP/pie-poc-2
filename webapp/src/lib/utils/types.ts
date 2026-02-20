@@ -50,38 +50,32 @@ export interface Sequence {
   cols: number;
   createdAt: Date;
   updatedAt: Date;
+  volume: number;
+  reverb: number;
 }
 
-// Types pour l'arrangement (FL Studio style Playlist)
-export interface ArrangementClip {
-  id: string; // ID unique du clip
-  sequenceId: string; // ID de la séquence référencée
-  x: number; // Position de départ (colonne dans l'arrangement)
-  y: number; // Piste (0, 1, 2... placement libre)
-  color?: string; // Couleur optionnelle du clip
-  startOffset?: number; // Début de lecture dans la séquence (trim gauche)
-  endOffset?: number; // Fin de lecture dans la séquence (trim droit, depuis la fin)
-}
-
-export interface Arrangement {
+export interface EQBand {
   id: string;
-  name: string;
-  clips: ArrangementClip[];
-  tempo: number; // Tempo maître
-  cols: number; // Longueur totale (ex: 256 colonnes)
-  trackCount: number; // Nombre de pistes visibles
-  createdAt: Date;
-  updatedAt: Date;
+  frequency: number;
+  gain: number;
+  type: "lowshelf" | "peaking" | "highshelf";
+  label: string;
 }
 
 export interface SequencerProject {
   sequences: Sequence[];
-  arrangement: Arrangement; // Vue arrangement avec clips
   activeSequenceId: string | null;
   projectName: string;
   version: string;
   createdAt: Date;
   updatedAt: Date;
+  volume: number;
+  reverb: number;
+  eqBands?: EQBand[];
+  // Legacy support
+  bass?: number;
+  mid?: number;
+  treble?: number;
 }
 
 // Format de sauvegarde compatible avec l'ancien système
@@ -110,16 +104,32 @@ export type User = {
   createdAt: Date;
 };
 
+export interface TagObject {
+  id: string;
+  name: string;
+  isActive?: boolean;
+  createdAt?: string;
+}
+
 export interface Post {
   id?: number;
   author: User;
   body: string;
-  tags?: string[];
+  tags?: (string | TagObject)[];
   comment_of?: number | null;
+  comment_of_post_id?: number | null;
   comments?: Post[];
   is_highlight?: boolean;
   highlight_on_tag?: boolean;
   pinned_by_user?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  isLikedByMe?: boolean;
+  likesCount?: number;
+}
+export interface CreatePostData {
+  body: string;
+  tags?: string[];
+  comment_of_post_id?: string | null;
+  is_highlight?: boolean;
 }
