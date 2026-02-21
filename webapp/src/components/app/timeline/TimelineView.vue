@@ -373,15 +373,31 @@ defineExpose({
         <span v-if="saveMessage" :class="['save-message', saveMessage.type]">
           {{ saveMessage.text }}
         </span>
-        <button
-          class="header-btn save-btn"
-          :class="{ saving: isSaving }"
-          @click="handleSaveProject"
-          :disabled="isSaving"
-          title="Sauvegarder en ligne"
-        >
-          {{ isSaving ? "..." : "Sauvegarder" }}
-        </button>
+        <div class="save-indicator-group">
+          <span
+            v-if="projectStore.hasUnsavedChanges"
+            class="unsaved-indicator"
+            title="Changements non sauvegardés"
+          >
+            ●
+          </span>
+          <button
+            class="header-btn save-btn"
+            :class="{
+              saving: isSaving,
+              'has-changes': projectStore.hasUnsavedChanges,
+            }"
+            @click="handleSaveProject"
+            :disabled="isSaving"
+            :title="
+              projectStore.hasUnsavedChanges
+                ? 'Sauvegarder les changements'
+                : 'Projet sauvegardé'
+            "
+          >
+            {{ isSaving ? "..." : "Sauvegarder" }}
+          </button>
+        </div>
         <input
           v-if="isEditingProjectName"
           ref="projectNameInputRef"
@@ -517,6 +533,28 @@ defineExpose({
   font-size: 16px;
 }
 
+.save-indicator-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unsaved-indicator {
+  color: #fbbf24;
+  font-size: 12px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .save-btn {
   background: #7a0f3e;
   border-color: #7a0f3e;
@@ -527,6 +565,10 @@ defineExpose({
 
   &.saving {
     opacity: 0.7;
+  }
+
+  &.has-changes {
+    border-color: #fbbf24;
   }
 }
 

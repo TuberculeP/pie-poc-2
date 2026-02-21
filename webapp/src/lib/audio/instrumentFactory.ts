@@ -22,8 +22,9 @@ export function createInstrumentEngine(
       // TODO: Implémenter ElementarySynthEngine
       console.warn("ElementarySynth not yet implemented, using BasicSynth");
       return new BasicSynthEngine(audioContext, destination, {
-        ...config,
         type: "basicSynth",
+        oscillatorType: "sine",
+        gain: config.gain,
       });
 
     default:

@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import apiClient from "../lib/utils/apiClient";
 import type { TimelineProject } from "../lib/utils/types";
+import type { useTimelineStore } from "./timelineStore";
 
 const stripTimestamps = (obj: any): any => {
   return JSON.parse(
@@ -123,7 +124,7 @@ export const useProjectStore = defineStore("project", () => {
 
   const loadProjectToTimeline = async (
     projectId: string,
-    timelineStore: any,
+    timelineStore: ReturnType<typeof useTimelineStore>,
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       isLoading.value = true;

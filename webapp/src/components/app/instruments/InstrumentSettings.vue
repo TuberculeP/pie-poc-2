@@ -20,6 +20,20 @@ const trackAudioStore = useTrackAudioStore();
 
 const instrumentType = computed(() => props.track.instrument.type);
 
+const currentOscillatorType = computed(() => {
+  if (props.track.instrument.type === "basicSynth") {
+    return props.track.instrument.oscillatorType;
+  }
+  return "sine";
+});
+
+const currentSoundfont = computed(() => {
+  if (props.track.instrument.type === "smplr") {
+    return props.track.instrument.soundfont;
+  }
+  return "";
+});
+
 const oscillatorTypes: OscillatorType[] = [
   "sine",
   "square",
@@ -121,7 +135,7 @@ const handleClose = () => {
                     :key="waveform"
                     class="waveform-btn"
                     :class="{
-                      active: track.instrument.oscillatorType === waveform,
+                      active: currentOscillatorType === waveform,
                     }"
                     @click="handleOscillatorChange(waveform)"
                   >
@@ -136,7 +150,7 @@ const handleClose = () => {
                 <label class="setting-label">Instrument</label>
                 <select
                   class="soundfont-select"
-                  :value="track.instrument.soundfont"
+                  :value="currentSoundfont"
                   @change="
                     handleSoundfontChange(
                       ($event.target as HTMLSelectElement).value,

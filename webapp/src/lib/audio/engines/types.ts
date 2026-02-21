@@ -1,4 +1,8 @@
-import type { InstrumentConfig, NoteName } from "../../utils/types";
+import type {
+  InstrumentConfig,
+  InstrumentConfigUpdate,
+  NoteName,
+} from "../../utils/types";
 
 export type EngineState = "idle" | "loading" | "ready" | "error";
 
@@ -18,7 +22,7 @@ export interface InstrumentEngine {
   stopNote(noteId: string): void;
   stopAllNotes(): void;
 
-  updateConfig(config: Partial<InstrumentConfig>): void;
+  updateConfig(config: InstrumentConfigUpdate): void;
 
   dispose(): void;
 }

@@ -1,4 +1,8 @@
-import type { InstrumentConfig, NoteName } from "../../../utils/types";
+import type {
+  SmplrConfig,
+  InstrumentConfigUpdate,
+  NoteName,
+} from "../../../utils/types";
 import { Soundfont } from "smplr";
 import { BaseEngine } from "../BaseEngine";
 
@@ -13,10 +17,10 @@ export class SmplrEngine extends BaseEngine {
   constructor(
     audioContext: AudioContext,
     destination: AudioNode,
-    config: InstrumentConfig,
+    config: SmplrConfig,
   ) {
     super(audioContext, destination, config);
-    this.currentSoundfontName = config.soundfont || "marimba";
+    this.currentSoundfontName = config.soundfont;
   }
 
   async preload(): Promise<void> {
@@ -100,18 +104,19 @@ export class SmplrEngine extends BaseEngine {
     }
   }
 
-  updateConfig(config: Partial<InstrumentConfig>): void {
+  updateConfig(config: InstrumentConfigUpdate): void {
     if (config.soundfont && config.soundfont !== this.currentSoundfontName) {
       this.stopAllNotes();
       this.soundfont = null;
       this.loadPromise = null;
       this.loadSoundfont(config.soundfont);
     }
-    this.config = { ...this.config, ...config };
+    this.config = { ...this.config, ...config } as SmplrConfig;
   }
 
   dispose(): void {
     this.stopAllNotes();
+    this.activeNotes.clear();
     this.soundfont = null;
     this.loadPromise = null;
     this.stateCallbacks.clear();

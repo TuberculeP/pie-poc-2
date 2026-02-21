@@ -60,7 +60,15 @@ getTrackNotesAtPosition(trackId, position): MidiNote[]
 
 ```typescript
 InstrumentType = "basicSynth" | "elementarySynth" | "smplr"
-InstrumentConfig { type, oscillatorType?, soundfont?, preset?, gain? }
+
+// Discriminated unions pour type safety
+BasicSynthConfig { type: "basicSynth", oscillatorType: OscillatorType, gain? }
+SmplrConfig { type: "smplr", soundfont: string, gain? }
+ElementarySynthConfig { type: "elementarySynth", preset?, gain? }
+InstrumentConfig = BasicSynthConfig | SmplrConfig | ElementarySynthConfig
+
+// Pour les updates partiels (sans discriminant)
+InstrumentConfigUpdate { oscillatorType?, soundfont?, preset?, gain? }
 
 EQBand {
   id: string          // "sub", "bass", "mid", "presence", "brilliance"
@@ -157,6 +165,8 @@ Engine → GainNode (volume) → EQ Filters (5 bandes) → DryGain → inputBus
 
 `views/app/BloopApp.vue` - Wrapper simple autour de `TimelineView`
 
+> **Note** : `BloopNoteSequencer.vue` (ancien séquenceur legacy) a été supprimé. Toute la logique est maintenant dans la timeline V2.
+
 ## Flow utilisateur
 
 1. **Ajouter une piste** : Bouton "+" → Menu avec 3 choix (Synth, Elementary, Sampler)
@@ -168,12 +178,34 @@ Engine → GainNode (volume) → EQ Filters (5 bandes) → DryGain → inputBus
 
 ## Constantes partagées
 
+### Timeline/UI (`composants`)
 ```typescript
 const COL_WIDTH = 20;            // Largeur d'une colonne (1 step)
 const TRACK_HEADER_WIDTH = 180;  // Header sticky
 const TRACK_PREVIEW_HEIGHT = 60; // Hauteur preview notes
-const NOTE_ROW_HEIGHT = 16;      // Hauteur d'une note dans piano roll
-const TOTAL_NOTES = 87;          // Notes disponibles (C0-B7)
+```
+
+### Piano Roll (`lib/audio/pianoRollConstants.ts`)
+```typescript
+TOTAL_NOTES = 87              // Notes disponibles (C0-B7)
+NOTE_ROW_HEIGHT = 16          // Hauteur d'une note
+NOTE_NAMES_DESCENDING         // ["B", "A#", "A", ...]
+WHITE_KEY_MULTIPLIERS         // Hauteurs relatives des touches blanches
+ALL_NOTES: NoteName[]         // Toutes les notes générées
+isBlackKey(noteName)          // Vérifie si note noire
+isOctaveStart(noteName)       // Vérifie si C (début d'octave)
+getOctaveNumber(noteName)     // Extrait le numéro d'octave
+noteIndexToName(index)        // Index → NoteName
+getWhiteKeys() / getBlackKeys()
+```
+
+### Audio Config (`lib/audio/config.ts`)
+```typescript
+DEFAULT_EQ_BANDS              // EQ 5 bandes par défaut
+createEQFilter(ctx, band)     // Crée un filtre BiquadFilterNode
+createEQFilterChain(ctx, bands) // Crée une chaîne complète { filters, chain }
+createImpulseResponse(ctx)    // Génère un buffer reverb
+cloneEQBands()                // Clone profond des bandes EQ
 ```
 
 ## Points d'attention
@@ -189,6 +221,9 @@ const TOTAL_NOTES = 87;          // Notes disponibles (C0-B7)
 
 - **SmplrEngine pas de son** : Ne pas utiliser `markRaw()` sur l'objet Soundfont de smplr
 - **Délai première note** : Système de preload implémenté
+- **Fuites mémoire engines** : Cleanup complet dans `dispose()` (clear des Maps, stateCallbacks)
+- **Watchers accumulation** : trackAudioStore stocke et cleanup les watchers dans `dispose()`
+- **Type safety** : Discriminated unions pour InstrumentConfig, pas de `any` dans projectStore
 
 ### Fonctionnalités manquantes
 

@@ -11,6 +11,7 @@ import type {
 } from "../lib/utils/types";
 import { TRACK_COLORS } from "../lib/utils/types";
 import { cloneEQBands } from "../lib/audio/config";
+import { useProjectStore } from "./projectStore";
 
 const STORAGE_KEY = "bloop-timeline-project";
 const DEFAULT_COLS = 128; // 32 mesures
@@ -40,6 +41,7 @@ export const useTimelineStore = defineStore("timelineStore", () => {
   // ============================================
   const activeTrackId = ref<string | null>(null);
   const expandedTrackId = ref<string | null>(null); // Quelle piste a le piano roll ouvert
+  const isLoadingProject = ref(false); // Flag pour ignorer markAsChanged pendant le chargement
 
   // ============================================
   // Computed Properties
@@ -434,18 +436,26 @@ export const useTimelineStore = defineStore("timelineStore", () => {
   };
 
   const loadFromLocalStorage = (): boolean => {
+    isLoadingProject.value = true;
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) return false;
+      if (!saved) {
+        isLoadingProject.value = false;
+        return false;
+      }
 
       const data = JSON.parse(saved) as TimelineProject;
 
       // Validation basique
-      if (!data.tracks || !Array.isArray(data.tracks)) return false;
+      if (!data.tracks || !Array.isArray(data.tracks)) {
+        isLoadingProject.value = false;
+        return false;
+      }
 
       // Vérifier la version - si ancienne version avec clips, on repart de zéro
       if (data.version !== "4.0") {
         console.log("Ancienne version détectée, création nouveau projet");
+        isLoadingProject.value = false;
         return false;
       }
 
@@ -469,14 +479,20 @@ export const useTimelineStore = defineStore("timelineStore", () => {
       });
 
       project.value = data;
+      setTimeout(() => {
+        isLoadingProject.value = false;
+      }, 0);
       return true;
     } catch (error) {
       console.error("Erreur lors du chargement local:", error);
+      isLoadingProject.value = false;
       return false;
     }
   };
 
   const loadProjectData = (data: TimelineProject): void => {
+    isLoadingProject.value = true;
+
     // Convertir les dates
     data.createdAt = new Date(data.createdAt);
     data.updatedAt = new Date(data.updatedAt);
@@ -501,6 +517,11 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     }
 
     project.value = data;
+
+    // Reset le flag après que Vue ait traité le changement
+    setTimeout(() => {
+      isLoadingProject.value = false;
+    }, 0);
   };
 
   const exportProject = (): void => {
@@ -522,6 +543,7 @@ export const useTimelineStore = defineStore("timelineStore", () => {
   };
 
   const createNewProject = (name: string = "Nouveau Projet"): void => {
+    isLoadingProject.value = true;
     project.value = {
       name,
       tracks: [],
@@ -536,6 +558,9 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     };
     activeTrackId.value = null;
     expandedTrackId.value = null;
+    setTimeout(() => {
+      isLoadingProject.value = false;
+    }, 0);
   };
 
   // ============================================
@@ -548,8 +573,19 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     }
   };
 
-  // Auto-save
-  watch(project, saveToLocalStorage, { deep: true });
+  // Auto-save et détection de changements
+  watch(
+    project,
+    () => {
+      saveToLocalStorage();
+      // Ne pas marquer comme "changed" pendant le chargement d'un projet
+      if (!isLoadingProject.value) {
+        const projectStore = useProjectStore();
+        projectStore.markAsChanged();
+      }
+    },
+    { deep: true },
+  );
 
   return {
     // État

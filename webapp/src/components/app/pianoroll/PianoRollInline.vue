@@ -3,6 +3,18 @@ import { computed, ref, onMounted, onBeforeUnmount } from "vue";
 import { useTimelineStore } from "../../../stores/timelineStore";
 import { useTrackAudioStore } from "../../../stores/trackAudioStore";
 import type { MidiNote, NoteName } from "../../../lib/utils/types";
+import {
+  TOTAL_NOTES,
+  NOTE_ROW_HEIGHT,
+  ALL_NOTES,
+  WHITE_KEY_MULTIPLIERS,
+  isBlackKey,
+  isOctaveStart,
+  getOctaveNumber,
+  noteIndexToName,
+  getWhiteKeys,
+  getBlackKeys,
+} from "../../../lib/audio/pianoRollConstants";
 
 const props = defineProps<{
   trackId: string;
@@ -16,43 +28,7 @@ const props = defineProps<{
 const timelineStore = useTimelineStore();
 const trackAudioStore = useTrackAudioStore();
 
-const NOTE_ROW_HEIGHT = 16;
-const TOTAL_NOTES = 87;
-
-// Multiplicateurs de hauteur pour les touches blanches (style piano réaliste)
-const whiteKeyMultipliers: Record<string, number> = {
-  C: 1.5,
-  D: 2,
-  E: 1.5,
-  F: 1.5,
-  G: 2,
-  A: 2,
-  B: 1.5,
-};
-
-// Génération des noms de notes (B7 en haut à C0 en bas)
-// Ordre descendant : B est le plus aigu dans l'octave, C le plus grave
-const noteNamesDescending = [
-  "B",
-  "A#",
-  "A",
-  "G#",
-  "G",
-  "F#",
-  "F",
-  "E",
-  "D#",
-  "D",
-  "C#",
-  "C",
-];
-
-const notes = Array.from({ length: TOTAL_NOTES }, (_, i) => {
-  // i=0 → B7, i=11 → C7, i=12 → B6, etc.
-  const octave = 7 - Math.floor(i / 12);
-  const noteIndex = i % 12;
-  return `${noteNamesDescending[noteIndex]}${octave}` as NoteName;
-});
+const notes = ALL_NOTES;
 
 // Track et notes
 const track = computed(() =>
@@ -103,27 +79,9 @@ const allActiveNotes = computed(() => {
   return combined;
 });
 
-// Utils
-const isBlackKey = (noteName: string): boolean => {
-  return noteName.includes("#");
-};
-
-const isOctaveStart = (noteName: string): boolean => {
-  return noteName.startsWith("C") && !noteName.includes("#");
-};
-
-const getOctaveNumber = (noteName: string): number => {
-  const match = noteName.match(/(\d+)$/);
-  return match ? parseInt(match[1]) : 4;
-};
-
-const noteIndexToName = (index: number): NoteName => {
-  return notes[index] || ("C4" as NoteName);
-};
-
 // Listes séparées des touches blanches et noires
-const whiteKeys = computed(() => notes.filter((n) => !isBlackKey(n)));
-const blackKeys = computed(() => notes.filter((n) => isBlackKey(n)));
+const whiteKeys = computed(() => getWhiteKeys());
+const blackKeys = computed(() => getBlackKeys());
 
 // Style pour les touches blanches (empilées avec multiplicateurs)
 const getWhiteKeyStyle = (note: NoteName) => {
@@ -135,13 +93,13 @@ const getWhiteKeyStyle = (note: NoteName) => {
   for (let i = 0; i < whiteKeyIndex; i++) {
     const prevNote = whiteKeys.value[i];
     const prevName = prevNote.replace(/\d+$/, "");
-    top += whiteKeyMultipliers[prevName] * NOTE_ROW_HEIGHT;
+    top += WHITE_KEY_MULTIPLIERS[prevName] * NOTE_ROW_HEIGHT;
   }
 
   return {
     position: "absolute" as const,
     top: `${top}px`,
-    height: `${whiteKeyMultipliers[noteName] * NOTE_ROW_HEIGHT}px`,
+    height: `${WHITE_KEY_MULTIPLIERS[noteName] * NOTE_ROW_HEIGHT}px`,
     width: "100%",
     left: "0",
     zIndex: 1,
@@ -167,7 +125,7 @@ const pianoKeysHeight = computed(() => {
   let total = 0;
   for (const note of whiteKeys.value) {
     const noteName = note.replace(/\d+$/, "");
-    total += whiteKeyMultipliers[noteName] * NOTE_ROW_HEIGHT;
+    total += WHITE_KEY_MULTIPLIERS[noteName] * NOTE_ROW_HEIGHT;
   }
   return total;
 });

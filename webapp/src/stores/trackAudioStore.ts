@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, watch, markRaw } from "vue";
+import { ref, watch, markRaw, type WatchStopHandle } from "vue";
 import { useTimelineStore } from "./timelineStore";
 import { useAudioBusStore } from "./audioBusStore";
 import type { EngineState, InstrumentEngine } from "../lib/audio/engines/types";
@@ -32,6 +32,7 @@ export const useTrackAudioStore = defineStore("trackAudioStore", () => {
   const trackChannels = ref<Map<string, TrackChannel>>(new Map());
   const trackEngineStates = ref<Map<string, EngineState>>(new Map());
   const isInitialized = ref(false);
+  const watcherStopHandles: WatchStopHandle[] = [];
 
   const { audioContext, inputBus, ensureAudioContextResumed } = audioBusStore;
 
@@ -282,51 +283,67 @@ export const useTrackAudioStore = defineStore("trackAudioStore", () => {
     syncTracksWithStore();
 
     // Watcher pour synchroniser quand les pistes changent
-    watch(
-      () => timelineStore.tracks,
-      () => syncTracksWithStore(),
-      { deep: true },
+    watcherStopHandles.push(
+      watch(
+        () => timelineStore.tracks,
+        () => syncTracksWithStore(),
+        { deep: true },
+      ),
     );
 
     // Watcher pour les volumes individuels
-    watch(
-      () => timelineStore.tracks.map((t) => ({ id: t.id, volume: t.volume })),
-      (tracksVolumes) => {
-        for (const { id, volume } of tracksVolumes) {
-          updateTrackVolume(id, volume);
-        }
-      },
-      { deep: true },
+    watcherStopHandles.push(
+      watch(
+        () => timelineStore.tracks.map((t) => ({ id: t.id, volume: t.volume })),
+        (tracksVolumes) => {
+          for (const { id, volume } of tracksVolumes) {
+            updateTrackVolume(id, volume);
+          }
+        },
+        { deep: true },
+      ),
     );
 
     // Watcher pour la reverb par piste
-    watch(
-      () => timelineStore.tracks.map((t) => ({ id: t.id, reverb: t.reverb })),
-      (tracksReverbs) => {
-        for (const { id, reverb } of tracksReverbs) {
-          updateTrackReverb(id, reverb ?? 0);
-        }
-      },
-      { deep: true },
+    watcherStopHandles.push(
+      watch(
+        () => timelineStore.tracks.map((t) => ({ id: t.id, reverb: t.reverb })),
+        (tracksReverbs) => {
+          for (const { id, reverb } of tracksReverbs) {
+            updateTrackReverb(id, reverb ?? 0);
+          }
+        },
+        { deep: true },
+      ),
     );
 
     // Watcher pour l'EQ par piste
-    watch(
-      () => timelineStore.tracks.map((t) => ({ id: t.id, eqBands: t.eqBands })),
-      (tracksEQs) => {
-        for (const { id, eqBands } of tracksEQs) {
-          if (eqBands) {
-            updateTrackEQBands(id, eqBands);
+    watcherStopHandles.push(
+      watch(
+        () =>
+          timelineStore.tracks.map((t) => ({ id: t.id, eqBands: t.eqBands })),
+        (tracksEQs) => {
+          for (const { id, eqBands } of tracksEQs) {
+            if (eqBands) {
+              updateTrackEQBands(id, eqBands);
+            }
           }
-        }
-      },
-      { deep: true },
+        },
+        { deep: true },
+      ),
     );
 
     isInitialized.value = true;
   };
 
   const dispose = (): void => {
+    // Unsubscribe tous les watchers
+    for (const stopHandle of watcherStopHandles) {
+      stopHandle();
+    }
+    watcherStopHandles.length = 0;
+
+    // Supprimer tous les channels
     for (const trackId of trackChannels.value.keys()) {
       removeTrackChannel(trackId);
     }

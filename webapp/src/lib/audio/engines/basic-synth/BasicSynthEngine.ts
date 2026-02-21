@@ -1,5 +1,6 @@
 import type {
-  InstrumentConfig,
+  BasicSynthConfig,
+  InstrumentConfigUpdate,
   NoteName,
   OscillatorType,
 } from "../../../utils/types";
@@ -21,10 +22,10 @@ export class BasicSynthEngine extends BaseEngine {
   constructor(
     audioContext: AudioContext,
     destination: AudioNode,
-    config: InstrumentConfig,
+    config: BasicSynthConfig,
   ) {
     super(audioContext, destination, config);
-    this.oscillatorType = config.oscillatorType || "sine";
+    this.oscillatorType = config.oscillatorType;
     this.gain = config.gain ?? 1;
     this._state = "ready";
   }
@@ -92,17 +93,20 @@ export class BasicSynthEngine extends BaseEngine {
     }
   }
 
-  updateConfig(config: Partial<InstrumentConfig>): void {
+  updateConfig(config: InstrumentConfigUpdate): void {
     if (config.oscillatorType) {
       this.oscillatorType = config.oscillatorType;
     }
     if (config.gain !== undefined) {
       this.gain = config.gain;
     }
-    this.config = { ...this.config, ...config };
+    this.config = { ...this.config, ...config } as BasicSynthConfig;
   }
 
   dispose(): void {
     this.stopAllNotes();
+    this.activeOscillators.clear();
+    this.stateCallbacks.clear();
+    this._state = "idle";
   }
 }

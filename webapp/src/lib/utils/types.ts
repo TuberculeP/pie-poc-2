@@ -95,12 +95,34 @@ export type InstrumentType = "basicSynth" | "elementarySynth" | "smplr";
 
 export type OscillatorType = "sine" | "square" | "sawtooth" | "triangle";
 
-export interface InstrumentConfig {
-  type: InstrumentType;
-  oscillatorType?: OscillatorType; // Pour basicSynth
-  soundfont?: string; // Pour smplr (piano, guitar, marimba, etc.)
-  preset?: string; // Pour elementarySynth
-  gain?: number; // Volume de l'instrument (0-1)
+export interface BasicSynthConfig {
+  type: "basicSynth";
+  oscillatorType: OscillatorType;
+  gain?: number;
+}
+
+export interface SmplrConfig {
+  type: "smplr";
+  soundfont: string;
+  gain?: number;
+}
+
+export interface ElementarySynthConfig {
+  type: "elementarySynth";
+  preset?: string;
+  gain?: number;
+}
+
+export type InstrumentConfig =
+  | BasicSynthConfig
+  | SmplrConfig
+  | ElementarySynthConfig;
+
+export interface InstrumentConfigUpdate {
+  oscillatorType?: OscillatorType;
+  soundfont?: string;
+  preset?: string;
+  gain?: number;
 }
 
 export interface Track {
