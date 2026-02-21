@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, computed, onBeforeUnmount } from "vue";
 import type { MidiNote, NoteName } from "../../../../lib/utils/types";
 import {
   TOTAL_NOTES,
@@ -9,6 +9,13 @@ import {
   isOctaveStart,
   noteIndexToName,
 } from "../../../../lib/audio/pianoRollConstants";
+import {
+  usePianoGridSelection,
+  usePianoGridResize,
+  usePianoGridDrag,
+  usePianoGridClipboard,
+  usePianoGridKeyboard,
+} from "../../../../composables/pianoGrid";
 
 const props = defineProps<{
   notes: MidiNote[];
@@ -33,72 +40,99 @@ const emit = defineEmits<{
 }>();
 
 const allNotes = ALL_NOTES;
-const selectedNotes = ref<Set<string>>(new Set());
-
-// Clipboard for copy-paste (stores notes relative to anchor point)
-const clipboard = ref<Array<{ dx: number; dy: number; w: number }>>([]);
-
-// Mouse position tracking for paste placement
 const mouseGridPos = ref<{ col: number; row: number }>({ col: 0, row: 0 });
+const justFinishedInteracting = ref(false);
 
 const gridWidth = computed(() => props.cols * props.colWidth);
 const gridHeight = computed(() => TOTAL_NOTES * NOTE_ROW_HEIGHT);
 
-// Resize state (supports group resizing)
-const resizingState = ref<{
-  startX: number;
-  notesInitialWidth: Map<string, { width: number; x: number }>;
-} | null>(null);
-const resizePreviewDeltas = ref<number | null>(null);
+// Selection composable
+const {
+  selectedNotes,
+  selectionRect,
+  isSelecting,
+  selectionRectStyle,
+  justFinishedSelecting,
+  handleSelectionStart,
+  toggleNoteSelection,
+  clearSelection,
+  removeFromSelection,
+  cleanup: cleanupSelection,
+} = usePianoGridSelection(
+  () => props.notes,
+  () => props.colWidth,
+  () => gridWidth.value,
+  () => gridHeight.value,
+);
 
-// Drag state (supports group dragging)
-const dragState = ref<{
-  startMouseX: number;
-  startMouseY: number;
-  clickedNoteId: string;
-  wasSelected: boolean;
-  hasMoved: boolean;
-  notesInitialPos: Map<string, { x: number; y: number; w: number }>;
-} | null>(null);
-const dragPreviewDeltas = ref<{ dx: number; dy: number } | null>(null);
+// Resize composable
+const {
+  resizingState,
+  resizePreviewDelta,
+  isResizing,
+  isNoteResizing,
+  handleResizeStart,
+  cleanup: cleanupResize,
+} = usePianoGridResize(
+  () => props.notes,
+  selectedNotes,
+  () => props.colWidth,
+  () => props.cols,
+  (updates) => emit("update-notes", updates),
+  () => {
+    justFinishedInteracting.value = true;
+  },
+);
 
-// Marquee selection state (Cmd+drag on empty area)
-const selectionRect = ref<{
-  startX: number;
-  startY: number;
-  currentX: number;
-  currentY: number;
-} | null>(null);
+// Drag composable
+const {
+  dragState,
+  dragPreviewDeltas,
+  isDragging,
+  isNoteDragging,
+  handleDragStart,
+  cleanup: cleanupDrag,
+} = usePianoGridDrag(
+  () => props.notes,
+  selectedNotes,
+  () => props.colWidth,
+  () => props.cols,
+  (updates) => emit("update-notes", updates),
+  () => {
+    justFinishedInteracting.value = true;
+  },
+);
 
-const isResizing = computed(() => resizingState.value !== null);
+// Clipboard composable
+const { copySelectedNotes, pasteNotes, duplicateSelectedNotes } =
+  usePianoGridClipboard(
+    () => props.notes,
+    selectedNotes,
+    () => props.cols,
+    mouseGridPos,
+    (notes) => emit("paste-notes", notes),
+  );
 
-const isNoteResizing = (noteId: string) => {
-  return resizingState.value?.notesInitialWidth.has(noteId) ?? false;
+// Delete selected notes
+const deleteSelectedNotes = () => {
+  const noteIds = Array.from(selectedNotes.value);
+  emit("delete-notes", noteIds);
+  selectedNotes.value.clear();
 };
-const isDragging = computed(() => dragState.value !== null);
-const isSelecting = computed(() => selectionRect.value !== null);
 
-const selectionRectStyle = computed(() => {
-  if (!selectionRect.value) return null;
-  const { startX, startY, currentX, currentY } = selectionRect.value;
-  const left = Math.min(startX, currentX);
-  const top = Math.min(startY, currentY);
-  const width = Math.abs(currentX - startX);
-  const height = Math.abs(currentY - startY);
-  return {
-    left: `${left}px`,
-    top: `${top}px`,
-    width: `${width}px`,
-    height: `${height}px`,
-  };
+// Keyboard composable
+usePianoGridKeyboard(selectedNotes, {
+  onUndo: () => emit("undo"),
+  onRedo: () => emit("redo"),
+  onDelete: deleteSelectedNotes,
+  onEscape: clearSelection,
+  onCopy: copySelectedNotes,
+  onPaste: pasteNotes,
+  onDuplicate: duplicateSelectedNotes,
 });
 
-const isNoteDragging = (noteId: string) => {
-  return dragState.value?.notesInitialPos.has(noteId) ?? false;
-};
-
+// Note style with drag/resize preview
 const getNoteStyle = (note: MidiNote) => {
-  // Drag preview for notes being dragged
   if (dragState.value && dragPreviewDeltas.value && isNoteDragging(note.i)) {
     const initial = dragState.value.notesInitialPos.get(note.i)!;
     return {
@@ -109,14 +143,13 @@ const getNoteStyle = (note: MidiNote) => {
       backgroundColor: props.color,
     };
   }
-  // Resize preview for notes being resized
   if (
     resizingState.value &&
-    resizePreviewDeltas.value !== null &&
+    resizePreviewDelta.value !== null &&
     isNoteResizing(note.i)
   ) {
     const initial = resizingState.value.notesInitialWidth.get(note.i)!;
-    const newWidth = initial.width + resizePreviewDeltas.value;
+    const newWidth = initial.width + resizePreviewDelta.value;
     return {
       left: `${note.x * props.colWidth}px`,
       top: `${note.y * NOTE_ROW_HEIGHT}px`,
@@ -125,7 +158,6 @@ const getNoteStyle = (note: MidiNote) => {
       backgroundColor: props.color,
     };
   }
-  // Default
   return {
     left: `${note.x * props.colWidth}px`,
     top: `${note.y * NOTE_ROW_HEIGHT}px`,
@@ -135,239 +167,7 @@ const getNoteStyle = (note: MidiNote) => {
   };
 };
 
-const handleResizeStart = (event: MouseEvent, note: MidiNote) => {
-  event.preventDefault();
-  event.stopPropagation();
-
-  const notesInitialWidth = new Map<string, { width: number; x: number }>();
-
-  // If the note is selected, resize all selected notes
-  if (selectedNotes.value.has(note.i)) {
-    for (const n of props.notes) {
-      if (selectedNotes.value.has(n.i)) {
-        notesInitialWidth.set(n.i, { width: n.w, x: n.x });
-      }
-    }
-  } else {
-    // Only resize this note
-    notesInitialWidth.set(note.i, { width: note.w, x: note.x });
-  }
-
-  resizingState.value = {
-    startX: event.clientX,
-    notesInitialWidth,
-  };
-  resizePreviewDeltas.value = 0;
-  document.addEventListener("mousemove", handleResizeMove);
-  document.addEventListener("mouseup", handleResizeEnd);
-};
-
-const handleResizeMove = (event: MouseEvent) => {
-  if (!resizingState.value) return;
-
-  const deltaX = event.clientX - resizingState.value.startX;
-  const rawDeltaCols = Math.round(deltaX / props.colWidth);
-
-  // Calculate constraints based on all resizing notes
-  let minDelta = -Infinity;
-  let maxDelta = Infinity;
-
-  for (const [, info] of resizingState.value.notesInitialWidth) {
-    // Min delta: width must stay >= 1
-    minDelta = Math.max(minDelta, 1 - info.width);
-    // Max delta: note must not exceed grid bounds
-    maxDelta = Math.min(maxDelta, props.cols - info.x - info.width);
-  }
-
-  resizePreviewDeltas.value = Math.max(
-    minDelta,
-    Math.min(maxDelta, rawDeltaCols),
-  );
-};
-
-const handleResizeEnd = () => {
-  if (resizingState.value && resizePreviewDeltas.value !== null) {
-    const delta = resizePreviewDeltas.value;
-    if (delta !== 0) {
-      const updates: Array<{ noteId: string; updates: Partial<MidiNote> }> = [];
-      for (const [noteId, info] of resizingState.value.notesInitialWidth) {
-        updates.push({ noteId, updates: { w: info.width + delta } });
-      }
-      emit("update-notes", updates);
-    }
-    justFinishedInteracting.value = true;
-  }
-  resizingState.value = null;
-  resizePreviewDeltas.value = null;
-  document.removeEventListener("mousemove", handleResizeMove);
-  document.removeEventListener("mouseup", handleResizeEnd);
-};
-
-// Drag handlers (supports group dragging)
-const handleDragStart = (event: MouseEvent, note: MidiNote) => {
-  if ((event.target as HTMLElement).classList.contains("resize-handle")) return;
-  // Don't start drag on Ctrl/Cmd click (used for multi-select)
-  if (event.ctrlKey || event.metaKey) return;
-  event.preventDefault();
-
-  const wasSelected = selectedNotes.value.has(note.i);
-
-  // Store initial positions of notes that will be dragged
-  // (selection change happens on first move, not on mousedown)
-  const notesInitialPos = new Map<
-    string,
-    { x: number; y: number; w: number }
-  >();
-
-  if (wasSelected) {
-    // Will drag all selected notes
-    for (const n of props.notes) {
-      if (selectedNotes.value.has(n.i)) {
-        notesInitialPos.set(n.i, { x: n.x, y: n.y, w: n.w });
-      }
-    }
-  } else {
-    // Will drag only this note (selection updated on first move)
-    notesInitialPos.set(note.i, { x: note.x, y: note.y, w: note.w });
-  }
-
-  dragState.value = {
-    startMouseX: event.clientX,
-    startMouseY: event.clientY,
-    clickedNoteId: note.i,
-    wasSelected,
-    hasMoved: false,
-    notesInitialPos,
-  };
-  dragPreviewDeltas.value = { dx: 0, dy: 0 };
-
-  document.addEventListener("mousemove", handleDragMove);
-  document.addEventListener("mouseup", handleDragEnd);
-};
-
-const handleDragMove = (event: MouseEvent) => {
-  if (!dragState.value) return;
-
-  const deltaX = event.clientX - dragState.value.startMouseX;
-  const deltaY = event.clientY - dragState.value.startMouseY;
-  const rawDeltaCols = Math.round(deltaX / props.colWidth);
-  const rawDeltaRows = Math.round(deltaY / NOTE_ROW_HEIGHT);
-
-  // Track if mouse has actually moved (for distinguishing click vs drag)
-  if (!dragState.value.hasMoved && (rawDeltaCols !== 0 || rawDeltaRows !== 0)) {
-    dragState.value.hasMoved = true;
-  }
-
-  // Calculate constraints based on all dragged notes
-  let minDx = -Infinity;
-  let maxDx = Infinity;
-  let minDy = -Infinity;
-  let maxDy = Infinity;
-
-  for (const [, pos] of dragState.value.notesInitialPos) {
-    // X constraints: note must stay in [0, cols - width]
-    minDx = Math.max(minDx, -pos.x);
-    maxDx = Math.min(maxDx, props.cols - pos.w - pos.x);
-    // Y constraints: note must stay in [0, TOTAL_NOTES - 1]
-    minDy = Math.max(minDy, -pos.y);
-    maxDy = Math.min(maxDy, TOTAL_NOTES - 1 - pos.y);
-  }
-
-  const constrainedDx = Math.max(minDx, Math.min(maxDx, rawDeltaCols));
-  const constrainedDy = Math.max(minDy, Math.min(maxDy, rawDeltaRows));
-
-  dragPreviewDeltas.value = { dx: constrainedDx, dy: constrainedDy };
-};
-
-const handleDragEnd = () => {
-  if (dragState.value?.hasMoved && dragPreviewDeltas.value) {
-    const { dx, dy } = dragPreviewDeltas.value;
-    if (dx !== 0 || dy !== 0) {
-      const updates: Array<{ noteId: string; updates: Partial<MidiNote> }> = [];
-      for (const [noteId, pos] of dragState.value.notesInitialPos) {
-        updates.push({ noteId, updates: { x: pos.x + dx, y: pos.y + dy } });
-      }
-      emit("update-notes", updates);
-    }
-    justFinishedInteracting.value = true;
-  }
-  dragState.value = null;
-  dragPreviewDeltas.value = null;
-  document.removeEventListener("mousemove", handleDragMove);
-  document.removeEventListener("mouseup", handleDragEnd);
-};
-
-// Marquee selection handlers
-const handleSelectionStart = (event: MouseEvent) => {
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  selectionRect.value = { startX: x, startY: y, currentX: x, currentY: y };
-  document.addEventListener("mousemove", handleSelectionMove);
-  document.addEventListener("mouseup", handleSelectionEnd);
-};
-
-const handleSelectionMove = (event: MouseEvent) => {
-  if (!selectionRect.value) return;
-  const grid = document.querySelector(".piano-grid");
-  if (!grid) return;
-  const rect = grid.getBoundingClientRect();
-  const x = Math.max(0, Math.min(event.clientX - rect.left, gridWidth.value));
-  const y = Math.max(0, Math.min(event.clientY - rect.top, gridHeight.value));
-  selectionRect.value.currentX = x;
-  selectionRect.value.currentY = y;
-};
-
-const handleSelectionEnd = () => {
-  if (selectionRect.value) {
-    const { startX, startY, currentX, currentY } = selectionRect.value;
-    const left = Math.min(startX, currentX);
-    const right = Math.max(startX, currentX);
-    const top = Math.min(startY, currentY);
-    const bottom = Math.max(startY, currentY);
-
-    // Convert pixel bounds to grid coordinates
-    const colLeft = left / props.colWidth;
-    const colRight = right / props.colWidth;
-    const rowTop = top / NOTE_ROW_HEIGHT;
-    const rowBottom = bottom / NOTE_ROW_HEIGHT;
-
-    // Find notes that overlap with the selection rectangle
-    for (const note of props.notes) {
-      const noteLeft = note.x;
-      const noteRight = note.x + note.w;
-      const noteTop = note.y;
-      const noteBottom = note.y + 1;
-
-      const overlaps =
-        noteLeft < colRight &&
-        noteRight > colLeft &&
-        noteTop < rowBottom &&
-        noteBottom > rowTop;
-
-      if (overlaps) {
-        selectedNotes.value.add(note.i);
-      }
-    }
-    justFinishedInteracting.value = true;
-  }
-  selectionRect.value = null;
-  document.removeEventListener("mousemove", handleSelectionMove);
-  document.removeEventListener("mouseup", handleSelectionEnd);
-};
-
-const handleNoteClick = (event: MouseEvent, note: MidiNote) => {
-  event.stopPropagation();
-  if (event.ctrlKey || event.metaKey) {
-    // Ctrl/Cmd+click: toggle in selection
-    if (selectedNotes.value.has(note.i)) selectedNotes.value.delete(note.i);
-    else selectedNotes.value.add(note.i);
-  }
-  // Simple click on note: do nothing
-};
-
-const justFinishedInteracting = ref(false);
-
+// Grid event handlers
 const handleGridMouseMove = (event: MouseEvent) => {
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
   const x = event.clientX - rect.left;
@@ -385,7 +185,6 @@ const handleGridMouseDown = (event: MouseEvent) => {
     target.classList.contains("resize-handle") ||
     target.classList.contains("note-label");
 
-  // Cmd+drag on empty area starts marquee selection
   if ((event.ctrlKey || event.metaKey) && !isOnNote) {
     event.preventDefault();
     handleSelectionStart(event);
@@ -393,13 +192,12 @@ const handleGridMouseDown = (event: MouseEvent) => {
 };
 
 const handleGridClick = (event: MouseEvent) => {
-  // Skip if we just finished a marquee selection
-  if (justFinishedInteracting.value) {
+  if (justFinishedInteracting.value || justFinishedSelecting.value) {
     justFinishedInteracting.value = false;
+    justFinishedSelecting.value = false;
     return;
   }
   const target = event.target as HTMLElement;
-  // Click on empty area (not on a note): add a note
   if (
     !target.classList.contains("note-block") &&
     !target.classList.contains("resize-handle") &&
@@ -412,7 +210,7 @@ const handleGridClick = (event: MouseEvent) => {
     const row = Math.floor(y / NOTE_ROW_HEIGHT);
 
     if (col >= 0 && col < props.cols && row >= 0 && row < TOTAL_NOTES) {
-      selectedNotes.value.clear();
+      clearSelection();
       emit("add-note", col, row);
     }
   }
@@ -421,13 +219,19 @@ const handleGridClick = (event: MouseEvent) => {
 const handleGridRightClick = (event: MouseEvent) => {
   event.preventDefault();
   const target = event.target as HTMLElement;
-  // Right-click on empty area: clear selection
   if (
     !target.classList.contains("note-block") &&
     !target.classList.contains("resize-handle") &&
     !target.classList.contains("note-label")
   ) {
-    selectedNotes.value.clear();
+    clearSelection();
+  }
+};
+
+const handleNoteClick = (event: MouseEvent, note: MidiNote) => {
+  event.stopPropagation();
+  if (event.ctrlKey || event.metaKey) {
+    toggleNoteSelection(note.i);
   }
 };
 
@@ -435,172 +239,13 @@ const handleNoteRightClick = (event: MouseEvent, note: MidiNote) => {
   event.preventDefault();
   event.stopPropagation();
   emit("remove-note", note.i);
-  selectedNotes.value.delete(note.i);
+  removeFromSelection(note.i);
 };
-
-const deleteSelectedNotes = () => {
-  const noteIds = Array.from(selectedNotes.value);
-  emit("delete-notes", noteIds);
-  selectedNotes.value.clear();
-};
-
-const copySelectedNotes = () => {
-  if (selectedNotes.value.size === 0) return;
-
-  // Get selected notes data
-  const selected = props.notes.filter((n) => selectedNotes.value.has(n.i));
-  if (selected.length === 0) return;
-
-  // Find the anchor: bottom-left note (minimum x, maximum y)
-  let anchorX = Infinity;
-  let anchorY = -Infinity;
-  for (const note of selected) {
-    if (note.x < anchorX || (note.x === anchorX && note.y > anchorY)) {
-      anchorX = note.x;
-      anchorY = note.y;
-    }
-  }
-
-  // Store notes relative to anchor
-  clipboard.value = selected.map((note) => ({
-    dx: note.x - anchorX,
-    dy: note.y - anchorY,
-    w: note.w,
-  }));
-};
-
-const duplicateSelectedNotes = async () => {
-  if (selectedNotes.value.size === 0) return;
-
-  const selected = props.notes.filter((n) => selectedNotes.value.has(n.i));
-  if (selected.length === 0) return;
-
-  // Find the rightmost edge of the selection
-  let rightmostEdge = 0;
-  let minX = Infinity;
-  for (const note of selected) {
-    rightmostEdge = Math.max(rightmostEdge, note.x + note.w);
-    minX = Math.min(minX, note.x);
-  }
-
-  // Calculate offset to place duplicates right after the selection
-  const offsetX = rightmostEdge - minX;
-
-  // Create duplicated notes
-  const notesToPaste: Array<{ x: number; y: number; w: number }> = [];
-  for (const note of selected) {
-    const x = note.x + offsetX;
-    if (x + note.w > props.cols) continue;
-    notesToPaste.push({ x, y: note.y, w: note.w });
-  }
-
-  if (notesToPaste.length > 0) {
-    emit("paste-notes", notesToPaste);
-
-    await nextTick();
-    selectedNotes.value.clear();
-    for (const pasted of notesToPaste) {
-      const match = props.notes.find(
-        (n) => n.x === pasted.x && n.y === pasted.y && n.w === pasted.w,
-      );
-      if (match) {
-        selectedNotes.value.add(match.i);
-      }
-    }
-  }
-};
-
-const pasteNotes = async () => {
-  if (clipboard.value.length === 0) return;
-
-  // Position: anchor note goes immediately to the right of mouse position
-  const baseX = mouseGridPos.value.col + 1;
-  const baseY = mouseGridPos.value.row;
-
-  // Calculate notes to paste with bounds checking
-  const notesToPaste: Array<{ x: number; y: number; w: number }> = [];
-  for (const clipNote of clipboard.value) {
-    const x = baseX + clipNote.dx;
-    const y = baseY + clipNote.dy;
-
-    // Skip notes that would be out of bounds
-    if (x < 0 || x + clipNote.w > props.cols) continue;
-    if (y < 0 || y >= TOTAL_NOTES) continue;
-
-    notesToPaste.push({ x, y, w: clipNote.w });
-  }
-
-  if (notesToPaste.length > 0) {
-    emit("paste-notes", notesToPaste);
-
-    // Wait for props.notes to update, then select the pasted notes
-    await nextTick();
-    selectedNotes.value.clear();
-    for (const pasted of notesToPaste) {
-      const match = props.notes.find(
-        (n) => n.x === pasted.x && n.y === pasted.y && n.w === pasted.w,
-      );
-      if (match) {
-        selectedNotes.value.add(match.i);
-      }
-    }
-  }
-};
-
-const handleKeydown = (event: KeyboardEvent) => {
-  // Undo: Ctrl/Cmd + Z (without Shift)
-  if (
-    (event.ctrlKey || event.metaKey) &&
-    event.key === "z" &&
-    !event.shiftKey
-  ) {
-    event.preventDefault();
-    emit("undo");
-    return;
-  }
-
-  // Redo: Ctrl/Cmd + Shift + Z OR Ctrl/Cmd + Y
-  if (
-    ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === "z") ||
-    ((event.ctrlKey || event.metaKey) && event.key === "y")
-  ) {
-    event.preventDefault();
-    emit("redo");
-    return;
-  }
-
-  if (
-    (event.key === "Delete" || event.key === "Backspace") &&
-    selectedNotes.value.size > 0
-  ) {
-    event.preventDefault();
-    deleteSelectedNotes();
-  } else if (event.key === "Escape") {
-    selectedNotes.value.clear();
-  } else if ((event.ctrlKey || event.metaKey) && event.key === "c") {
-    event.preventDefault();
-    copySelectedNotes();
-  } else if ((event.ctrlKey || event.metaKey) && event.key === "v") {
-    event.preventDefault();
-    pasteNotes();
-  } else if ((event.ctrlKey || event.metaKey) && event.key === "d") {
-    event.preventDefault();
-    duplicateSelectedNotes();
-  }
-};
-
-onMounted(() => {
-  window.addEventListener("keydown", handleKeydown);
-});
 
 onBeforeUnmount(() => {
-  window.removeEventListener("keydown", handleKeydown);
-  document.removeEventListener("mousemove", handleResizeMove);
-  document.removeEventListener("mouseup", handleResizeEnd);
-  document.removeEventListener("mousemove", handleDragMove);
-  document.removeEventListener("mouseup", handleDragEnd);
-  document.removeEventListener("mousemove", handleSelectionMove);
-  document.removeEventListener("mouseup", handleSelectionEnd);
+  cleanupSelection();
+  cleanupResize();
+  cleanupDrag();
 });
 </script>
 

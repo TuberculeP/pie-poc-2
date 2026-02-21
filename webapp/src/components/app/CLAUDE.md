@@ -15,11 +15,12 @@ Architecture multi-pistes style GarageBand simplifiée pour les débutants :
 
 ### Stores
 
-| Store             | Fichier                     | Rôle                                                         |
-| ----------------- | --------------------------- | ------------------------------------------------------------ |
-| `timelineStore`   | `stores/timelineStore.ts`   | Gestion des pistes et notes, état d'expansion                |
-| `trackAudioStore` | `stores/trackAudioStore.ts` | Routing audio par piste, EQ/Reverb par piste, instruments    |
-| `audioBusStore`   | `stores/audioBusStore.ts`   | Bus audio master, EQ global, reverb global                   |
+| Store               | Fichier                       | Rôle                                                       |
+| ------------------- | ----------------------------- | ---------------------------------------------------------- |
+| `timelineStore`     | `stores/timelineStore.ts`     | Gestion des pistes et notes, état d'expansion              |
+| `trackAudioStore`   | `stores/trackAudioStore.ts`   | Routing audio par piste, EQ/Reverb par piste, instruments  |
+| `audioBusStore`     | `stores/audioBusStore.ts`     | Bus audio master, EQ global, reverb global                 |
+| `trackHistoryStore` | `stores/trackHistoryStore.ts` | Undo/redo par piste (snapshots), batch operations          |
 
 #### timelineStore - API
 
@@ -148,11 +149,22 @@ Engine → GainNode (volume) → EQ Filters (5 bandes) → DryGain → inputBus
 | `TimelineRuler.vue`  | Marqueurs de mesures cliquables                    |
 | `AddTrackButton.vue` | Menu de sélection d'instrument                     |
 
-#### Piano Roll (`components/app/pianoroll/`)
+#### Piano Roll (`components/app/timeline/PianoRoll/`)
 
-| Composant             | Rôle                                    |
-| --------------------- | --------------------------------------- |
-| `PianoRollInline.vue` | Éditeur de notes intégré sous la piste  |
+> Voir [PianoRoll/CLAUDE.md](timeline/PianoRoll/CLAUDE.md) pour la documentation complète.
+
+| Composant        | Rôle                                          |
+| ---------------- | --------------------------------------------- |
+| `PianoRoll.vue`  | Orchestrateur : audio preview, history, emits |
+| `PianoGrid.vue`  | Grille interactive (notes, drag, resize...)   |
+| `PianoKeys.vue`  | Clavier vertical avec preview au clic         |
+
+**Composables** (`composables/pianoGrid/`) :
+- `usePianoGridSelection` - selectedNotes + marquee selection
+- `usePianoGridDrag` - drag groupé avec preview
+- `usePianoGridResize` - resize groupé avec preview
+- `usePianoGridClipboard` - copy/paste/duplicate
+- `usePianoGridKeyboard` - raccourcis clavier
 
 #### Instruments (`components/app/instruments/`)
 
@@ -171,10 +183,14 @@ Engine → GainNode (volume) → EQ Filters (5 bandes) → DryGain → inputBus
 
 1. **Ajouter une piste** : Bouton "+" → Menu avec 3 choix (Synth, Elementary, Sampler)
 2. **Éditer les notes** : Double-clic sur la timeline d'une piste → Piano roll s'expand en dessous
-3. **Ajouter une note** : Double-clic sur la grille du piano roll
+3. **Ajouter une note** : Clic simple sur la grille du piano roll
 4. **Supprimer une note** : Clic droit sur la note
-5. **Configurer l'instrument** : Clic sur ⚙ d'une piste → Panneau latéral
-6. **Playback** : Toutes les pistes jouent simultanément (respect mute/solo)
+5. **Sélection multiple** : Ctrl/Cmd+clic sur les notes ou Ctrl/Cmd+drag pour marquee
+6. **Drag/Resize** : Glisser les notes sélectionnées / handle à droite
+7. **Copy/Paste** : Ctrl+C, Ctrl+V (colle à la position souris), Ctrl+D (duplicate à droite)
+8. **Undo/Redo** : Ctrl+Z / Ctrl+Shift+Z (par piste, persiste même si piano roll fermé)
+9. **Configurer l'instrument** : Clic sur ⚙ d'une piste → Panneau latéral
+10. **Playback** : Toutes les pistes jouent simultanément (respect mute/solo)
 
 ## Constantes partagées
 
@@ -227,10 +243,11 @@ cloneEQBands()                // Clone profond des bandes EQ
 
 ### Fonctionnalités manquantes
 
-- [ ] Drag & drop des notes dans le piano roll
-- [ ] Resize des notes (durée)
-- [ ] Copier/coller de notes
-- [ ] Undo/redo
+- [x] Drag & drop des notes (groupé avec preview)
+- [x] Resize des notes (groupé avec preview)
+- [x] Copier/coller de notes (Ctrl+C/V/D)
+- [x] Undo/redo par piste (Ctrl+Z/Shift+Z, persiste si piano roll fermé)
+- [x] Sélection multiple (Ctrl+clic + marquee selection)
 - [ ] Export audio (WAV/MP3)
 - [x] EQ/Reverb par piste (dans InstrumentSettings)
 - [ ] Zoom timeline
