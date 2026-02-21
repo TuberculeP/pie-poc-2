@@ -120,6 +120,39 @@ const deleteSelectedNotes = () => {
   selectedNotes.value.clear();
 };
 
+// Move selected notes by delta
+const moveSelectedNotes = (dx: number, dy: number) => {
+  if (selectedNotes.value.size === 0) return;
+
+  const selectedNotesList = props.notes.filter((n) =>
+    selectedNotes.value.has(n.i),
+  );
+
+  // Check bounds before moving
+  const canMove = selectedNotesList.every((note) => {
+    const newX = note.x + dx;
+    const newY = note.y + dy;
+    return (
+      newX >= 0 &&
+      newX + note.w <= props.cols &&
+      newY >= 0 &&
+      newY < TOTAL_NOTES
+    );
+  });
+
+  if (!canMove) return;
+
+  const updates = selectedNotesList.map((note) => ({
+    noteId: note.i,
+    updates: {
+      x: note.x + dx,
+      y: note.y + dy,
+    },
+  }));
+
+  emit("update-notes", updates);
+};
+
 // Keyboard composable
 usePianoGridKeyboard(selectedNotes, {
   onUndo: () => emit("undo"),
@@ -129,6 +162,7 @@ usePianoGridKeyboard(selectedNotes, {
   onCopy: copySelectedNotes,
   onPaste: pasteNotes,
   onDuplicate: duplicateSelectedNotes,
+  onMoveSelection: moveSelectedNotes,
 });
 
 // Note style with drag/resize preview
