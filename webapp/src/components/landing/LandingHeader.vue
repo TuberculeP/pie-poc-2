@@ -191,9 +191,6 @@ const handleClickOutside = (event: MouseEvent) => {
   if (!target.closest(".profile-wrapper")) {
     showProfileMenu.value = false;
   }
-  if (!target.closest(".start-now-dropdown")) {
-    showAuthMenu.value = false; // ✅ ajouté
-  }
 };
 
 // Logout handler
@@ -202,8 +199,7 @@ const handleLogout = async () => {
     await apiClient.post("/auth/logout");
     authStore.user = undefined;
     closeProfileMenu();
-    closeMenu();
-    router.push("/");
+    await router.push("/");
   } catch (error) {
     console.error("Erreur lors de la déconnexion:", error);
   }
@@ -254,7 +250,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener("scroll", handleScroll);
-  window.removeEventListener("resize", handleResize);
   document.removeEventListener("click", handleClickOutside);
   document.body.style.overflow = "";
 });

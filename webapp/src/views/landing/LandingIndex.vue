@@ -1,9 +1,9 @@
 <template>
-  <LandingLayout
-    ><LandingHeader />
+  <LandingLayout>
+    <LandingHeader />
     <LandingContain />
-    <LandingFooter
-  /></LandingLayout>
+    <LandingFooter />
+  </LandingLayout>
 </template>
 
 <script setup lang="ts">
