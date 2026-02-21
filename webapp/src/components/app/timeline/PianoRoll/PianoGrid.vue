@@ -70,9 +70,6 @@ const isNoteResizing = (noteId: string) => {
 };
 const isDragging = computed(() => dragState.value !== null);
 const isSelecting = computed(() => selectionRect.value !== null);
-const isInteracting = computed(
-  () => isResizing.value || isDragging.value || isSelecting.value,
-);
 
 const selectionRectStyle = computed(() => {
   if (!selectionRect.value) return null;
@@ -353,36 +350,14 @@ const handleSelectionEnd = () => {
   document.removeEventListener("mouseup", handleSelectionEnd);
 };
 
-const handleGridDblClick = (event: MouseEvent) => {
-  if (isInteracting.value) return;
-  const target = event.target as HTMLElement;
-  if (
-    target.classList.contains("note-block") ||
-    target.classList.contains("resize-handle")
-  ) {
-    return;
-  }
-  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  const col = Math.floor(x / props.colWidth);
-  const row = Math.floor(y / NOTE_ROW_HEIGHT);
-
-  if (col >= 0 && col < props.cols && row >= 0 && row < TOTAL_NOTES) {
-    emit("add-note", col, row);
-  }
-};
-
 const handleNoteClick = (event: MouseEvent, note: MidiNote) => {
   event.stopPropagation();
   if (event.ctrlKey || event.metaKey) {
     // Ctrl/Cmd+click: toggle in selection
     if (selectedNotes.value.has(note.i)) selectedNotes.value.delete(note.i);
     else selectedNotes.value.add(note.i);
-  } else if (!selectedNotes.value.has(note.i)) {
-    // Simple click on note outside group: clear selection
-    selectedNotes.value.clear();
   }
+  // Simple click on note: do nothing
 };
 
 const justFinishedInteracting = ref(false);
@@ -418,7 +393,29 @@ const handleGridClick = (event: MouseEvent) => {
     return;
   }
   const target = event.target as HTMLElement;
-  // Click on empty area (not on a note): clear selection
+  // Click on empty area (not on a note): add a note
+  if (
+    !target.classList.contains("note-block") &&
+    !target.classList.contains("resize-handle") &&
+    !target.classList.contains("note-label")
+  ) {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const col = Math.floor(x / props.colWidth);
+    const row = Math.floor(y / NOTE_ROW_HEIGHT);
+
+    if (col >= 0 && col < props.cols && row >= 0 && row < TOTAL_NOTES) {
+      selectedNotes.value.clear();
+      emit("add-note", col, row);
+    }
+  }
+};
+
+const handleGridRightClick = (event: MouseEvent) => {
+  event.preventDefault();
+  const target = event.target as HTMLElement;
+  // Right-click on empty area: clear selection
   if (
     !target.classList.contains("note-block") &&
     !target.classList.contains("resize-handle") &&
@@ -593,7 +590,7 @@ onBeforeUnmount(() => {
     @mousemove="handleGridMouseMove"
     @mousedown="handleGridMouseDown"
     @click="handleGridClick"
-    @dblclick="handleGridDblClick"
+    @contextmenu="handleGridRightClick"
   >
     <div class="measure-lines">
       <div
