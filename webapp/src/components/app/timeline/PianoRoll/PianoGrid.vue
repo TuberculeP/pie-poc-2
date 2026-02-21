@@ -38,16 +38,52 @@ const resizingNote = ref<{
 } | null>(null);
 const resizePreviewWidth = ref<number | null>(null);
 
-const isResizing = computed(() => resizingNote.value !== null);
+// Drag state (supports group dragging)
+const dragState = ref<{
+  startMouseX: number;
+  startMouseY: number;
+  clickedNoteId: string;
+  wasSelected: boolean;
+  hasMoved: boolean;
+  notesInitialPos: Map<string, { x: number; y: number; w: number }>;
+} | null>(null);
+const dragPreviewDeltas = ref<{ dx: number; dy: number } | null>(null);
 
-const getResizePreviewStyle = (note: MidiNote) => {
-  if (resizingNote.value?.id !== note.i || resizePreviewWidth.value === null) {
-    return null;
+const isResizing = computed(() => resizingNote.value !== null);
+const isDragging = computed(() => dragState.value !== null);
+const isInteracting = computed(() => isResizing.value || isDragging.value);
+
+const isNoteDragging = (noteId: string) => {
+  return dragState.value?.notesInitialPos.has(noteId) ?? false;
+};
+
+const getNoteStyle = (note: MidiNote) => {
+  // Drag preview for notes being dragged
+  if (dragState.value && dragPreviewDeltas.value && isNoteDragging(note.i)) {
+    const initial = dragState.value.notesInitialPos.get(note.i)!;
+    return {
+      left: `${(initial.x + dragPreviewDeltas.value.dx) * props.colWidth}px`,
+      top: `${(initial.y + dragPreviewDeltas.value.dy) * NOTE_ROW_HEIGHT}px`,
+      width: `${note.w * props.colWidth - 2}px`,
+      height: `${NOTE_ROW_HEIGHT - 2}px`,
+      backgroundColor: props.color,
+    };
   }
+  // Resize preview
+  if (resizingNote.value?.id === note.i && resizePreviewWidth.value !== null) {
+    return {
+      left: `${note.x * props.colWidth}px`,
+      top: `${note.y * NOTE_ROW_HEIGHT}px`,
+      width: `${resizePreviewWidth.value * props.colWidth - 2}px`,
+      height: `${NOTE_ROW_HEIGHT - 2}px`,
+      backgroundColor: props.color,
+    };
+  }
+  // Default
   return {
     left: `${note.x * props.colWidth}px`,
     top: `${note.y * NOTE_ROW_HEIGHT}px`,
-    width: `${resizePreviewWidth.value * props.colWidth - 2}px`,
+    width: `${note.w * props.colWidth - 2}px`,
     height: `${NOTE_ROW_HEIGHT - 2}px`,
     backgroundColor: props.color,
   };
@@ -89,15 +125,108 @@ const handleResizeEnd = () => {
       });
     }
   }
-
   resizingNote.value = null;
   resizePreviewWidth.value = null;
   document.removeEventListener("mousemove", handleResizeMove);
   document.removeEventListener("mouseup", handleResizeEnd);
 };
 
+// Drag handlers (supports group dragging)
+const handleDragStart = (event: MouseEvent, note: MidiNote) => {
+  if ((event.target as HTMLElement).classList.contains("resize-handle")) return;
+  // Don't start drag on Ctrl/Cmd click (used for multi-select)
+  if (event.ctrlKey || event.metaKey) return;
+  event.preventDefault();
+
+  const wasSelected = selectedNotes.value.has(note.i);
+
+  // Store initial positions of notes that will be dragged
+  // (selection change happens on first move, not on mousedown)
+  const notesInitialPos = new Map<
+    string,
+    { x: number; y: number; w: number }
+  >();
+
+  if (wasSelected) {
+    // Will drag all selected notes
+    for (const n of props.notes) {
+      if (selectedNotes.value.has(n.i)) {
+        notesInitialPos.set(n.i, { x: n.x, y: n.y, w: n.w });
+      }
+    }
+  } else {
+    // Will drag only this note (selection updated on first move)
+    notesInitialPos.set(note.i, { x: note.x, y: note.y, w: note.w });
+  }
+
+  dragState.value = {
+    startMouseX: event.clientX,
+    startMouseY: event.clientY,
+    clickedNoteId: note.i,
+    wasSelected,
+    hasMoved: false,
+    notesInitialPos,
+  };
+  dragPreviewDeltas.value = { dx: 0, dy: 0 };
+
+  document.addEventListener("mousemove", handleDragMove);
+  document.addEventListener("mouseup", handleDragEnd);
+};
+
+const handleDragMove = (event: MouseEvent) => {
+  if (!dragState.value) return;
+
+  const deltaX = event.clientX - dragState.value.startMouseX;
+  const deltaY = event.clientY - dragState.value.startMouseY;
+  const rawDeltaCols = Math.round(deltaX / props.colWidth);
+  const rawDeltaRows = Math.round(deltaY / NOTE_ROW_HEIGHT);
+
+  // Track if mouse has actually moved (for distinguishing click vs drag)
+  if (!dragState.value.hasMoved && (rawDeltaCols !== 0 || rawDeltaRows !== 0)) {
+    dragState.value.hasMoved = true;
+  }
+
+  // Calculate constraints based on all dragged notes
+  let minDx = -Infinity;
+  let maxDx = Infinity;
+  let minDy = -Infinity;
+  let maxDy = Infinity;
+
+  for (const [, pos] of dragState.value.notesInitialPos) {
+    // X constraints: note must stay in [0, cols - width]
+    minDx = Math.max(minDx, -pos.x);
+    maxDx = Math.min(maxDx, props.cols - pos.w - pos.x);
+    // Y constraints: note must stay in [0, TOTAL_NOTES - 1]
+    minDy = Math.max(minDy, -pos.y);
+    maxDy = Math.min(maxDy, TOTAL_NOTES - 1 - pos.y);
+  }
+
+  const constrainedDx = Math.max(minDx, Math.min(maxDx, rawDeltaCols));
+  const constrainedDy = Math.max(minDy, Math.min(maxDy, rawDeltaRows));
+
+  dragPreviewDeltas.value = { dx: constrainedDx, dy: constrainedDy };
+};
+
+const handleDragEnd = () => {
+  if (dragState.value?.hasMoved && dragPreviewDeltas.value) {
+    const { dx, dy } = dragPreviewDeltas.value;
+    if (dx !== 0 || dy !== 0) {
+      for (const [noteId, pos] of dragState.value.notesInitialPos) {
+        emit("update-note", noteId, {
+          x: pos.x + dx,
+          y: pos.y + dy,
+        });
+      }
+    }
+  }
+  dragState.value = null;
+  dragPreviewDeltas.value = null;
+  document.removeEventListener("mousemove", handleDragMove);
+  document.removeEventListener("mouseup", handleDragEnd);
+};
+
 const handleGridDblClick = (event: MouseEvent) => {
-  if (isResizing.value) return;
+  if (isInteracting.value) return;
   const target = event.target as HTMLElement;
   if (
     target.classList.contains("note-block") ||
@@ -117,14 +246,26 @@ const handleGridDblClick = (event: MouseEvent) => {
 };
 
 const handleNoteClick = (event: MouseEvent, note: MidiNote) => {
-  if (isResizing.value) return;
   event.stopPropagation();
   if (event.ctrlKey || event.metaKey) {
+    // Ctrl/Cmd+click: toggle in selection
     if (selectedNotes.value.has(note.i)) selectedNotes.value.delete(note.i);
     else selectedNotes.value.add(note.i);
-  } else {
+  } else if (!selectedNotes.value.has(note.i)) {
+    // Simple click on note outside group: clear selection
     selectedNotes.value.clear();
-    selectedNotes.value.add(note.i);
+  }
+};
+
+const handleGridClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  // Click on empty area (not on a note): clear selection
+  if (
+    !target.classList.contains("note-block") &&
+    !target.classList.contains("resize-handle") &&
+    !target.classList.contains("note-label")
+  ) {
+    selectedNotes.value.clear();
   }
 };
 
@@ -162,14 +303,17 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleKeydown);
   document.removeEventListener("mousemove", handleResizeMove);
   document.removeEventListener("mouseup", handleResizeEnd);
+  document.removeEventListener("mousemove", handleDragMove);
+  document.removeEventListener("mouseup", handleDragEnd);
 });
 </script>
 
 <template>
   <div
     class="piano-grid"
-    :class="{ resizing: isResizing }"
+    :class="{ resizing: isResizing, dragging: isDragging }"
     :style="{ width: `${gridWidth}px`, height: `${gridHeight}px` }"
+    @click="handleGridClick"
     @dblclick="handleGridDblClick"
   >
     <div class="measure-lines">
@@ -210,16 +354,10 @@ onBeforeUnmount(() => {
         selected: selectedNotes.has(note.i),
         'black-note': isBlackKey(noteIndexToName(note.y)),
         'is-resizing': resizingNote?.id === note.i,
+        'is-dragging': isNoteDragging(note.i),
       }"
-      :style="
-        getResizePreviewStyle(note) || {
-          left: `${note.x * colWidth}px`,
-          top: `${note.y * NOTE_ROW_HEIGHT}px`,
-          width: `${note.w * colWidth - 2}px`,
-          height: `${NOTE_ROW_HEIGHT - 2}px`,
-          backgroundColor: color,
-        }
-      "
+      :style="getNoteStyle(note)"
+      @mousedown="handleDragStart($event, note)"
       @click="handleNoteClick($event, note)"
       @contextmenu="handleNoteRightClick($event, note)"
     >
@@ -236,6 +374,10 @@ onBeforeUnmount(() => {
 
   &.resizing {
     cursor: ew-resize;
+  }
+
+  &.dragging {
+    cursor: grabbing;
   }
 }
 
@@ -317,9 +459,11 @@ onBeforeUnmount(() => {
     filter: brightness(0.85);
   }
 
-  &.is-resizing {
+  &.is-resizing,
+  &.is-dragging {
     opacity: 0.7;
     outline: 2px dashed #fff7ab;
+    cursor: grabbing;
   }
 }
 
