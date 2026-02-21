@@ -49,9 +49,35 @@ const dragState = ref<{
 } | null>(null);
 const dragPreviewDeltas = ref<{ dx: number; dy: number } | null>(null);
 
+// Marquee selection state (Cmd+drag on empty area)
+const selectionRect = ref<{
+  startX: number;
+  startY: number;
+  currentX: number;
+  currentY: number;
+} | null>(null);
+
 const isResizing = computed(() => resizingNote.value !== null);
 const isDragging = computed(() => dragState.value !== null);
-const isInteracting = computed(() => isResizing.value || isDragging.value);
+const isSelecting = computed(() => selectionRect.value !== null);
+const isInteracting = computed(
+  () => isResizing.value || isDragging.value || isSelecting.value,
+);
+
+const selectionRectStyle = computed(() => {
+  if (!selectionRect.value) return null;
+  const { startX, startY, currentX, currentY } = selectionRect.value;
+  const left = Math.min(startX, currentX);
+  const top = Math.min(startY, currentY);
+  const width = Math.abs(currentX - startX);
+  const height = Math.abs(currentY - startY);
+  return {
+    left: `${left}px`,
+    top: `${top}px`,
+    width: `${width}px`,
+    height: `${height}px`,
+  };
+});
 
 const isNoteDragging = (noteId: string) => {
   return dragState.value?.notesInitialPos.has(noteId) ?? false;
@@ -225,6 +251,65 @@ const handleDragEnd = () => {
   document.removeEventListener("mouseup", handleDragEnd);
 };
 
+// Marquee selection handlers
+const handleSelectionStart = (event: MouseEvent) => {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  selectionRect.value = { startX: x, startY: y, currentX: x, currentY: y };
+  document.addEventListener("mousemove", handleSelectionMove);
+  document.addEventListener("mouseup", handleSelectionEnd);
+};
+
+const handleSelectionMove = (event: MouseEvent) => {
+  if (!selectionRect.value) return;
+  const grid = document.querySelector(".piano-grid");
+  if (!grid) return;
+  const rect = grid.getBoundingClientRect();
+  const x = Math.max(0, Math.min(event.clientX - rect.left, gridWidth.value));
+  const y = Math.max(0, Math.min(event.clientY - rect.top, gridHeight.value));
+  selectionRect.value.currentX = x;
+  selectionRect.value.currentY = y;
+};
+
+const handleSelectionEnd = () => {
+  if (selectionRect.value) {
+    const { startX, startY, currentX, currentY } = selectionRect.value;
+    const left = Math.min(startX, currentX);
+    const right = Math.max(startX, currentX);
+    const top = Math.min(startY, currentY);
+    const bottom = Math.max(startY, currentY);
+
+    // Convert pixel bounds to grid coordinates
+    const colLeft = left / props.colWidth;
+    const colRight = right / props.colWidth;
+    const rowTop = top / NOTE_ROW_HEIGHT;
+    const rowBottom = bottom / NOTE_ROW_HEIGHT;
+
+    // Find notes that overlap with the selection rectangle
+    for (const note of props.notes) {
+      const noteLeft = note.x;
+      const noteRight = note.x + note.w;
+      const noteTop = note.y;
+      const noteBottom = note.y + 1;
+
+      const overlaps =
+        noteLeft < colRight &&
+        noteRight > colLeft &&
+        noteTop < rowBottom &&
+        noteBottom > rowTop;
+
+      if (overlaps) {
+        selectedNotes.value.add(note.i);
+      }
+    }
+    justFinishedSelecting.value = true;
+  }
+  selectionRect.value = null;
+  document.removeEventListener("mousemove", handleSelectionMove);
+  document.removeEventListener("mouseup", handleSelectionEnd);
+};
+
 const handleGridDblClick = (event: MouseEvent) => {
   if (isInteracting.value) return;
   const target = event.target as HTMLElement;
@@ -257,7 +342,28 @@ const handleNoteClick = (event: MouseEvent, note: MidiNote) => {
   }
 };
 
+const justFinishedSelecting = ref(false);
+
+const handleGridMouseDown = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  const isOnNote =
+    target.classList.contains("note-block") ||
+    target.classList.contains("resize-handle") ||
+    target.classList.contains("note-label");
+
+  // Cmd+drag on empty area starts marquee selection
+  if ((event.ctrlKey || event.metaKey) && !isOnNote) {
+    event.preventDefault();
+    handleSelectionStart(event);
+  }
+};
+
 const handleGridClick = (event: MouseEvent) => {
+  // Skip if we just finished a marquee selection
+  if (justFinishedSelecting.value) {
+    justFinishedSelecting.value = false;
+    return;
+  }
   const target = event.target as HTMLElement;
   // Click on empty area (not on a note): clear selection
   if (
@@ -305,14 +411,21 @@ onBeforeUnmount(() => {
   document.removeEventListener("mouseup", handleResizeEnd);
   document.removeEventListener("mousemove", handleDragMove);
   document.removeEventListener("mouseup", handleDragEnd);
+  document.removeEventListener("mousemove", handleSelectionMove);
+  document.removeEventListener("mouseup", handleSelectionEnd);
 });
 </script>
 
 <template>
   <div
     class="piano-grid"
-    :class="{ resizing: isResizing, dragging: isDragging }"
+    :class="{
+      resizing: isResizing,
+      dragging: isDragging,
+      selecting: isSelecting,
+    }"
     :style="{ width: `${gridWidth}px`, height: `${gridHeight}px` }"
+    @mousedown="handleGridMouseDown"
     @click="handleGridClick"
     @dblclick="handleGridDblClick"
   >
@@ -364,6 +477,13 @@ onBeforeUnmount(() => {
       <span class="note-label">{{ noteIndexToName(note.y) }}</span>
       <div class="resize-handle" @mousedown="handleResizeStart($event, note)" />
     </div>
+
+    <!-- Marquee selection rectangle -->
+    <div
+      v-if="selectionRect"
+      class="selection-rect"
+      :style="selectionRectStyle"
+    />
   </div>
 </template>
 
@@ -378,6 +498,10 @@ onBeforeUnmount(() => {
 
   &.dragging {
     cursor: grabbing;
+  }
+
+  &.selecting {
+    cursor: crosshair;
   }
 }
 
@@ -497,5 +621,13 @@ onBeforeUnmount(() => {
       rgba(255, 255, 255, 0.4) 100%
     );
   }
+}
+
+.selection-rect {
+  position: absolute;
+  border: 2px dashed #fff7ab;
+  background: rgba(255, 247, 171, 0.1);
+  pointer-events: none;
+  z-index: 20;
 }
 </style>
