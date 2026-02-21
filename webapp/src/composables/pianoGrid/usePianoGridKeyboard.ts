@@ -1,4 +1,4 @@
-import { onMounted, onBeforeUnmount, type Ref } from "vue";
+import { onMounted, onBeforeUnmount, type Ref, type ComputedRef } from "vue";
 
 export interface KeyboardActions {
   onUndo: () => void;
@@ -8,6 +8,7 @@ export interface KeyboardActions {
   onCopy: () => void;
   onPaste: () => void;
   onDuplicate: () => void;
+  onMoveSelection: (dx: number, dy: number) => void;
 }
 
 export function usePianoGridKeyboard(
@@ -73,6 +74,44 @@ export function usePianoGridKeyboard(
       event.preventDefault();
       actions.onDuplicate();
       return;
+    }
+
+    // Arrow keys with modifiers for moving selection
+    if (selectedNotes.value.size > 0) {
+      const isArrowKey = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key);
+
+      if (isArrowKey && (event.shiftKey || event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+
+        // Ctrl/Cmd + Arrow: move by octave (12 semitones) vertically
+        if ((event.ctrlKey || event.metaKey) && !event.shiftKey) {
+          if (event.key === "ArrowUp") {
+            actions.onMoveSelection(0, -12);
+          } else if (event.key === "ArrowDown") {
+            actions.onMoveSelection(0, 12);
+          }
+          return;
+        }
+
+        // Shift + Arrow: move by 1 step
+        if (event.shiftKey && !event.ctrlKey && !event.metaKey) {
+          switch (event.key) {
+            case "ArrowUp":
+              actions.onMoveSelection(0, -1);
+              break;
+            case "ArrowDown":
+              actions.onMoveSelection(0, 1);
+              break;
+            case "ArrowLeft":
+              actions.onMoveSelection(-1, 0);
+              break;
+            case "ArrowRight":
+              actions.onMoveSelection(1, 0);
+              break;
+          }
+          return;
+        }
+      }
     }
   };
 
