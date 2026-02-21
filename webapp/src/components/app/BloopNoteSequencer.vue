@@ -992,7 +992,7 @@ const saveOnline = async (): Promise<void> => {
     return;
   }
 
-  const result = await projectStore.saveProjectOnline(
+  const result = await projectStore.saveProjectOnlineLegacy(
     sequencerStore.project,
     notes,
     enableKeyboardSimulation.value,
