@@ -67,3 +67,25 @@ export const createEQFilter = (
   if (band.type === "peaking") filter.Q.value = q;
   return filter;
 };
+
+export interface EQFilterChain {
+  filters: Map<string, BiquadFilterNode>;
+  chain: BiquadFilterNode[];
+}
+
+export const createEQFilterChain = (
+  ctx: AudioContext,
+  bands: EQBand[],
+  q = 1.5,
+): EQFilterChain => {
+  const filters = new Map<string, BiquadFilterNode>();
+  const chain: BiquadFilterNode[] = [];
+
+  for (const band of bands) {
+    const filter = createEQFilter(ctx, band, q);
+    filters.set(band.id, filter);
+    chain.push(filter);
+  }
+
+  return { filters, chain };
+};

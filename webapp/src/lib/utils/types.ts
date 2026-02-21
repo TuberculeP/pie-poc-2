@@ -87,6 +87,99 @@ export interface LegacySequenceData {
   version: string;
 }
 
+// ============================================
+// Types pour le système multi-pistes (Timeline GarageBand-style)
+// ============================================
+
+export type InstrumentType = "basicSynth" | "elementarySynth" | "smplr";
+
+export type OscillatorType = "sine" | "square" | "sawtooth" | "triangle";
+
+export interface BasicSynthConfig {
+  type: "basicSynth";
+  oscillatorType: OscillatorType;
+  gain?: number;
+}
+
+export interface SmplrConfig {
+  type: "smplr";
+  soundfont: string;
+  gain?: number;
+}
+
+export interface ElementarySynthConfig {
+  type: "elementarySynth";
+  preset?: string;
+  gain?: number;
+}
+
+export type InstrumentConfig =
+  | BasicSynthConfig
+  | SmplrConfig
+  | ElementarySynthConfig;
+
+export interface InstrumentConfigUpdate {
+  oscillatorType?: OscillatorType;
+  soundfont?: string;
+  preset?: string;
+  gain?: number;
+}
+
+export interface Track {
+  id: string;
+  name: string;
+  instrument: InstrumentConfig;
+  color: string;
+  volume: number; // 0-100
+  reverb: number; // 0-100 (wet/dry mix)
+  eqBands: EQBand[]; // EQ 5 bandes par piste
+  muted: boolean;
+  solo: boolean;
+  order: number;
+  notes: MidiNote[]; // Notes avec positions absolues sur la timeline
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Clip {
+  id: string;
+  trackId: string;
+  notes: MidiNote[]; // Notes directement dans le clip
+  x: number; // Position sur la timeline (en colonnes)
+  w: number; // Largeur du clip (en colonnes)
+  color?: string; // Override de la couleur de la piste
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TimelineProject {
+  id?: string;
+  name: string;
+  tracks: Track[];
+  cols: number; // Longueur totale de la timeline
+  tempo: number; // BPM global
+  volume: number; // Volume master (0-100)
+  reverb: number; // Reverb master (0-100)
+  eqBands?: EQBand[];
+  version: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Couleurs disponibles pour les pistes
+export const TRACK_COLORS = [
+  "#ef4444", // red
+  "#f97316", // orange
+  "#eab308", // yellow
+  "#22c55e", // green
+  "#06b6d4", // cyan
+  "#3b82f6", // blue
+  "#8b5cf6", // violet
+  "#ec4899", // pink
+] as const;
+
+export type TrackColor = (typeof TRACK_COLORS)[number];
+
 export type User = {
   id: string;
   email: string;

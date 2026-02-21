@@ -1,127 +1,89 @@
 <script setup lang="ts">
-import BloopBasicSynth from "../../components/app/instruments/BloopBasicSynth.vue";
 import { useMainStore } from "../../stores/mainStore";
-import BloopElementarySynth from "../../components/app/instruments/BloopElementarySynth.vue";
 import { storeToRefs } from "pinia";
-import BloopSmplr from "../../components/app/instruments/BloopSmplr.vue";
 import AppLayout from "../../layouts/AppLayout.vue";
-import BloopNoteSequencer from "../../components/app/BloopNoteSequencer.vue";
-import BloopArrangementView from "../../components/app/BloopArrangementView.vue";
-import BloopSequenceTabs from "../../components/app/BloopSequenceTabs.vue";
-import type { MidiNote, NoteName } from "../../lib/utils/types";
-import { ref, computed, onMounted } from "vue";
+import { TimelineView } from "../../components/app/timeline";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useTimelineStore } from "../../stores/timelineStore";
+import { useTrackAudioStore } from "../../stores/trackAudioStore";
 import { useProjectStore } from "../../stores/projectStore";
-import { useSequencerStore } from "../../stores/sequencerStore";
 
 const route = useRoute();
 const router = useRouter();
+const timelineStore = useTimelineStore();
+const trackAudioStore = useTrackAudioStore();
 const projectStore = useProjectStore();
-const sequencerStore = useSequencerStore();
 
-const projectId = computed(() => route.query.projectId as string | undefined);
 const isNewProject = computed(() => route.query.new === "true");
+const projectIdFromUrl = computed(
+  () => route.query.projectId as string | undefined,
+);
+
+const loadError = ref<string | null>(null);
 
 const mainStore = useMainStore();
 const { isLoaded, loadPercentage } = storeToRefs(mainStore);
 
-// Mode de vue (Pattern ou Arrangement)
-const viewMode = ref<"pattern" | "arrangement">("pattern");
-
-// Fonction pour basculer vers le mode Pattern et sélectionner une séquence
-const editSequence = (sequenceId: string) => {
-  sequencerStore.setActiveSequence(sequenceId);
-  viewMode.value = "pattern";
-};
-
-const instruments = [
-  {
-    name: "Basic",
-    component: BloopBasicSynth,
-  },
-  {
-    name: "Elementary",
-    component: BloopElementarySynth,
-  },
-  {
-    name: "Smplr",
-    component: BloopSmplr,
-  },
-];
-
-const currentInstrument = ref<(typeof instruments)[number]["name"]>("Basic");
-
-// Référence vers l'instrument actuel pour pouvoir l'appeler
-const currentInstrumentRef = ref<any>(null);
-
-const onNoteStart = (
-  note: MidiNote,
-  noteName: NoteName,
-  position: number,
-): void => {
-  // eslint-disable-next-line no-console
-  console.log(`🚀 Note START Event:`, {
-    noteId: note.i,
-    noteName,
-    position,
-    duration: note.w,
-    velocity: 100, // Vous pouvez ajouter une propriété velocity aux notes
-  });
-
-  // Jouer la note sur l'instrument actuel si il a les bonnes méthodes
-  if (currentInstrumentRef.value?.playSequencerNote) {
-    currentInstrumentRef.value.playSequencerNote(noteName, note.i);
-  }
-};
-
-const onNoteEnd = (
-  note: MidiNote,
-  noteName: NoteName,
-  position: number,
-): void => {
-  // eslint-disable-next-line no-console
-  console.log(`🛑 Note END Event:`, {
-    noteId: note.i,
-    noteName,
-    position,
-    duration: note.w,
-  });
-
-  // Arrêter la note sur l'instrument actuel si il a les bonnes méthodes
-  if (currentInstrumentRef.value?.stopSequencerNote) {
-    currentInstrumentRef.value.stopSequencerNote(note.i);
-  }
-};
-
-// Initialisation au montage
 onMounted(async () => {
-  // Si l'audio n'est pas chargé, c'est un rechargement de page
-  // -> rediriger vers le sélecteur pour le "first click" qui débloque l'audio
   if (!isLoaded.value) {
     router.replace({ name: "app-main" });
     return;
   }
 
-  // Si c'est un nouveau projet, reset le store
+  loadError.value = null;
+
   if (isNewProject.value) {
-    projectStore.createNewProject();
-    sequencerStore.loadProjectData({
-      sequences: [],
-      activeSequenceId: null,
-      projectName: "Nouveau projet",
-      version: "2.1",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    sequencerStore.createSequence("Ma première séquence");
+    // Nouveau projet
+    projectStore.resetProject();
+    timelineStore.createNewProject("Nouveau Projet");
+  } else if (projectIdFromUrl.value) {
+    // Charger depuis l'API
+    const result = await projectStore.loadProjectToTimeline(
+      projectIdFromUrl.value,
+      timelineStore,
+    );
+    if (!result.success) {
+      loadError.value = result.error || "Erreur lors du chargement";
+      // Fallback: créer un nouveau projet
+      projectStore.resetProject();
+      timelineStore.createNewProject("Nouveau Projet");
+    }
+  } else {
+    // Charger depuis localStorage (comportement par défaut)
+    projectStore.resetProject();
+    timelineStore.initialize();
   }
+
+  trackAudioStore.initialize();
+});
+
+const handleSave = async () => {
+  const result = await projectStore.saveProjectOnline(timelineStore.project);
+  if (result.success && result.projectId) {
+    // Mettre à jour l'URL avec le projectId
+    router.replace({
+      name: "app-sequencer",
+      query: { projectId: result.projectId },
+    });
+  }
+  return result;
+};
+
+const handleBackToProjects = () => {
+  router.push({ name: "app-main" });
+};
+
+// Exposer les fonctions pour TimelineView
+defineExpose({
+  handleSave,
+  handleBackToProjects,
 });
 </script>
 
 <template>
   <AppLayout>
-    <div>
-      <!-- Écran de chargement -->
+    <div class="app-container">
       <div v-if="!isLoaded" class="loading-screen">
         <p>Chargement de l'application... {{ loadPercentage }}%</p>
         <div class="progress-bar">
@@ -132,97 +94,27 @@ onMounted(async () => {
         </div>
       </div>
 
-      <!-- Séquenceur -->
-      <div v-else class="sequencer-wrapper">
-        <!-- Sélecteur d'instruments en onglets -->
-        <div class="instrument-tabs">
-          <button
-            v-for="({ name }, i) in instruments"
-            :key="`insttab-${i}`"
-            @click="currentInstrument = name"
-            class="instrument-tab"
-            :class="{ active: currentInstrument === name }"
-          >
-            {{ name }}
-          </button>
-        </div>
-        <component
-          ref="currentInstrumentRef"
-          :is="
-            instruments.find((inst: any) => inst.name === currentInstrument)
-              ?.component
-          "
-        />
-
-        <!-- Tabs avec switch Pattern/Arrangement -->
-        <BloopSequenceTabs v-model="viewMode" @edit-sequence="editSequence" />
-
-        <!-- Vue Pattern (Piano Roll) -->
-        <BloopNoteSequencer
-          v-if="viewMode === 'pattern'"
-          :project-id="projectId"
-          @note-start="onNoteStart"
-          @note-end="onNoteEnd"
-        />
-
-        <!-- Vue Arrangement (Playlist FL Studio style) -->
-        <BloopArrangementView
-          v-if="viewMode === 'arrangement'"
-          @edit-sequence="editSequence"
-          @note-start="onNoteStart"
-          @note-end="onNoteEnd"
-        />
+      <div v-else class="timeline-wrapper">
+        <TimelineView />
       </div>
     </div>
   </AppLayout>
 </template>
 
 <style scoped>
-/* Onglets d'instruments */
-.instrument-tabs {
+.app-container {
+  height: 100%;
   display: flex;
-  border-bottom: 2px solid var(--color-border-secondary);
-  margin-bottom: 20px;
-  background-color: var(--color-bg-primary-dark);
-  border-radius: 8px 8px 0 0;
-  overflow: hidden;
+  flex-direction: column;
 }
 
-.instrument-tab {
-  background: transparent;
-  border: none;
-  padding: 12px 24px;
-  color: var(--color-white);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  font-weight: 500;
-  border-bottom: 3px solid transparent;
-  position: relative;
+.timeline-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
-.instrument-tab:hover {
-  background-color: var(--color-primary-hover);
-  color: var(--color-white);
-}
-
-.instrument-tab.active {
-  background-color: var(--color-primary);
-  color: var(--color-white);
-  border-bottom-color: var(--color-accent);
-}
-
-.instrument-tab.active::after {
-  content: "";
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: var(--color-accent);
-}
-
-/* Écran de chargement */
 .loading-screen {
   display: flex;
   flex-direction: column;

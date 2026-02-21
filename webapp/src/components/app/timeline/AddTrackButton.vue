@@ -1,0 +1,187 @@
+<script setup lang="ts">
+import { ref } from "vue";
+import { vOnClickOutside } from "@vueuse/components";
+import type { InstrumentType } from "../../../lib/utils/types";
+
+const emit = defineEmits<{
+  (e: "add-track", type: InstrumentType): void;
+}>();
+
+const showMenu = ref(false);
+
+const instruments = [
+  {
+    type: "basicSynth" as InstrumentType,
+    name: "Synth",
+    icon: "🎹",
+    description: "Oscillateur simple (sine, square, saw, triangle)",
+  },
+  {
+    type: "elementarySynth" as InstrumentType,
+    name: "Elementary",
+    icon: "🎛️",
+    description: "Synthétiseur avancé avec ADSR",
+  },
+  {
+    type: "smplr" as InstrumentType,
+    name: "Sampler",
+    icon: "🎸",
+    description: "Instruments réalistes (piano, guitare, etc.)",
+  },
+];
+
+const handleSelect = (type: InstrumentType) => {
+  emit("add-track", type);
+  showMenu.value = false;
+};
+
+const handleClickOutside = () => {
+  showMenu.value = false;
+};
+</script>
+
+<template>
+  <div class="add-track-wrapper" v-on-click-outside="handleClickOutside">
+    <button
+      class="add-track-btn"
+      @click="showMenu = !showMenu"
+      title="Ajouter une piste"
+    >
+      <span class="icon">+</span>
+      <span class="label">Ajouter</span>
+    </button>
+
+    <Transition name="fade">
+      <div v-if="showMenu" class="instrument-menu">
+        <div class="menu-header">Choisir un instrument</div>
+        <button
+          v-for="inst in instruments"
+          :key="inst.type"
+          class="instrument-option"
+          @click="handleSelect(inst.type)"
+        >
+          <span class="inst-icon">{{ inst.icon }}</span>
+          <div class="inst-info">
+            <span class="inst-name">{{ inst.name }}</span>
+            <span class="inst-desc">{{ inst.description }}</span>
+          </div>
+        </button>
+      </div>
+    </Transition>
+  </div>
+</template>
+
+<style scoped lang="scss">
+.add-track-wrapper {
+  position: relative;
+}
+
+.add-track-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #ff3fb4;
+  border: none;
+  border-radius: 6px;
+  color: #1a0e15;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #ff62c2;
+    transform: translateY(-1px);
+  }
+
+  .icon {
+    font-size: 18px;
+    font-weight: 600;
+  }
+}
+
+.instrument-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 280px;
+  background: #2d0f20;
+  border: 1px solid rgba(122, 15, 62, 0.5);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.menu-header {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.6);
+  background: #1a0e15;
+  border-bottom: 1px solid rgba(122, 15, 62, 0.5);
+}
+
+.instrument-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #3d1528;
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid rgba(122, 15, 62, 0.3);
+  }
+}
+
+.inst-icon {
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a0e15;
+  border-radius: 8px;
+}
+
+.inst-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inst-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #f2efe8;
+}
+
+.inst-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.15s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+</style>

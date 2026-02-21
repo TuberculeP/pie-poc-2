@@ -1,10 +1,20 @@
 import { defineStore } from "pinia";
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { useSequencerStore } from "./sequencerStore";
+import { useTimelineStore } from "./timelineStore";
 import { createImpulseResponse, createEQFilter } from "../lib/audio/config";
 
 export const useAudioBusStore = defineStore("audioBusStore", () => {
   const sequencerStore = useSequencerStore();
+  const timelineStore = useTimelineStore();
+
+  // Use timelineStore if it has tracks, otherwise fall back to sequencerStore
+  const activeStore = computed(() => {
+    if (timelineStore.tracks.length > 0) {
+      return timelineStore;
+    }
+    return sequencerStore;
+  });
 
   const audioContext = new (window.AudioContext ||
     (window as any).webkitAudioContext)();
@@ -50,17 +60,36 @@ export const useAudioBusStore = defineStore("audioBusStore", () => {
   };
 
   watch(
-    () => sequencerStore.volume,
+    () => activeStore.value.volume,
     (v) => setGain(masterGain, v / 100),
     { immediate: true },
   );
   watch(
-    () => sequencerStore.reverb,
-    (v) => setGain(wetGain, v / 100),
+    () => activeStore.value.reverb,
+    (v) => {
+      // Si on utilise la timeline (avec reverb par piste), désactiver la reverb globale
+      const useGlobalReverb = timelineStore.tracks.length === 0;
+      setGain(wetGain, useGlobalReverb ? v / 100 : 0);
+    },
+    { immediate: true },
+  );
+
+  // Watcher pour désactiver la reverb globale quand on passe à la timeline
+  watch(
+    () => timelineStore.tracks.length,
+    (trackCount) => {
+      if (trackCount > 0) {
+        // Timeline active = reverb par piste, pas de reverb globale
+        setGain(wetGain, 0);
+      } else {
+        // Sequencer = reverb globale
+        setGain(wetGain, activeStore.value.reverb / 100);
+      }
+    },
     { immediate: true },
   );
   watch(
-    () => sequencerStore.eqBands,
+    () => activeStore.value.eqBands,
     (bands) =>
       bands.forEach((b) => {
         const f = eqFilters.get(b.id);
