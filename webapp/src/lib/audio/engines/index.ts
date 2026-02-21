@@ -15,3 +15,4 @@ export { noteNameToFrequency } from "./noteUtils";
 // Engines
 export { BasicSynthEngine } from "./basic-synth";
 export { SmplrEngine, SOUNDFONT_LIST, type SoundfontName } from "./smplr";
+export { UndertaleEngine } from "./undertale";

@@ -127,12 +127,13 @@ export const useTimelineStore = defineStore("timelineStore", () => {
   };
 
   const generateTrackName = (instrumentType: InstrumentType): string => {
-    const baseName =
-      instrumentType === "basicSynth"
-        ? "Synth"
-        : instrumentType === "elementarySynth"
-          ? "Elementary"
-          : "Sampler";
+    const baseNames: Record<InstrumentType, string> = {
+      basicSynth: "Synth",
+      elementarySynth: "Elementary",
+      smplr: "Sampler",
+      undertale: "Undertale",
+    };
+    const baseName = baseNames[instrumentType];
     let counter = 1;
     let name = `${baseName} ${counter}`;
 

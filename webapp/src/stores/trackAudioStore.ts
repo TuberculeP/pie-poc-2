@@ -250,6 +250,10 @@ export const useTrackAudioStore = defineStore("trackAudioStore", () => {
     return trackEngineStates.value.get(trackId) ?? "idle";
   };
 
+  const getEngine = (trackId: string): InstrumentEngine | null => {
+    return trackChannels.value.get(trackId)?.engine ?? null;
+  };
+
   const preloadTrack = async (trackId: string): Promise<void> => {
     const channel = trackChannels.value.get(trackId);
     if (channel) {
@@ -367,6 +371,7 @@ export const useTrackAudioStore = defineStore("trackAudioStore", () => {
     updateTrackInstrument,
 
     getTrackEngineState,
+    getEngine,
     preloadTrack,
 
     createTrackChannel,
