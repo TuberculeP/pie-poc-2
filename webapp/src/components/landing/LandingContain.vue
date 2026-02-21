@@ -152,7 +152,6 @@
     <section class="features" id="features" ref="featuresRef">
       <div class="section-container">
         <div class="section-header">
-          <!-- <span class="section-tag">Fonctionnalites</span> -->
           <h2 class="section-title">
             <SplitText
               text="Tout ce dont vous avez besoin"
@@ -197,7 +196,6 @@
     <section class="how-it-works" id="gallery" ref="howItWorksRef">
       <div class="section-container">
         <div class="section-header">
-          <!-- <span class="section-tag">Simple & Rapide</span> -->
           <h2 class="section-title">
             <SplitText
               text="Comment ca marche ?"
@@ -208,7 +206,6 @@
         </div>
 
         <div class="steps-container" ref="stepsContainerRef">
-          <!-- SVG Line that draws itself -->
           <svg
             class="steps-line-svg"
             ref="stepsLineSvgRef"
@@ -741,7 +738,7 @@ const plans = [
   },
   {
     name: "Medium",
-    price: "9.99",
+    price: "11.99",
     description: "Pour les createurs serieux",
     popular: true,
     features: [
@@ -755,7 +752,7 @@ const plans = [
   },
   {
     name: "Premium",
-    price: "19.99",
+    price: "15.99",
     description: "Pour les professionnels",
     popular: false,
     features: [
@@ -794,45 +791,59 @@ const scrollToFeatures = () => {
 const initHeroAnimations = () => {
   const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-  // Initial states
-  gsap.set(
-    [
-      heroBadgeRef.value,
-      heroDescRef.value,
-      heroStatsRef.value,
-      heroActionsRef.value,
-    ],
-    {
+  // Filter out null values before setting initial states
+  const validRefs = [
+    heroBadgeRef.value,
+    heroDescRef.value,
+    heroStatsRef.value,
+    heroActionsRef.value,
+  ].filter((ref) => ref !== null);
+
+  if (validRefs.length > 0) {
+    gsap.set(validRefs, {
       opacity: 0,
       y: 30,
-    },
-  );
-  gsap.set(heroVisualRef.value, { opacity: 0, x: 100, rotateY: -15 });
+    });
+  }
+
+  if (heroVisualRef.value) {
+    gsap.set(heroVisualRef.value, { opacity: 0, x: 100, rotateY: -15 });
+  }
 
   // Badge animation
-  tl.to(heroBadgeRef.value, { opacity: 1, y: 0, duration: 0.6 }, 0.3);
+  if (heroBadgeRef.value) {
+    tl.to(heroBadgeRef.value, { opacity: 1, y: 0, duration: 0.6 }, 0.3);
+  }
 
   // Description
-  tl.to(heroDescRef.value, { opacity: 1, y: 0, duration: 0.6 }, 0.8);
+  if (heroDescRef.value) {
+    tl.to(heroDescRef.value, { opacity: 1, y: 0, duration: 0.6 }, 0.8);
+  }
 
   // Stats
-  tl.to(heroStatsRef.value, { opacity: 1, y: 0, duration: 0.6 }, 1);
+  if (heroStatsRef.value) {
+    tl.to(heroStatsRef.value, { opacity: 1, y: 0, duration: 0.6 }, 1);
+  }
 
   // Actions
-  tl.to(heroActionsRef.value, { opacity: 1, y: 0, duration: 0.6 }, 1.2);
+  if (heroActionsRef.value) {
+    tl.to(heroActionsRef.value, { opacity: 1, y: 0, duration: 0.6 }, 1.2);
+  }
 
   // Visual with 3D rotation
-  tl.to(
-    heroVisualRef.value,
-    {
-      opacity: 1,
-      x: 0,
-      rotateY: 0,
-      duration: 1.2,
-      ease: "power2.out",
-    },
-    0.5,
-  );
+  if (heroVisualRef.value) {
+    tl.to(
+      heroVisualRef.value,
+      {
+        opacity: 1,
+        x: 0,
+        rotateY: 0,
+        duration: 1.2,
+        ease: "power2.out",
+      },
+      0.5,
+    );
+  }
 
   // Mockup 3D rotation on scroll
   if (mockupRef.value && heroRef.value) {
