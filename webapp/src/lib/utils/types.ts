@@ -91,7 +91,11 @@ export interface LegacySequenceData {
 // Types pour le système multi-pistes (Timeline GarageBand-style)
 // ============================================
 
-export type InstrumentType = "basicSynth" | "elementarySynth" | "smplr";
+export type InstrumentType =
+  | "basicSynth"
+  | "elementarySynth"
+  | "smplr"
+  | "undertale";
 
 export type OscillatorType = "sine" | "square" | "sawtooth" | "triangle";
 
@@ -113,16 +117,32 @@ export interface ElementarySynthConfig {
   gain?: number;
 }
 
+export interface UndertaleConfig {
+  type: "undertale";
+  instrument: string;
+  gain?: number;
+  attack?: number;
+  decay?: number;
+  sustain?: number;
+  release?: number;
+}
+
 export type InstrumentConfig =
   | BasicSynthConfig
   | SmplrConfig
-  | ElementarySynthConfig;
+  | ElementarySynthConfig
+  | UndertaleConfig;
 
 export interface InstrumentConfigUpdate {
   oscillatorType?: OscillatorType;
   soundfont?: string;
   preset?: string;
+  instrument?: string;
   gain?: number;
+  attack?: number;
+  decay?: number;
+  sustain?: number;
+  release?: number;
 }
 
 export interface Track {

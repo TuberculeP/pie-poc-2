@@ -1,11 +1,19 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { Track } from "../../../lib/utils/types";
+import { useTrackAudioStore } from "../../../stores/trackAudioStore";
 
 const props = defineProps<{
   track: Track;
   isActive?: boolean;
   isExpanded: boolean;
 }>();
+
+const trackAudioStore = useTrackAudioStore();
+
+const isLoading = computed(() => {
+  return trackAudioStore.getTrackEngineState(props.track.id) === "loading";
+});
 
 const emit = defineEmits<{
   (e: "toggle-mute"): void;
@@ -22,9 +30,14 @@ const headerStyle = { borderLeftColor: props.track.color };
 <template>
   <div class="track-header" :style="headerStyle" @click="emit('select')">
     <div class="track-info">
-      <span class="track-name" @dblclick.stop="emit('rename')">
-        {{ track.name }}
-      </span>
+      <div class="track-name-row">
+        <span class="track-name" @dblclick.stop="emit('rename')">
+          {{ track.name }}
+        </span>
+        <span v-if="isLoading" class="loading-spinner" title="Chargement...">
+          ⟳
+        </span>
+      </div>
       <div class="track-controls">
         <button
           class="control-btn mute-btn"
@@ -88,6 +101,12 @@ const headerStyle = { borderLeftColor: props.track.color };
   gap: 6px;
 }
 
+.track-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .track-name {
   font-size: 13px;
   font-weight: 500;
@@ -99,6 +118,21 @@ const headerStyle = { borderLeftColor: props.track.color };
 
   &:hover {
     text-decoration: underline;
+  }
+}
+
+.loading-spinner {
+  font-size: 14px;
+  color: #ff3fb4;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 

@@ -2,6 +2,7 @@ import type { InstrumentConfig } from "../utils/types";
 import {
   BasicSynthEngine,
   SmplrEngine,
+  UndertaleEngine,
   type InstrumentEngine,
 } from "./engines";
 
@@ -26,6 +27,9 @@ export function createInstrumentEngine(
         oscillatorType: "sine",
         gain: config.gain,
       });
+
+    case "undertale":
+      return new UndertaleEngine(audioContext, destination, config);
 
     default:
       throw new Error(`Unknown instrument type: ${(config as any).type}`);
@@ -55,6 +59,17 @@ export function getDefaultConfigForType(
         type: "elementarySynth",
         preset: "default",
         gain: 1,
+      };
+
+    case "undertale":
+      return {
+        type: "undertale",
+        instrument: "",
+        gain: 1,
+        attack: 0,
+        decay: 0,
+        sustain: 1,
+        release: 0.3,
       };
 
     default:

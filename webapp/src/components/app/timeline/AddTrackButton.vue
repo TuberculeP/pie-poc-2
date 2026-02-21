@@ -28,6 +28,12 @@ const instruments = [
     icon: "🎸",
     description: "Instruments réalistes (piano, guitare, etc.)",
   },
+  {
+    type: "undertale" as InstrumentType,
+    name: "Undertale",
+    icon: "💀",
+    description: "Soundfont Undertale (plusieurs presets)",
+  },
 ];
 
 const handleSelect = (type: InstrumentType) => {

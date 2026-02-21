@@ -3,7 +3,7 @@ import { computed } from "vue";
 import type { Track, OscillatorType } from "../../../lib/utils/types";
 import { useTimelineStore } from "../../../stores/timelineStore";
 import { useTrackAudioStore } from "../../../stores/trackAudioStore";
-import { SOUNDFONT_LIST } from "../../../lib/audio/engines";
+import { SOUNDFONT_LIST, UndertaleEngine } from "../../../lib/audio/engines";
 import TrackEqualizer from "./TrackEqualizer.vue";
 
 const props = defineProps<{
@@ -34,6 +34,58 @@ const currentSoundfont = computed(() => {
   return "";
 });
 
+const undertaleEngine = computed(() => {
+  if (props.track.instrument.type !== "undertale") return null;
+  const engine = trackAudioStore.getEngine(props.track.id);
+  if (engine && engine instanceof UndertaleEngine) {
+    return engine;
+  }
+  return null;
+});
+
+const undertaleInstruments = computed(() => {
+  return undertaleEngine.value?.instrumentNames ?? [];
+});
+
+const currentUndertaleInstrument = computed(() => {
+  if (props.track.instrument.type === "undertale") {
+    return props.track.instrument.instrument;
+  }
+  return "";
+});
+
+const undertaleEngineState = computed(() => {
+  return trackAudioStore.getTrackEngineState(props.track.id);
+});
+
+const undertaleAttack = computed(() => {
+  if (props.track.instrument.type === "undertale") {
+    return props.track.instrument.attack ?? 0;
+  }
+  return 0;
+});
+
+const undertaleDecay = computed(() => {
+  if (props.track.instrument.type === "undertale") {
+    return props.track.instrument.decay ?? 0;
+  }
+  return 0;
+});
+
+const undertaleSustain = computed(() => {
+  if (props.track.instrument.type === "undertale") {
+    return props.track.instrument.sustain ?? 1;
+  }
+  return 1;
+});
+
+const undertaleRelease = computed(() => {
+  if (props.track.instrument.type === "undertale") {
+    return props.track.instrument.release ?? 0.3;
+  }
+  return 0.3;
+});
+
 const oscillatorTypes: OscillatorType[] = [
   "sine",
   "square",
@@ -51,6 +103,16 @@ const handleOscillatorChange = (type: OscillatorType) => {
 const handleSoundfontChange = (soundfont: string) => {
   timelineStore.updateTrackInstrument(props.track.id, { soundfont });
   trackAudioStore.updateTrackInstrument(props.track.id, { soundfont });
+};
+
+const handleUndertaleInstrumentChange = (instrument: string) => {
+  timelineStore.updateTrackInstrument(props.track.id, { instrument });
+  trackAudioStore.updateTrackInstrument(props.track.id, { instrument });
+};
+
+const handleADSRChange = (param: "attack" | "decay" | "sustain" | "release", value: number) => {
+  timelineStore.updateTrackInstrument(props.track.id, { [param]: value });
+  trackAudioStore.updateTrackInstrument(props.track.id, { [param]: value });
 };
 
 const handleVolumeChange = (volume: number) => {
@@ -161,6 +223,111 @@ const handleClose = () => {
                     {{ sf.replace(/_/g, " ") }}
                   </option>
                 </select>
+              </div>
+            </template>
+
+            <template v-else-if="instrumentType === 'undertale'">
+              <div class="setting-group">
+                <label class="setting-label">Preset Undertale</label>
+                <template v-if="undertaleEngineState === 'loading'">
+                  <p class="loading-text">Chargement du soundfont...</p>
+                </template>
+                <template v-else-if="undertaleInstruments.length > 0">
+                  <select
+                    class="soundfont-select"
+                    :value="currentUndertaleInstrument"
+                    @change="
+                      handleUndertaleInstrumentChange(
+                        ($event.target as HTMLSelectElement).value,
+                      )
+                    "
+                  >
+                    <option
+                      v-for="inst in undertaleInstruments"
+                      :key="inst"
+                      :value="inst"
+                    >
+                      {{ inst }}
+                    </option>
+                  </select>
+                </template>
+                <template v-else>
+                  <p class="coming-soon">Aucun preset disponible</p>
+                </template>
+              </div>
+
+              <div class="setting-group">
+                <label class="setting-label">Enveloppe ADSR</label>
+                <div class="adsr-controls">
+                  <div class="adsr-slider">
+                    <span class="adsr-label">A</span>
+                    <input
+                      type="range"
+                      :value="undertaleAttack"
+                      min="0"
+                      max="2"
+                      step="0.01"
+                      @input="
+                        handleADSRChange(
+                          'attack',
+                          Number(($event.target as HTMLInputElement).value),
+                        )
+                      "
+                    />
+                    <span class="adsr-value">{{ undertaleAttack.toFixed(2) }}s</span>
+                  </div>
+                  <div class="adsr-slider">
+                    <span class="adsr-label">D</span>
+                    <input
+                      type="range"
+                      :value="undertaleDecay"
+                      min="0"
+                      max="2"
+                      step="0.01"
+                      @input="
+                        handleADSRChange(
+                          'decay',
+                          Number(($event.target as HTMLInputElement).value),
+                        )
+                      "
+                    />
+                    <span class="adsr-value">{{ undertaleDecay.toFixed(2) }}s</span>
+                  </div>
+                  <div class="adsr-slider">
+                    <span class="adsr-label">S</span>
+                    <input
+                      type="range"
+                      :value="undertaleSustain"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      @input="
+                        handleADSRChange(
+                          'sustain',
+                          Number(($event.target as HTMLInputElement).value),
+                        )
+                      "
+                    />
+                    <span class="adsr-value">{{ (undertaleSustain * 100).toFixed(0) }}%</span>
+                  </div>
+                  <div class="adsr-slider">
+                    <span class="adsr-label">R</span>
+                    <input
+                      type="range"
+                      :value="undertaleRelease"
+                      min="0"
+                      max="3"
+                      step="0.01"
+                      @input="
+                        handleADSRChange(
+                          'release',
+                          Number(($event.target as HTMLInputElement).value),
+                        )
+                      "
+                    />
+                    <span class="adsr-value">{{ undertaleRelease.toFixed(2) }}s</span>
+                  </div>
+                </div>
               </div>
             </template>
 
@@ -331,6 +498,56 @@ const handleClose = () => {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.6);
   font-style: italic;
+}
+
+.loading-text {
+  font-size: 13px;
+  color: #ff3fb4;
+  font-style: italic;
+}
+
+.adsr-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.adsr-slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .adsr-label {
+    width: 16px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #ff3fb4;
+    text-align: center;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    background: #7a0f3e;
+    border-radius: 3px;
+
+    &::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: #ff3fb4;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  }
+
+  .adsr-value {
+    min-width: 50px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: right;
+  }
 }
 
 .slide-enter-active,
