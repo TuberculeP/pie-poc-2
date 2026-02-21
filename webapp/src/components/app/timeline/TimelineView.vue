@@ -51,6 +51,7 @@ const scrollContainerRef = ref<HTMLElement | null>(null);
 
 const isPlaying = ref(false);
 const currentPosition = ref(0);
+const checkpointPosition = ref(0);
 const playbackStartTime = ref(0);
 const animationFrameId = ref<number | null>(null);
 
@@ -67,6 +68,10 @@ const TRACK_HEADER_WIDTH = 180;
 
 const cursorStyle = computed(() => ({
   left: `${currentPosition.value * COL_WIDTH + TRACK_HEADER_WIDTH}px`,
+}));
+
+const checkpointStyle = computed(() => ({
+  left: `${checkpointPosition.value * COL_WIDTH + TRACK_HEADER_WIDTH}px`,
 }));
 
 const noteNamesDescending = [
@@ -130,12 +135,35 @@ const stopAllActiveNotes = () => {
   activeNotes.value.clear();
 };
 
+const triggerNotesAtPosition = (position: number) => {
+  const intPosition = Math.floor(position);
+
+  for (const track of timelineStore.getPlayableTracks()) {
+    for (const note of track.notes) {
+      const noteKey = `${track.id}_${note.i}`;
+      const noteStart = note.x;
+      const noteEnd = note.x + note.w;
+
+      if (
+        intPosition >= noteStart &&
+        intPosition < noteEnd &&
+        !activeNotes.value.has(noteKey)
+      ) {
+        const noteName = noteIndexToName(note.y);
+        trackAudioStore.playNoteOnTrack(track.id, noteName, note.i);
+        activeNotes.value.set(noteKey, { trackId: track.id, noteId: note.i });
+        emit("note-start", note, noteName, intPosition, track.id);
+      }
+    }
+  }
+};
+
 const animate = () => {
   if (!isPlaying.value) return;
 
   const elapsed = (performance.now() - playbackStartTime.value) / 1000;
   const stepsPerSecond = (timelineStore.tempo / 60) * 4;
-  const newPosition = elapsed * stepsPerSecond;
+  const newPosition = checkpointPosition.value + elapsed * stepsPerSecond;
 
   if (newPosition >= timelineStore.project.cols) {
     stopPlayback();
@@ -157,13 +185,11 @@ const animate = () => {
 const startPlayback = () => {
   if (isPlaying.value) return;
 
+  currentPosition.value = checkpointPosition.value;
   isPlaying.value = true;
-  playbackStartTime.value =
-    performance.now() -
-    (currentPosition.value / ((timelineStore.tempo / 60) * 4)) * 1000;
+  playbackStartTime.value = performance.now();
 
-  // Jouer les notes à la position initiale
-  playNotesAtPosition(currentPosition.value);
+  triggerNotesAtPosition(currentPosition.value);
 
   animationFrameId.value = requestAnimationFrame(animate);
 };
@@ -175,6 +201,7 @@ const stopPlayback = () => {
     animationFrameId.value = null;
   }
   stopAllActiveNotes();
+  currentPosition.value = checkpointPosition.value;
 };
 
 const togglePlayback = () => {
@@ -185,12 +212,15 @@ const togglePlayback = () => {
   }
 };
 
-const seekTo = (position: number) => {
-  currentPosition.value = position;
+const setCheckpoint = (position: number) => {
+  checkpointPosition.value = position;
   if (isPlaying.value) {
     stopAllActiveNotes();
-    playbackStartTime.value =
-      performance.now() - (position / ((timelineStore.tempo / 60) * 4)) * 1000;
+    currentPosition.value = position;
+    playbackStartTime.value = performance.now();
+    triggerNotesAtPosition(position);
+  } else {
+    currentPosition.value = position;
   }
 };
 
@@ -318,7 +348,7 @@ defineExpose({
   startPlayback,
   stopPlayback,
   togglePlayback,
-  seekTo,
+  setCheckpoint,
 });
 </script>
 
@@ -339,7 +369,7 @@ defineExpose({
         <div class="transport-controls">
           <button
             class="transport-btn"
-            @click="seekTo(0)"
+            @click="setCheckpoint(0)"
             title="Retour au début"
           >
             ⏮
@@ -428,7 +458,7 @@ defineExpose({
           :cols="timelineStore.project.cols"
           :col-width="COL_WIDTH"
           :scroll-left="scrollLeft"
-          @seek="seekTo"
+          @seek="setCheckpoint"
         />
 
         <div class="tracks-container">
@@ -460,11 +490,8 @@ defineExpose({
           </div>
         </div>
 
-        <div
-          v-if="isPlaying || currentPosition > 0"
-          class="playhead"
-          :style="cursorStyle"
-        />
+        <div class="checkpoint-marker" :style="checkpointStyle" />
+        <div v-if="isPlaying" class="playhead" :style="cursorStyle" />
       </div>
     </div>
 
@@ -723,6 +750,27 @@ defineExpose({
   .hint {
     font-size: 12px;
     margin-top: 8px;
+  }
+}
+
+.checkpoint-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #22c55e;
+  pointer-events: none;
+  z-index: 49;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -5px;
+    width: 12px;
+    height: 12px;
+    background: #22c55e;
+    clip-path: polygon(50% 100%, 0 0, 100% 0);
   }
 }
 
