@@ -30,13 +30,12 @@ const selectedNotes = ref<Set<string>>(new Set());
 const gridWidth = computed(() => props.cols * props.colWidth);
 const gridHeight = computed(() => TOTAL_NOTES * NOTE_ROW_HEIGHT);
 
-// Resize state
-const resizingNote = ref<{
-  id: string;
+// Resize state (supports group resizing)
+const resizingState = ref<{
   startX: number;
-  startWidth: number;
+  notesInitialWidth: Map<string, { width: number; x: number }>;
 } | null>(null);
-const resizePreviewWidth = ref<number | null>(null);
+const resizePreviewDeltas = ref<number | null>(null);
 
 // Drag state (supports group dragging)
 const dragState = ref<{
@@ -57,7 +56,11 @@ const selectionRect = ref<{
   currentY: number;
 } | null>(null);
 
-const isResizing = computed(() => resizingNote.value !== null);
+const isResizing = computed(() => resizingState.value !== null);
+
+const isNoteResizing = (noteId: string) => {
+  return resizingState.value?.notesInitialWidth.has(noteId) ?? false;
+};
 const isDragging = computed(() => dragState.value !== null);
 const isSelecting = computed(() => selectionRect.value !== null);
 const isInteracting = computed(
@@ -95,12 +98,18 @@ const getNoteStyle = (note: MidiNote) => {
       backgroundColor: props.color,
     };
   }
-  // Resize preview
-  if (resizingNote.value?.id === note.i && resizePreviewWidth.value !== null) {
+  // Resize preview for notes being resized
+  if (
+    resizingState.value &&
+    resizePreviewDeltas.value !== null &&
+    isNoteResizing(note.i)
+  ) {
+    const initial = resizingState.value.notesInitialWidth.get(note.i)!;
+    const newWidth = initial.width + resizePreviewDeltas.value;
     return {
       left: `${note.x * props.colWidth}px`,
       top: `${note.y * NOTE_ROW_HEIGHT}px`,
-      width: `${resizePreviewWidth.value * props.colWidth - 2}px`,
+      width: `${newWidth * props.colWidth - 2}px`,
       height: `${NOTE_ROW_HEIGHT - 2}px`,
       backgroundColor: props.color,
     };
@@ -118,41 +127,67 @@ const getNoteStyle = (note: MidiNote) => {
 const handleResizeStart = (event: MouseEvent, note: MidiNote) => {
   event.preventDefault();
   event.stopPropagation();
-  resizingNote.value = {
-    id: note.i,
+
+  const notesInitialWidth = new Map<string, { width: number; x: number }>();
+
+  // If the note is selected, resize all selected notes
+  if (selectedNotes.value.has(note.i)) {
+    for (const n of props.notes) {
+      if (selectedNotes.value.has(n.i)) {
+        notesInitialWidth.set(n.i, { width: n.w, x: n.x });
+      }
+    }
+  } else {
+    // Only resize this note
+    notesInitialWidth.set(note.i, { width: note.w, x: note.x });
+  }
+
+  resizingState.value = {
     startX: event.clientX,
-    startWidth: note.w,
+    notesInitialWidth,
   };
-  resizePreviewWidth.value = note.w;
+  resizePreviewDeltas.value = 0;
   document.addEventListener("mousemove", handleResizeMove);
   document.addEventListener("mouseup", handleResizeEnd);
 };
 
 const handleResizeMove = (event: MouseEvent) => {
-  if (!resizingNote.value) return;
+  if (!resizingState.value) return;
 
-  const deltaX = event.clientX - resizingNote.value.startX;
-  const deltaCols = Math.round(deltaX / props.colWidth);
-  const newWidth = Math.max(1, resizingNote.value.startWidth + deltaCols);
+  const deltaX = event.clientX - resizingState.value.startX;
+  const rawDeltaCols = Math.round(deltaX / props.colWidth);
 
-  const note = props.notes.find((n) => n.i === resizingNote.value?.id);
-  if (note) {
-    const maxWidth = props.cols - note.x;
-    resizePreviewWidth.value = Math.min(newWidth, maxWidth);
+  // Calculate constraints based on all resizing notes
+  let minDelta = -Infinity;
+  let maxDelta = Infinity;
+
+  for (const [, info] of resizingState.value.notesInitialWidth) {
+    // Min delta: width must stay >= 1
+    minDelta = Math.max(minDelta, 1 - info.width);
+    // Max delta: note must not exceed grid bounds
+    maxDelta = Math.min(maxDelta, props.cols - info.x - info.width);
   }
+
+  resizePreviewDeltas.value = Math.max(
+    minDelta,
+    Math.min(maxDelta, rawDeltaCols),
+  );
 };
 
 const handleResizeEnd = () => {
-  if (resizingNote.value && resizePreviewWidth.value !== null) {
-    const note = props.notes.find((n) => n.i === resizingNote.value?.id);
-    if (note && resizePreviewWidth.value !== note.w) {
-      emit("update-note", resizingNote.value.id, {
-        w: resizePreviewWidth.value,
-      });
+  if (resizingState.value && resizePreviewDeltas.value !== null) {
+    const delta = resizePreviewDeltas.value;
+    if (delta !== 0) {
+      for (const [noteId, info] of resizingState.value.notesInitialWidth) {
+        emit("update-note", noteId, {
+          w: info.width + delta,
+        });
+      }
     }
+    justFinishedInteracting.value = true;
   }
-  resizingNote.value = null;
-  resizePreviewWidth.value = null;
+  resizingState.value = null;
+  resizePreviewDeltas.value = null;
   document.removeEventListener("mousemove", handleResizeMove);
   document.removeEventListener("mouseup", handleResizeEnd);
 };
@@ -244,6 +279,7 @@ const handleDragEnd = () => {
         });
       }
     }
+    justFinishedInteracting.value = true;
   }
   dragState.value = null;
   dragPreviewDeltas.value = null;
@@ -303,7 +339,7 @@ const handleSelectionEnd = () => {
         selectedNotes.value.add(note.i);
       }
     }
-    justFinishedSelecting.value = true;
+    justFinishedInteracting.value = true;
   }
   selectionRect.value = null;
   document.removeEventListener("mousemove", handleSelectionMove);
@@ -342,7 +378,7 @@ const handleNoteClick = (event: MouseEvent, note: MidiNote) => {
   }
 };
 
-const justFinishedSelecting = ref(false);
+const justFinishedInteracting = ref(false);
 
 const handleGridMouseDown = (event: MouseEvent) => {
   const target = event.target as HTMLElement;
@@ -360,8 +396,8 @@ const handleGridMouseDown = (event: MouseEvent) => {
 
 const handleGridClick = (event: MouseEvent) => {
   // Skip if we just finished a marquee selection
-  if (justFinishedSelecting.value) {
-    justFinishedSelecting.value = false;
+  if (justFinishedInteracting.value) {
+    justFinishedInteracting.value = false;
     return;
   }
   const target = event.target as HTMLElement;
@@ -466,7 +502,7 @@ onBeforeUnmount(() => {
       :class="{
         selected: selectedNotes.has(note.i),
         'black-note': isBlackKey(noteIndexToName(note.y)),
-        'is-resizing': resizingNote?.id === note.i,
+        'is-resizing': isNoteResizing(note.i),
         'is-dragging': isNoteDragging(note.i),
       }"
       :style="getNoteStyle(note)"
