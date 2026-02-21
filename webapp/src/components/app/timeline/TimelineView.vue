@@ -74,6 +74,20 @@ const checkpointStyle = computed(() => ({
   left: `${checkpointPosition.value * COL_WIDTH + TRACK_HEADER_WIDTH}px`,
 }));
 
+const loopEndPosition = computed(() => {
+  let lastNoteEnd = 0;
+  for (const track of timelineStore.getPlayableTracks()) {
+    for (const note of track.notes) {
+      const noteEnd = note.x + note.w;
+      if (noteEnd > lastNoteEnd) {
+        lastNoteEnd = noteEnd;
+      }
+    }
+  }
+  if (lastNoteEnd === 0) return timelineStore.project.cols;
+  return Math.ceil(lastNoteEnd / 4) * 4;
+});
+
 const noteNamesDescending = [
   "B",
   "A#",
@@ -163,11 +177,15 @@ const animate = () => {
 
   const elapsed = (performance.now() - playbackStartTime.value) / 1000;
   const stepsPerSecond = (timelineStore.tempo / 60) * 4;
-  const newPosition = checkpointPosition.value + elapsed * stepsPerSecond;
+  let newPosition = checkpointPosition.value + elapsed * stepsPerSecond;
 
-  if (newPosition >= timelineStore.project.cols) {
-    stopPlayback();
-    return;
+  if (newPosition >= loopEndPosition.value) {
+    stopAllActiveNotes();
+    newPosition = 0;
+    playbackStartTime.value =
+      performance.now() +
+      (checkpointPosition.value / stepsPerSecond) * 1000;
+    triggerNotesAtPosition(newPosition);
   }
 
   const prevIntPosition = Math.floor(currentPosition.value);
