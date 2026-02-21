@@ -3,6 +3,7 @@ import { ref, computed, onBeforeUnmount } from "vue";
 import type { Track, MidiNote, NoteName } from "../../../../lib/utils/types";
 import { useTimelineStore } from "../../../../stores/timelineStore";
 import { useTrackAudioStore } from "../../../../stores/trackAudioStore";
+import { useTrackHistoryStore } from "../../../../stores/trackHistoryStore";
 import {
   TOTAL_NOTES,
   NOTE_ROW_HEIGHT,
@@ -21,6 +22,7 @@ const props = defineProps<{
 
 const timelineStore = useTimelineStore();
 const trackAudioStore = useTrackAudioStore();
+const trackHistoryStore = useTrackHistoryStore();
 
 const gridHeight = computed(() => TOTAL_NOTES * NOTE_ROW_HEIGHT);
 
@@ -68,7 +70,7 @@ const handleAllNotesStop = (): void => {
 };
 
 const handleAddNote = (x: number, y: number): void => {
-  const noteId = timelineStore.addNoteToTrack(props.track.id, {
+  const noteId = trackHistoryStore.recordAddNote(props.track.id, {
     x,
     y,
     w: 1,
@@ -85,16 +87,13 @@ const handleAddNote = (x: number, y: number): void => {
 };
 
 const handleRemoveNote = (noteId: string): void => {
-  timelineStore.removeNoteFromTrack(props.track.id, noteId);
-};
-
-const handleUpdateNote = (noteId: string, updates: Partial<MidiNote>): void => {
-  timelineStore.updateNoteInTrack(props.track.id, noteId, updates);
+  trackHistoryStore.recordRemoveNote(props.track.id, noteId);
 };
 
 const handlePasteNotes = (
   notes: Array<{ x: number; y: number; w: number }>,
 ): void => {
+  trackHistoryStore.startBatch(props.track.id, `Paste ${notes.length} notes`);
   for (const note of notes) {
     timelineStore.addNoteToTrack(props.track.id, {
       x: note.x,
@@ -103,6 +102,38 @@ const handlePasteNotes = (
       h: 1,
     });
   }
+  trackHistoryStore.endBatch();
+};
+
+const handleDeleteNotes = (noteIds: string[]): void => {
+  trackHistoryStore.startBatch(
+    props.track.id,
+    `Delete ${noteIds.length} notes`,
+  );
+  for (const noteId of noteIds) {
+    timelineStore.removeNoteFromTrack(props.track.id, noteId);
+  }
+  trackHistoryStore.endBatch();
+};
+
+const handleUpdateNotes = (
+  updates: Array<{ noteId: string; updates: Partial<MidiNote> }>,
+): void => {
+  const desc =
+    updates.length === 1 ? "Update note" : `Update ${updates.length} notes`;
+  trackHistoryStore.startBatch(props.track.id, desc);
+  for (const { noteId, updates: noteUpdates } of updates) {
+    timelineStore.updateNoteInTrack(props.track.id, noteId, noteUpdates);
+  }
+  trackHistoryStore.endBatch();
+};
+
+const handleUndo = (): void => {
+  trackHistoryStore.undo(props.track.id);
+};
+
+const handleRedo = (): void => {
+  trackHistoryStore.redo(props.track.id);
 };
 
 onBeforeUnmount(() => {
@@ -125,10 +156,14 @@ onBeforeUnmount(() => {
       :col-width="colWidth"
       :color="track.color"
       :active-notes="allActiveNotes"
+      :track-id="track.id"
       @add-note="handleAddNote"
       @remove-note="handleRemoveNote"
-      @update-note="handleUpdateNote"
+      @update-notes="handleUpdateNotes"
+      @delete-notes="handleDeleteNotes"
       @paste-notes="handlePasteNotes"
+      @undo="handleUndo"
+      @redo="handleRedo"
     />
   </div>
 </template>

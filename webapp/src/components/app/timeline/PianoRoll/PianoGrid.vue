@@ -16,13 +16,20 @@ const props = defineProps<{
   colWidth: number;
   color: string;
   activeNotes: Set<NoteName>;
+  trackId: string;
 }>();
 
 const emit = defineEmits<{
   (e: "add-note", x: number, y: number): void;
   (e: "remove-note", noteId: string): void;
-  (e: "update-note", noteId: string, updates: Partial<MidiNote>): void;
+  (
+    e: "update-notes",
+    updates: Array<{ noteId: string; updates: Partial<MidiNote> }>,
+  ): void;
+  (e: "delete-notes", noteIds: string[]): void;
   (e: "paste-notes", notes: Array<{ x: number; y: number; w: number }>): void;
+  (e: "undo"): void;
+  (e: "redo"): void;
 }>();
 
 const allNotes = ALL_NOTES;
@@ -182,11 +189,11 @@ const handleResizeEnd = () => {
   if (resizingState.value && resizePreviewDeltas.value !== null) {
     const delta = resizePreviewDeltas.value;
     if (delta !== 0) {
+      const updates: Array<{ noteId: string; updates: Partial<MidiNote> }> = [];
       for (const [noteId, info] of resizingState.value.notesInitialWidth) {
-        emit("update-note", noteId, {
-          w: info.width + delta,
-        });
+        updates.push({ noteId, updates: { w: info.width + delta } });
       }
+      emit("update-notes", updates);
     }
     justFinishedInteracting.value = true;
   }
@@ -276,12 +283,11 @@ const handleDragEnd = () => {
   if (dragState.value?.hasMoved && dragPreviewDeltas.value) {
     const { dx, dy } = dragPreviewDeltas.value;
     if (dx !== 0 || dy !== 0) {
+      const updates: Array<{ noteId: string; updates: Partial<MidiNote> }> = [];
       for (const [noteId, pos] of dragState.value.notesInitialPos) {
-        emit("update-note", noteId, {
-          x: pos.x + dx,
-          y: pos.y + dy,
-        });
+        updates.push({ noteId, updates: { x: pos.x + dx, y: pos.y + dy } });
       }
+      emit("update-notes", updates);
     }
     justFinishedInteracting.value = true;
   }
@@ -433,9 +439,8 @@ const handleNoteRightClick = (event: MouseEvent, note: MidiNote) => {
 };
 
 const deleteSelectedNotes = () => {
-  for (const noteId of selectedNotes.value) {
-    emit("remove-note", noteId);
-  }
+  const noteIds = Array.from(selectedNotes.value);
+  emit("delete-notes", noteIds);
   selectedNotes.value.clear();
 };
 
@@ -543,6 +548,27 @@ const pasteNotes = async () => {
 };
 
 const handleKeydown = (event: KeyboardEvent) => {
+  // Undo: Ctrl/Cmd + Z (without Shift)
+  if (
+    (event.ctrlKey || event.metaKey) &&
+    event.key === "z" &&
+    !event.shiftKey
+  ) {
+    event.preventDefault();
+    emit("undo");
+    return;
+  }
+
+  // Redo: Ctrl/Cmd + Shift + Z OR Ctrl/Cmd + Y
+  if (
+    ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === "z") ||
+    ((event.ctrlKey || event.metaKey) && event.key === "y")
+  ) {
+    event.preventDefault();
+    emit("redo");
+    return;
+  }
+
   if (
     (event.key === "Delete" || event.key === "Backspace") &&
     selectedNotes.value.size > 0

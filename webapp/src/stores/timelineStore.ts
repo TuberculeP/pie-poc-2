@@ -192,6 +192,11 @@ export const useTimelineStore = defineStore("timelineStore", () => {
       expandedTrackId.value = null;
     }
 
+    // Clear undo/redo history for this track
+    import("./trackHistoryStore").then(({ useTrackHistoryStore }) => {
+      useTrackHistoryStore().clearTrackHistory(trackId);
+    });
+
     return true;
   };
 
@@ -518,6 +523,11 @@ export const useTimelineStore = defineStore("timelineStore", () => {
 
     project.value = data;
 
+    // Clear all undo/redo history when loading a new project
+    import("./trackHistoryStore").then(({ useTrackHistoryStore }) => {
+      useTrackHistoryStore().clearAllHistory();
+    });
+
     // Reset le flag après que Vue ait traité le changement
     setTimeout(() => {
       isLoadingProject.value = false;
@@ -558,6 +568,12 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     };
     activeTrackId.value = null;
     expandedTrackId.value = null;
+
+    // Clear all undo/redo history
+    import("./trackHistoryStore").then(({ useTrackHistoryStore }) => {
+      useTrackHistoryStore().clearAllHistory();
+    });
+
     setTimeout(() => {
       isLoadingProject.value = false;
     }, 0);
