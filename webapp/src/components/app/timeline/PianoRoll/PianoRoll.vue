@@ -92,6 +92,19 @@ const handleUpdateNote = (noteId: string, updates: Partial<MidiNote>): void => {
   timelineStore.updateNoteInTrack(props.track.id, noteId, updates);
 };
 
+const handlePasteNotes = (
+  notes: Array<{ x: number; y: number; w: number }>,
+): void => {
+  for (const note of notes) {
+    timelineStore.addNoteToTrack(props.track.id, {
+      x: note.x,
+      y: note.y,
+      w: note.w,
+      h: 1,
+    });
+  }
+};
+
 onBeforeUnmount(() => {
   handleAllNotesStop();
 });
@@ -115,6 +128,7 @@ onBeforeUnmount(() => {
       @add-note="handleAddNote"
       @remove-note="handleRemoveNote"
       @update-note="handleUpdateNote"
+      @paste-notes="handlePasteNotes"
     />
   </div>
 </template>

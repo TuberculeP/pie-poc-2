@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import type { MidiNote, NoteName } from "../../../../lib/utils/types";
 import {
   TOTAL_NOTES,
@@ -22,10 +22,17 @@ const emit = defineEmits<{
   (e: "add-note", x: number, y: number): void;
   (e: "remove-note", noteId: string): void;
   (e: "update-note", noteId: string, updates: Partial<MidiNote>): void;
+  (e: "paste-notes", notes: Array<{ x: number; y: number; w: number }>): void;
 }>();
 
 const allNotes = ALL_NOTES;
 const selectedNotes = ref<Set<string>>(new Set());
+
+// Clipboard for copy-paste (stores notes relative to anchor point)
+const clipboard = ref<Array<{ dx: number; dy: number; w: number }>>([]);
+
+// Mouse position tracking for paste placement
+const mouseGridPos = ref<{ col: number; row: number }>({ col: 0, row: 0 });
 
 const gridWidth = computed(() => props.cols * props.colWidth);
 const gridHeight = computed(() => TOTAL_NOTES * NOTE_ROW_HEIGHT);
@@ -380,6 +387,16 @@ const handleNoteClick = (event: MouseEvent, note: MidiNote) => {
 
 const justFinishedInteracting = ref(false);
 
+const handleGridMouseMove = (event: MouseEvent) => {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  mouseGridPos.value = {
+    col: Math.floor(x / props.colWidth),
+    row: Math.floor(y / NOTE_ROW_HEIGHT),
+  };
+};
+
 const handleGridMouseDown = (event: MouseEvent) => {
   const target = event.target as HTMLElement;
   const isOnNote =
@@ -425,6 +442,109 @@ const deleteSelectedNotes = () => {
   selectedNotes.value.clear();
 };
 
+const copySelectedNotes = () => {
+  if (selectedNotes.value.size === 0) return;
+
+  // Get selected notes data
+  const selected = props.notes.filter((n) => selectedNotes.value.has(n.i));
+  if (selected.length === 0) return;
+
+  // Find the anchor: bottom-left note (minimum x, maximum y)
+  let anchorX = Infinity;
+  let anchorY = -Infinity;
+  for (const note of selected) {
+    if (note.x < anchorX || (note.x === anchorX && note.y > anchorY)) {
+      anchorX = note.x;
+      anchorY = note.y;
+    }
+  }
+
+  // Store notes relative to anchor
+  clipboard.value = selected.map((note) => ({
+    dx: note.x - anchorX,
+    dy: note.y - anchorY,
+    w: note.w,
+  }));
+};
+
+const duplicateSelectedNotes = async () => {
+  if (selectedNotes.value.size === 0) return;
+
+  const selected = props.notes.filter((n) => selectedNotes.value.has(n.i));
+  if (selected.length === 0) return;
+
+  // Find the rightmost edge of the selection
+  let rightmostEdge = 0;
+  let minX = Infinity;
+  for (const note of selected) {
+    rightmostEdge = Math.max(rightmostEdge, note.x + note.w);
+    minX = Math.min(minX, note.x);
+  }
+
+  // Calculate offset to place duplicates right after the selection
+  const offsetX = rightmostEdge - minX;
+
+  // Create duplicated notes
+  const notesToPaste: Array<{ x: number; y: number; w: number }> = [];
+  for (const note of selected) {
+    const x = note.x + offsetX;
+    if (x + note.w > props.cols) continue;
+    notesToPaste.push({ x, y: note.y, w: note.w });
+  }
+
+  if (notesToPaste.length > 0) {
+    emit("paste-notes", notesToPaste);
+
+    await nextTick();
+    selectedNotes.value.clear();
+    for (const pasted of notesToPaste) {
+      const match = props.notes.find(
+        (n) => n.x === pasted.x && n.y === pasted.y && n.w === pasted.w,
+      );
+      if (match) {
+        selectedNotes.value.add(match.i);
+      }
+    }
+  }
+};
+
+const pasteNotes = async () => {
+  if (clipboard.value.length === 0) return;
+
+  // Position: anchor note goes immediately to the right of mouse position
+  const baseX = mouseGridPos.value.col + 1;
+  const baseY = mouseGridPos.value.row;
+
+  // Calculate notes to paste with bounds checking
+  const notesToPaste: Array<{ x: number; y: number; w: number }> = [];
+  for (const clipNote of clipboard.value) {
+    const x = baseX + clipNote.dx;
+    const y = baseY + clipNote.dy;
+
+    // Skip notes that would be out of bounds
+    if (x < 0 || x + clipNote.w > props.cols) continue;
+    if (y < 0 || y >= TOTAL_NOTES) continue;
+
+    notesToPaste.push({ x, y, w: clipNote.w });
+  }
+
+  if (notesToPaste.length > 0) {
+    emit("paste-notes", notesToPaste);
+
+    // Wait for props.notes to update, then select the pasted notes
+    await nextTick();
+    selectedNotes.value.clear();
+    for (const pasted of notesToPaste) {
+      const match = props.notes.find(
+        (n) => n.x === pasted.x && n.y === pasted.y && n.w === pasted.w,
+      );
+      if (match) {
+        selectedNotes.value.add(match.i);
+      }
+    }
+  }
+};
+
 const handleKeydown = (event: KeyboardEvent) => {
   if (
     (event.key === "Delete" || event.key === "Backspace") &&
@@ -434,6 +554,15 @@ const handleKeydown = (event: KeyboardEvent) => {
     deleteSelectedNotes();
   } else if (event.key === "Escape") {
     selectedNotes.value.clear();
+  } else if ((event.ctrlKey || event.metaKey) && event.key === "c") {
+    event.preventDefault();
+    copySelectedNotes();
+  } else if ((event.ctrlKey || event.metaKey) && event.key === "v") {
+    event.preventDefault();
+    pasteNotes();
+  } else if ((event.ctrlKey || event.metaKey) && event.key === "d") {
+    event.preventDefault();
+    duplicateSelectedNotes();
   }
 };
 
@@ -461,6 +590,7 @@ onBeforeUnmount(() => {
       selecting: isSelecting,
     }"
     :style="{ width: `${gridWidth}px`, height: `${gridHeight}px` }"
+    @mousemove="handleGridMouseMove"
     @mousedown="handleGridMouseDown"
     @click="handleGridClick"
     @dblclick="handleGridDblClick"
