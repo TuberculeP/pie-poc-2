@@ -30,8 +30,81 @@ const selectedNotes = ref<Set<string>>(new Set());
 const gridWidth = computed(() => props.cols * props.colWidth);
 const gridHeight = computed(() => TOTAL_NOTES * NOTE_ROW_HEIGHT);
 
+// Resize state
+const resizingNote = ref<{
+  id: string;
+  startX: number;
+  startWidth: number;
+} | null>(null);
+const resizePreviewWidth = ref<number | null>(null);
+
+const isResizing = computed(() => resizingNote.value !== null);
+
+const getResizePreviewStyle = (note: MidiNote) => {
+  if (resizingNote.value?.id !== note.i || resizePreviewWidth.value === null) {
+    return null;
+  }
+  return {
+    left: `${note.x * props.colWidth}px`,
+    top: `${note.y * NOTE_ROW_HEIGHT}px`,
+    width: `${resizePreviewWidth.value * props.colWidth - 2}px`,
+    height: `${NOTE_ROW_HEIGHT - 2}px`,
+    backgroundColor: props.color,
+  };
+};
+
+const handleResizeStart = (event: MouseEvent, note: MidiNote) => {
+  event.preventDefault();
+  event.stopPropagation();
+  resizingNote.value = {
+    id: note.i,
+    startX: event.clientX,
+    startWidth: note.w,
+  };
+  resizePreviewWidth.value = note.w;
+  document.addEventListener("mousemove", handleResizeMove);
+  document.addEventListener("mouseup", handleResizeEnd);
+};
+
+const handleResizeMove = (event: MouseEvent) => {
+  if (!resizingNote.value) return;
+
+  const deltaX = event.clientX - resizingNote.value.startX;
+  const deltaCols = Math.round(deltaX / props.colWidth);
+  const newWidth = Math.max(1, resizingNote.value.startWidth + deltaCols);
+
+  const note = props.notes.find((n) => n.i === resizingNote.value?.id);
+  if (note) {
+    const maxWidth = props.cols - note.x;
+    resizePreviewWidth.value = Math.min(newWidth, maxWidth);
+  }
+};
+
+const handleResizeEnd = () => {
+  if (resizingNote.value && resizePreviewWidth.value !== null) {
+    const note = props.notes.find((n) => n.i === resizingNote.value?.id);
+    if (note && resizePreviewWidth.value !== note.w) {
+      emit("update-note", resizingNote.value.id, {
+        w: resizePreviewWidth.value,
+      });
+    }
+  }
+
+  resizingNote.value = null;
+  resizePreviewWidth.value = null;
+  document.removeEventListener("mousemove", handleResizeMove);
+  document.removeEventListener("mouseup", handleResizeEnd);
+};
+
 const handleGridDblClick = (event: MouseEvent) => {
-  if ((event.target as HTMLElement).classList.contains("note-block")) return;
+  if (isResizing.value) return;
+  const target = event.target as HTMLElement;
+  if (
+    target.classList.contains("note-block") ||
+    target.classList.contains("resize-handle")
+  ) {
+    return;
+  }
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
@@ -44,6 +117,7 @@ const handleGridDblClick = (event: MouseEvent) => {
 };
 
 const handleNoteClick = (event: MouseEvent, note: MidiNote) => {
+  if (isResizing.value) return;
   event.stopPropagation();
   if (event.ctrlKey || event.metaKey) {
     if (selectedNotes.value.has(note.i)) selectedNotes.value.delete(note.i);
@@ -86,12 +160,15 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleKeydown);
+  document.removeEventListener("mousemove", handleResizeMove);
+  document.removeEventListener("mouseup", handleResizeEnd);
 });
 </script>
 
 <template>
   <div
     class="piano-grid"
+    :class="{ resizing: isResizing }"
     :style="{ width: `${gridWidth}px`, height: `${gridHeight}px` }"
     @dblclick="handleGridDblClick"
   >
@@ -123,6 +200,8 @@ onBeforeUnmount(() => {
         />
       </div>
     </div>
+
+    <!-- Notes -->
     <div
       v-for="note in notes"
       :key="note.i"
@@ -130,18 +209,22 @@ onBeforeUnmount(() => {
       :class="{
         selected: selectedNotes.has(note.i),
         'black-note': isBlackKey(noteIndexToName(note.y)),
+        'is-resizing': resizingNote?.id === note.i,
       }"
-      :style="{
-        left: `${note.x * colWidth}px`,
-        top: `${note.y * NOTE_ROW_HEIGHT}px`,
-        width: `${note.w * colWidth - 2}px`,
-        height: `${NOTE_ROW_HEIGHT - 2}px`,
-        backgroundColor: color,
-      }"
+      :style="
+        getResizePreviewStyle(note) || {
+          left: `${note.x * colWidth}px`,
+          top: `${note.y * NOTE_ROW_HEIGHT}px`,
+          width: `${note.w * colWidth - 2}px`,
+          height: `${NOTE_ROW_HEIGHT - 2}px`,
+          backgroundColor: color,
+        }
+      "
       @click="handleNoteClick($event, note)"
       @contextmenu="handleNoteRightClick($event, note)"
     >
       <span class="note-label">{{ noteIndexToName(note.y) }}</span>
+      <div class="resize-handle" @mousedown="handleResizeStart($event, note)" />
     </div>
   </div>
 </template>
@@ -150,6 +233,10 @@ onBeforeUnmount(() => {
 .piano-grid {
   position: relative;
   cursor: crosshair;
+
+  &.resizing {
+    cursor: ew-resize;
+  }
 }
 
 .grid-background {
@@ -205,21 +292,34 @@ onBeforeUnmount(() => {
   color: rgba(0, 0, 0, 0.8);
   user-select: none;
   opacity: 0.9;
+  z-index: 2;
 
   &:hover {
-    transform: scale(1.02);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     opacity: 1;
+
+    .resize-handle {
+      opacity: 1;
+    }
   }
 
   &.selected {
     outline: 2px solid #fff7ab;
     box-shadow: 0 0 12px rgba(255, 247, 171, 0.4);
     z-index: 10;
+
+    .resize-handle {
+      opacity: 1;
+    }
   }
 
   &.black-note {
     filter: brightness(0.85);
+  }
+
+  &.is-resizing {
+    opacity: 0.7;
+    outline: 2px dashed #fff7ab;
   }
 }
 
@@ -227,5 +327,31 @@ onBeforeUnmount(() => {
   overflow: hidden;
   white-space: nowrap;
   font-weight: 500;
+  pointer-events: none;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: ew-resize;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+  border-radius: 0 2px 2px 0;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+
+  &:hover {
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 100%
+    );
+  }
 }
 </style>
