@@ -1,0 +1,169 @@
+<script setup lang="ts">
+import { ref, watch, onMounted, onBeforeUnmount } from "vue";
+import type { NoteName } from "../../../../lib/utils/types";
+import { PianoKeysRenderer } from "../../../../lib/canvas/pianoKeysRenderer";
+
+const props = defineProps<{
+  activeNotes: Set<NoteName>;
+  gridHeight: number;
+}>();
+
+const emit = defineEmits<{
+  (e: "note-start", note: NoteName): void;
+  (e: "note-stop", note: NoteName): void;
+  (e: "all-notes-stop"): void;
+}>();
+
+const PIANO_WIDTH = 180;
+
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+const renderer = ref<PianoKeysRenderer | null>(null);
+const isMouseDown = ref(false);
+const currentNote = ref<NoteName | null>(null);
+let dpr = 1;
+
+const initCanvas = () => {
+  const canvas = canvasRef.value;
+  if (!canvas) return;
+
+  dpr = window.devicePixelRatio || 1;
+  const width = PIANO_WIDTH;
+  const height = props.gridHeight;
+
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+
+  const ctx = canvas.getContext("2d")!;
+  ctx.scale(dpr, dpr);
+
+  renderer.value = new PianoKeysRenderer(ctx, width, height);
+  render();
+};
+
+const updateCanvasSize = () => {
+  const canvas = canvasRef.value;
+  if (!canvas || !renderer.value) return;
+
+  const width = PIANO_WIDTH;
+  const height = props.gridHeight;
+
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+
+  const ctx = canvas.getContext("2d")!;
+  ctx.scale(dpr, dpr);
+
+  renderer.value.updateSize(width, height);
+  render();
+};
+
+const render = () => {
+  if (!renderer.value) return;
+  renderer.value.render(props.activeNotes);
+};
+
+const handleMouseMove = (event: MouseEvent) => {
+  if (!renderer.value) return;
+  const rect = canvasRef.value!.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  const note = renderer.value.getKeyAtPosition(x, y);
+  renderer.value.setHoveredKey(note);
+  render();
+
+  if (isMouseDown.value && note && note !== currentNote.value) {
+    if (currentNote.value) {
+      emit("note-stop", currentNote.value);
+    }
+    currentNote.value = note;
+    emit("note-start", note);
+  }
+};
+
+const handleMouseDown = (event: MouseEvent) => {
+  if (!renderer.value) return;
+  event.preventDefault();
+
+  const rect = canvasRef.value!.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  const note = renderer.value.getKeyAtPosition(x, y);
+  if (note) {
+    isMouseDown.value = true;
+    currentNote.value = note;
+    emit("note-start", note);
+  }
+};
+
+const handleMouseUp = () => {
+  if (isMouseDown.value) {
+    isMouseDown.value = false;
+    currentNote.value = null;
+    emit("all-notes-stop");
+  }
+};
+
+const handleMouseLeave = () => {
+  if (renderer.value) {
+    renderer.value.setHoveredKey(null);
+    render();
+  }
+};
+
+const handleGlobalMouseUp = () => {
+  if (isMouseDown.value) {
+    isMouseDown.value = false;
+    currentNote.value = null;
+    emit("all-notes-stop");
+  }
+};
+
+watch(() => props.activeNotes, render, { deep: true });
+watch(() => props.gridHeight, updateCanvasSize);
+
+onMounted(() => {
+  initCanvas();
+  document.addEventListener("mouseup", handleGlobalMouseUp);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("mouseup", handleGlobalMouseUp);
+});
+</script>
+
+<template>
+  <div class="piano-keys-canvas">
+    <canvas
+      ref="canvasRef"
+      @mousemove="handleMouseMove"
+      @mousedown="handleMouseDown"
+      @mouseup="handleMouseUp"
+      @mouseleave="handleMouseLeave"
+    />
+  </div>
+</template>
+
+<style scoped lang="scss">
+.piano-keys-canvas {
+  width: 180px;
+  min-width: 180px;
+  flex-shrink: 0;
+  background: #2a2a2a;
+  border-right: 2px solid #333;
+  box-sizing: border-box;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  cursor: pointer;
+
+  canvas {
+    display: block;
+  }
+}
+</style>

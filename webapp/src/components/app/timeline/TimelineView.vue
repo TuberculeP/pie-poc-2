@@ -67,7 +67,7 @@ const sortedTracks = computed(() => timelineStore.sortedTracks);
 const TRACK_HEADER_WIDTH = 180;
 
 const cursorStyle = computed(() => ({
-  left: `${currentPosition.value * COL_WIDTH + TRACK_HEADER_WIDTH}px`,
+  transform: `translateX(${currentPosition.value * COL_WIDTH + TRACK_HEADER_WIDTH}px)`,
 }));
 
 const checkpointStyle = computed(() => ({
@@ -796,10 +796,12 @@ defineExpose({
   position: absolute;
   top: 0;
   bottom: 0;
+  left: 0;
   width: 2px;
   background: #ef4444;
   pointer-events: none;
   z-index: 50;
+  will-change: transform;
 
   &::before {
     content: "";

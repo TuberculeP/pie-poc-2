@@ -2,7 +2,10 @@
 import type { Track } from "../../../lib/utils/types";
 import TrackHeader from "./TrackHeader.vue";
 import TrackTimelinePreview from "./TrackTimelinePreview.vue";
+import TrackTimelinePreviewCanvas from "./TrackTimelinePreviewCanvas.vue";
 import PianoRoll from "./PianoRoll/PianoRoll.vue";
+
+const USE_CANVAS = true;
 
 defineProps<{
   track: Track;
@@ -43,7 +46,8 @@ const emit = defineEmits<{
       @toggle-expand="emit('toggle-expand', track)"
     />
 
-    <TrackTimelinePreview
+    <component
+      :is="USE_CANVAS ? TrackTimelinePreviewCanvas : TrackTimelinePreview"
       :notes="track.notes"
       :cols="cols"
       :col-width="colWidth"
