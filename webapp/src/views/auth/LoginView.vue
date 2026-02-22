@@ -84,7 +84,10 @@ const form = reactive({
 });
 
 const googleAuthEnabled = computed(() => authStore.googleAuthEnabled);
-const googleAuthUrl = "/api/auth/google";
+const googleAuthUrl = computed(() => {
+  const baseUrl = "/api/auth/google";
+  return redirect ? `${baseUrl}?redirect=${encodeURIComponent(redirect)}` : baseUrl;
+});
 
 async function submitForm() {
   const result = await apiClient.post<{ user: User }>("/auth/login", form);
