@@ -59,6 +59,7 @@ const {
   removeFromSelection,
   cleanup: cleanupSelection,
 } = usePianoGridSelection(
+  null,
   () => props.notes,
   () => props.colWidth,
   () => gridWidth.value,

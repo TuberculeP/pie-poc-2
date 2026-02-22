@@ -1,4 +1,4 @@
-import { ref, computed } from "vue";
+import { ref, computed, type Ref } from "vue";
 import type { MidiNote } from "../../lib/utils/types";
 import { NOTE_ROW_HEIGHT } from "../../lib/audio/pianoRollConstants";
 
@@ -10,6 +10,7 @@ export interface SelectionRect {
 }
 
 export function usePianoGridSelection(
+  containerRef: Ref<HTMLElement | null> | null,
   notes: () => MidiNote[],
   colWidth: () => number,
   gridWidth: () => number,
@@ -47,7 +48,7 @@ export function usePianoGridSelection(
 
   const handleSelectionMove = (event: MouseEvent) => {
     if (!selectionRect.value) return;
-    const grid = document.querySelector(".piano-grid");
+    const grid = containerRef?.value ?? document.querySelector(".piano-grid");
     if (!grid) return;
     const rect = grid.getBoundingClientRect();
     const x = Math.max(0, Math.min(event.clientX - rect.left, gridWidth()));

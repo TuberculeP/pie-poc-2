@@ -11,6 +11,9 @@ import {
 } from "../../../../lib/audio/pianoRollConstants";
 import PianoKeys from "./PianoKeys.vue";
 import PianoGrid from "./PianoGrid.vue";
+import PianoGridCanvas from "./PianoGridCanvas.vue";
+
+const USE_CANVAS_GRID = true;
 
 const props = defineProps<{
   track: Track;
@@ -150,7 +153,8 @@ onBeforeUnmount(() => {
       @note-stop="handleNoteStop"
       @all-notes-stop="handleAllNotesStop"
     />
-    <PianoGrid
+    <component
+      :is="USE_CANVAS_GRID ? PianoGridCanvas : PianoGrid"
       :notes="track.notes"
       :cols="cols"
       :col-width="colWidth"
