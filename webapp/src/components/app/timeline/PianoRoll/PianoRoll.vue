@@ -10,10 +10,11 @@ import {
   noteIndexToName,
 } from "../../../../lib/audio/pianoRollConstants";
 import PianoKeys from "./PianoKeys.vue";
+import PianoKeysCanvas from "./PianoKeysCanvas.vue";
 import PianoGrid from "./PianoGrid.vue";
 import PianoGridCanvas from "./PianoGridCanvas.vue";
 
-const USE_CANVAS_GRID = true;
+const USE_CANVAS = true;
 
 const props = defineProps<{
   track: Track;
@@ -146,7 +147,8 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="piano-roll-wrapper">
-    <PianoKeys
+    <component
+      :is="USE_CANVAS ? PianoKeysCanvas : PianoKeys"
       :active-notes="allActiveNotes"
       :grid-height="gridHeight"
       @note-start="handleNoteStart"
@@ -154,7 +156,7 @@ onBeforeUnmount(() => {
       @all-notes-stop="handleAllNotesStop"
     />
     <component
-      :is="USE_CANVAS_GRID ? PianoGridCanvas : PianoGrid"
+      :is="USE_CANVAS ? PianoGridCanvas : PianoGrid"
       :notes="track.notes"
       :cols="cols"
       :col-width="colWidth"
