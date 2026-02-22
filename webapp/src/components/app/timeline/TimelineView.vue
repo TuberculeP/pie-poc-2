@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, inject, type Ref } from "vue";
 import { useRouter } from "vue-router";
 import { useTimelineStore } from "../../../stores/timelineStore";
 import { useTrackAudioStore } from "../../../stores/trackAudioStore";
@@ -8,6 +8,7 @@ import type {
   Track,
   InstrumentType,
   MidiNote,
+  AudioClip,
   NoteName,
 } from "../../../lib/utils/types";
 import { getDefaultConfigForType } from "../../../lib/audio/instrumentFactory";
@@ -56,6 +57,7 @@ const animationFrameId = ref<number | null>(null);
 
 const settingsTrack = ref<Track | null>(null);
 const showSettings = ref(false);
+const showAudioLibrary = inject<Ref<boolean>>("showAudioLibrary", ref(false));
 
 const isEditingProjectName = ref(false);
 const editedProjectName = ref("");
@@ -94,6 +96,10 @@ const activeNotes = ref<Map<string, { trackId: string; noteId: string }>>(
   new Map(),
 );
 
+const activeClips = ref<Map<string, { trackId: string; clip: AudioClip }>>(
+  new Map(),
+);
+
 // Playback - lit directement les notes des tracks (plus de clips)
 const playNotesAtPosition = (position: number) => {
   const intPosition = Math.floor(position);
@@ -123,11 +129,45 @@ const playNotesAtPosition = (position: number) => {
   }
 };
 
+const playClipsAtPosition = (position: number) => {
+  const intPosition = Math.floor(position);
+
+  for (const track of timelineStore.getPlayableTracks()) {
+    if (track.instrument.type !== "audioTrack") continue;
+
+    for (const clip of track.clips ?? []) {
+      const clipKey = `${track.id}_${clip.id}`;
+      const clipStart = clip.x;
+      const clipEnd = clip.x + clip.w;
+
+      if (intPosition >= clipStart && intPosition < clipEnd) {
+        if (!activeClips.value.has(clipKey)) {
+          const offsetInClip = intPosition - clipStart;
+          trackAudioStore.playClipOnTrack(track.id, clip, offsetInClip);
+          activeClips.value.set(clipKey, { trackId: track.id, clip });
+        }
+      }
+
+      if (intPosition >= clipEnd && activeClips.value.has(clipKey)) {
+        trackAudioStore.stopClipOnTrack(track.id, clip.id);
+        activeClips.value.delete(clipKey);
+      }
+    }
+  }
+};
+
 const stopAllActiveNotes = () => {
   for (const [_, { trackId, noteId }] of activeNotes.value) {
     trackAudioStore.stopNoteOnTrack(trackId, noteId);
   }
   activeNotes.value.clear();
+};
+
+const stopAllActiveClips = () => {
+  for (const [_, { trackId, clip }] of activeClips.value) {
+    trackAudioStore.stopClipOnTrack(trackId, clip.id);
+  }
+  activeClips.value.clear();
 };
 
 const animate = () => {
@@ -149,6 +189,7 @@ const animate = () => {
 
   if (newIntPosition !== prevIntPosition) {
     playNotesAtPosition(newPosition);
+    playClipsAtPosition(newPosition);
   }
 
   animationFrameId.value = requestAnimationFrame(animate);
@@ -162,8 +203,9 @@ const startPlayback = () => {
     performance.now() -
     (currentPosition.value / ((timelineStore.tempo / 60) * 4)) * 1000;
 
-  // Jouer les notes à la position initiale
+  // Jouer les notes et clips à la position initiale
   playNotesAtPosition(currentPosition.value);
+  playClipsAtPosition(currentPosition.value);
 
   animationFrameId.value = requestAnimationFrame(animate);
 };
@@ -175,6 +217,7 @@ const stopPlayback = () => {
     animationFrameId.value = null;
   }
   stopAllActiveNotes();
+  stopAllActiveClips();
 };
 
 const togglePlayback = () => {
@@ -189,6 +232,7 @@ const seekTo = (position: number) => {
   currentPosition.value = position;
   if (isPlaying.value) {
     stopAllActiveNotes();
+    stopAllActiveClips();
     playbackStartTime.value =
       performance.now() - (position / ((timelineStore.tempo / 60) * 4)) * 1000;
   }
@@ -334,6 +378,14 @@ defineExpose({
           ←
         </button>
         <AddTrackButton @add-track="handleAddTrack" />
+        <button
+          class="header-btn library-btn"
+          :class="{ active: showAudioLibrary }"
+          @click="showAudioLibrary = !showAudioLibrary"
+          title="Audio Library"
+        >
+          🔊
+        </button>
       </div>
       <div class="header-center">
         <div class="transport-controls">
@@ -531,6 +583,16 @@ defineExpose({
 .back-btn {
   padding: 8px 12px;
   font-size: 16px;
+}
+
+.library-btn {
+  padding: 8px 12px;
+  font-size: 16px;
+
+  &.active {
+    background: #7a0f3e;
+    border-color: #ff3fb4;
+  }
 }
 
 .save-indicator-group {
