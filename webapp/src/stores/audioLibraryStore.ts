@@ -2,41 +2,70 @@ import { defineStore } from "pinia";
 import { ref, markRaw } from "vue";
 import type { AudioSample, SamplePack, SampleFolder } from "../lib/utils/types";
 import { useAudioBusStore } from "./audioBusStore";
+import { useSampleCacheStore } from "./sampleCacheStore";
+import apiClient from "../lib/utils/apiClient";
 
 type LoadingState = "idle" | "loading" | "ready" | "error";
 
-interface ManifestSample {
+interface ApiPack {
+  id: string;
+  slug: string;
+  name: string;
+  author: string | null;
+  cover: string | null;
+  featured: boolean;
+  isActive: boolean;
+  createdAt: string;
+  folders?: ApiFolder[];
+}
+
+interface ApiFolder {
+  id: string;
+  name: string;
+  order: number;
+  packId: string;
+}
+
+interface ApiSample {
   id: string;
   name: string;
   filename: string;
+  duration: number;
+  waveform: number[] | null;
+  folderId: string;
+  previewUrl: string | null;
+  fullUrl: string | null;
 }
 
-interface ManifestFolder {
-  name: string;
-  samples: ManifestSample[];
+interface ApiResponse<T> {
+  status: number;
+  message: string;
+  body: T;
 }
 
-interface ManifestPack {
-  id: string;
-  name: string;
-  author?: string;
-  featured?: boolean;
-  cover?: string;
-  folders: ManifestFolder[];
-}
-
-interface SampleManifest {
-  packs: ManifestPack[];
+interface PaginatedPacksResponse {
+  packs: ApiPack[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
 export const useAudioLibraryStore = defineStore("audioLibrary", () => {
   const audioBusStore = useAudioBusStore();
+  const cacheStore = useSampleCacheStore();
 
   const packs = ref<SamplePack[]>([]);
   const samples = ref<Map<string, AudioSample>>(new Map());
   const buffers = ref<Map<string, AudioBuffer>>(new Map());
   const loadingStates = ref<Map<string, LoadingState>>(new Map());
   const isInitialized = ref(false);
+
+  const currentPackSlug = ref<string | null>(null);
+  const currentFolderId = ref<string | null>(null);
+  const pagination = ref({ page: 1, limit: 20, total: 0, pages: 0 });
 
   const getSample = (sampleId: string): AudioSample | undefined => {
     return samples.value.get(sampleId);
@@ -66,7 +95,10 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
     return Array.from(samples.value.values());
   };
 
-  const generateWaveformData = (buffer: AudioBuffer, points: number = 128): number[] => {
+  const generateWaveformData = (
+    buffer: AudioBuffer,
+    points: number = 128
+  ): number[] => {
     const channelData = buffer.getChannelData(0);
     const blockSize = Math.floor(channelData.length / points);
     const waveform: number[] = [];
@@ -83,6 +115,7 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
     const max = Math.max(...waveform, 0.001);
     return waveform.map((v) => v / max);
   };
+
 
   const loadSample = async (sampleId: string): Promise<AudioBuffer | null> => {
     const sample = samples.value.get(sampleId);
@@ -113,22 +146,42 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
     loadingStates.value.set(sampleId, "loading");
 
     try {
-      const response = await fetch(`/samples/packs/${sample.packId}/${sample.filename}`);
+      await cacheStore.initialize();
+      const cached = await cacheStore.get(sampleId);
+
+      if (cached) {
+        try {
+          const audioBuffer = await audioBusStore.audioContext.decodeAudioData(
+            cached.slice(0)
+          );
+          buffers.value.set(sampleId, markRaw(audioBuffer));
+          sample.duration = audioBuffer.duration;
+          sample.waveformData = generateWaveformData(audioBuffer);
+          loadingStates.value.set(sampleId, "ready");
+          return audioBuffer;
+        } catch {
+          // Cache corrompu, on continue avec fetch
+        }
+      }
+
+      const response = await fetch(sample.fullUrl);
       if (!response.ok) {
         throw new Error(`Failed to fetch: ${response.status}`);
       }
 
       const arrayBuffer = await response.arrayBuffer();
+
+      await cacheStore.set(sampleId, arrayBuffer);
+
       const audioBuffer = await audioBusStore.audioContext.decodeAudioData(
-        arrayBuffer,
+        arrayBuffer.slice(0)
       );
 
       buffers.value.set(sampleId, markRaw(audioBuffer));
-
       sample.duration = audioBuffer.duration;
       sample.waveformData = generateWaveformData(audioBuffer);
-
       loadingStates.value.set(sampleId, "ready");
+
       return audioBuffer;
     } catch (error) {
       console.error(`Failed to load sample ${sampleId}:`, error);
@@ -153,66 +206,140 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
     await Promise.all(allSamples.map((s) => loadSample(s.id)));
   };
 
+  const fetchPacksFromApi = async (
+    page = 1,
+    limit = 50
+  ): Promise<SamplePack[]> => {
+    const result = await apiClient.get<ApiResponse<PaginatedPacksResponse>>(
+      `/samples/packs?page=${page}&limit=${limit}`
+    );
+
+    if (result.error || !result.data?.body) {
+      return [];
+    }
+
+    const { packs: apiPacks, pagination: pag } = result.data.body;
+    pagination.value = pag;
+
+    return apiPacks.map((ap) => ({
+      id: ap.slug,
+      name: ap.name,
+      author: ap.author ?? undefined,
+      featured: ap.featured,
+      cover: ap.cover ?? undefined,
+      folders: [],
+    }));
+  };
+
+  const fetchPackDetails = async (
+    slug: string
+  ): Promise<SamplePack | null> => {
+    const result = await apiClient.get<ApiResponse<ApiPack>>(
+      `/samples/packs/${slug}`
+    );
+
+    if (result.error || !result.data?.body) {
+      return null;
+    }
+
+    const ap = result.data.body;
+    currentPackSlug.value = slug;
+
+    const folders: SampleFolder[] = (ap.folders ?? []).map((f) => ({
+      id: f.id,
+      name: f.name,
+      samples: [],
+    }));
+
+    const pack: SamplePack = {
+      id: ap.slug,
+      name: ap.name,
+      author: ap.author ?? undefined,
+      featured: ap.featured,
+      cover: ap.cover ?? undefined,
+      folders,
+    };
+
+    const existingIndex = packs.value.findIndex((p) => p.id === slug);
+    if (existingIndex >= 0) {
+      packs.value[existingIndex] = pack;
+    } else {
+      packs.value.push(pack);
+    }
+
+    return pack;
+  };
+
+  const fetchFolderSamples = async (
+    packSlug: string,
+    folderId: string
+  ): Promise<AudioSample[]> => {
+    const result = await apiClient.get<ApiResponse<ApiSample[]>>(
+      `/samples/packs/${packSlug}/folders/${folderId}`
+    );
+
+    if (result.error || !result.data?.body) {
+      return [];
+    }
+
+    currentFolderId.value = folderId;
+
+    const fetchedSamples: AudioSample[] = result.data.body.map((as) => ({
+      id: as.id,
+      name: as.name,
+      packId: packSlug,
+      folder: folderId,
+      filename: as.filename,
+      duration: as.duration,
+      waveformData: as.waveform ?? undefined,
+      fullUrl: as.fullUrl ?? "",
+    }));
+
+    for (const sample of fetchedSamples) {
+      samples.value.set(sample.id, sample);
+      if (!loadingStates.value.has(sample.id)) {
+        loadingStates.value.set(sample.id, "idle");
+      }
+    }
+
+    const pack = packs.value.find((p) => p.id === packSlug);
+    if (pack) {
+      const folder = pack.folders.find((f: any) => f.id === folderId);
+      if (folder) {
+        folder.samples = fetchedSamples;
+      }
+    }
+
+    return fetchedSamples;
+  };
+
+  const initializeFromApi = async (): Promise<boolean> => {
+    try {
+      const fetchedPacks = await fetchPacksFromApi(1, 50);
+      if (fetchedPacks.length === 0) {
+        return false;
+      }
+      packs.value = fetchedPacks;
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const initialize = async (): Promise<void> => {
     if (isInitialized.value) return;
-
-    try {
-      const response = await fetch("/samples/manifest.json");
-      if (!response.ok) {
-        console.warn("No audio library manifest found");
-        isInitialized.value = true;
-        return;
-      }
-
-      const manifest: SampleManifest = await response.json();
-
-      for (const packData of manifest.packs) {
-        const folders: SampleFolder[] = [];
-
-        for (const folderData of packData.folders) {
-          const folderSamples: AudioSample[] = [];
-
-          for (const sampleData of folderData.samples) {
-            const sample: AudioSample = {
-              id: sampleData.id,
-              name: sampleData.name,
-              packId: packData.id,
-              folder: folderData.name,
-              filename: sampleData.filename,
-              duration: 0,
-            };
-            samples.value.set(sampleData.id, sample);
-            loadingStates.value.set(sampleData.id, "idle");
-            folderSamples.push(sample);
-          }
-
-          folders.push({
-            name: folderData.name,
-            samples: folderSamples,
-          });
-        }
-
-        packs.value.push({
-          id: packData.id,
-          name: packData.name,
-          author: packData.author,
-          featured: packData.featured,
-          cover: packData.cover,
-          folders,
-        });
-      }
-
-      isInitialized.value = true;
-    } catch (error) {
-      console.error("Failed to initialize audio library:", error);
-      isInitialized.value = true;
-    }
+    await initializeFromApi();
+    isInitialized.value = true;
   };
 
   return {
     packs,
     samples,
     isInitialized,
+    pagination,
+    currentPackSlug,
+    currentFolderId,
+
     getSample,
     getSampleBuffer,
     getLoadingState,
@@ -220,9 +347,14 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
     getAllPacks,
     getFeaturedPacks,
     getAllSamples,
+
     loadSample,
     preloadPack,
     preloadAllSamples,
     initialize,
+
+    fetchPacksFromApi,
+    fetchPackDetails,
+    fetchFolderSamples,
   };
 });

@@ -5,6 +5,9 @@ import { Subscription } from "./Subscription";
 import { Tag } from "./Tag";
 import { User } from "./User";
 import { MessageLike } from "./MessageLike";
+import { SamplePack } from "./SamplePack";
+import { SampleFolder } from "./SampleFolder";
+import { AudioSample } from "./AudioSample";
 
 const entities = [
   User,
@@ -14,6 +17,9 @@ const entities = [
   DirectMessage,
   Project,
   MessageLike,
+  SamplePack,
+  SampleFolder,
+  AudioSample,
 ];
 
 export default entities;

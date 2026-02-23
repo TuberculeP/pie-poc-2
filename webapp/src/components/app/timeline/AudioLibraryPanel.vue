@@ -14,9 +14,12 @@ const selectedPack = ref<SamplePack | null>(null);
 const selectedFolder = ref<SampleFolder | null>(null);
 const previewingId = ref<string | null>(null);
 const previewSource = ref<AudioBufferSourceNode | null>(null);
+const isLoading = ref(false);
 
 onMounted(async () => {
+  isLoading.value = true;
   await audioLibraryStore.initialize();
+  isLoading.value = false;
 });
 
 const packs = computed(() => audioLibraryStore.getAllPacks());
@@ -44,15 +47,45 @@ const navigateTo = (level: NavigationLevel): void => {
   }
 };
 
-const openPack = (pack: SamplePack): void => {
-  selectedPack.value = pack;
+const openPack = async (pack: SamplePack): Promise<void> => {
+  isLoading.value = true;
+
+  if (pack.folders.length === 0 || pack.folders.some((f) => f.id)) {
+    const details = await audioLibraryStore.fetchPackDetails(pack.id);
+    if (details) {
+      selectedPack.value = details;
+    } else {
+      selectedPack.value = pack;
+    }
+  } else {
+    selectedPack.value = pack;
+  }
+
   selectedFolder.value = null;
   currentLevel.value = "folders";
+  isLoading.value = false;
 };
 
-const openFolder = (folder: SampleFolder): void => {
+const openFolder = async (folder: SampleFolder): Promise<void> => {
+  if (!selectedPack.value) return;
+
+  isLoading.value = true;
+
+  if (folder.id && folder.samples.length === 0) {
+    await audioLibraryStore.fetchFolderSamples(selectedPack.value.id, folder.id);
+    const updatedPack = audioLibraryStore.getPack(selectedPack.value.id);
+    if (updatedPack) {
+      selectedPack.value = updatedPack;
+      const updatedFolder = updatedPack.folders.find((f: SampleFolder) => f.id === folder.id);
+      if (updatedFolder) {
+        folder = updatedFolder;
+      }
+    }
+  }
+
   selectedFolder.value = folder;
   currentLevel.value = "samples";
+  isLoading.value = false;
 };
 
 const handleDragStart = (event: DragEvent, sampleId: string): void => {
@@ -134,7 +167,12 @@ const getSampleCount = (pack: SamplePack): number => {
       </template>
     </div>
 
-    <div v-if="packs.length === 0" class="empty-state">
+    <div v-if="isLoading" class="loading-state">
+      <span class="loading-icon">⏳</span>
+      <span>Chargement...</span>
+    </div>
+
+    <div v-else-if="packs.length === 0" class="empty-state">
       <p>No sample packs available</p>
       <p class="hint">Add packs to /public/samples/packs/</p>
     </div>
@@ -261,6 +299,26 @@ const getSampleCount = (pack: SamplePack): number => {
 
 .breadcrumb-sep {
   color: rgba(255, 255, 255, 0.3);
+}
+
+.loading-state {
+  padding: 24px 16px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  .loading-icon {
+    font-size: 24px;
+    animation: pulse 1s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .empty-state {

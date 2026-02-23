@@ -26,6 +26,25 @@ async function authGuard(to: any, from: any, next: any) {
     next({ name: "app-login", query: { redirect: to.name } });
   }
 }
+
+async function adminGuard(to: any, from: any, next: any) {
+  const authStore = useAuthStore();
+  const check = await apiClient.get<{ user: User }>("/auth/check");
+
+  if (check.error || !check.data?.user) {
+    next({ name: "app-login", query: { redirect: to.name } });
+    return;
+  }
+
+  authStore.user = check.data.user;
+
+  if (check.data.user.role !== "ROLE_ADMIN") {
+    next({ name: "landing-main" });
+    return;
+  }
+
+  next();
+}
 import BlogApp from "./views/blog/BlogApp.vue";
 import BlogSearchResults from "./views/blog/BlogSearchResults.vue";
 import BlogPostDetail from "./views/blog/BlogPostDetail.vue";
@@ -61,11 +80,48 @@ const routes = [
   },
   { path: "/profile", component: ProfileView, name: "profile" },
   { path: "/messages", component: MessagesView, name: "messages" },
+  // Admin routes
+  {
+    path: "/admin",
+    component: () => import("./views/admin/AdminDashboard.vue"),
+    name: "admin-dashboard",
+    meta: { requiresAdmin: true },
+  },
+  {
+    path: "/admin/users",
+    component: () => import("./views/admin/AdminUsers.vue"),
+    name: "admin-users",
+    meta: { requiresAdmin: true },
+  },
+  {
+    path: "/admin/samples",
+    component: () => import("./views/admin/AdminSamples.vue"),
+    name: "admin-samples",
+    meta: { requiresAdmin: true },
+  },
+  {
+    path: "/admin/samples/:packId",
+    component: () => import("./views/admin/AdminPackDetail.vue"),
+    name: "admin-pack-detail",
+    meta: { requiresAdmin: true },
+  },
+  {
+    path: "/admin/samples/:packId/:folderId",
+    component: () => import("./views/admin/AdminFolderDetail.vue"),
+    name: "admin-folder-detail",
+    meta: { requiresAdmin: true },
+  },
 ];
 
 const getGuardedRoutes = () => {
   const guardedMatches = ["app", "blog", "settings", "profile", "messages"];
-  return routes.map((route) => {
+  return routes.map((route: any) => {
+    if (route.meta?.requiresAdmin) {
+      return {
+        ...route,
+        beforeEnter: adminGuard,
+      };
+    }
     if (guardedMatches.some((match) => route.path.includes(match))) {
       return {
         ...route,

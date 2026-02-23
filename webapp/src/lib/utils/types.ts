@@ -168,9 +168,11 @@ export interface AudioSample {
   filename: string;
   duration: number;
   waveformData?: number[];
+  fullUrl: string;
 }
 
 export interface SampleFolder {
+  id?: string;
   name: string;
   samples: AudioSample[];
 }
