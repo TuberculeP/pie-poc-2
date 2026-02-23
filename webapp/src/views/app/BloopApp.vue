@@ -4,17 +4,20 @@ import { storeToRefs } from "pinia";
 import AppLayout from "../../layouts/AppLayout.vue";
 import { TimelineView } from "../../components/app/timeline";
 import AudioLibraryPanel from "../../components/app/timeline/AudioLibraryPanel.vue";
+import DawLoadingOverlay from "../../components/app/DawLoadingOverlay.vue";
 import { computed, onMounted, ref, provide } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useTimelineStore } from "../../stores/timelineStore";
 import { useTrackAudioStore } from "../../stores/trackAudioStore";
 import { useProjectStore } from "../../stores/projectStore";
+import { useDawLoadingStore } from "../../stores/dawLoadingStore";
 
 const route = useRoute();
 const router = useRouter();
 const timelineStore = useTimelineStore();
 const trackAudioStore = useTrackAudioStore();
 const projectStore = useProjectStore();
+const dawLoadingStore = useDawLoadingStore();
 
 const isNewProject = computed(() => route.query.new === "true");
 const projectIdFromUrl = computed(
@@ -37,6 +40,7 @@ onMounted(async () => {
   }
 
   loadError.value = null;
+  dawLoadingStore.reset();
 
   if (isNewProject.value) {
     projectStore.resetProject();
@@ -57,6 +61,9 @@ onMounted(async () => {
   }
 
   trackAudioStore.initialize();
+
+  // Précharger les ressources du projet
+  await dawLoadingStore.preloadProject(timelineStore.project);
 });
 
 const handleSave = async () => {
@@ -87,6 +94,7 @@ defineExpose({
 
 <template>
   <AppLayout>
+    <DawLoadingOverlay />
     <div class="app-container">
       <div v-if="!isLoaded" class="loading-screen">
         <p>Chargement de l'application... {{ loadPercentage }}%</p>

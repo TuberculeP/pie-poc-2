@@ -223,6 +223,7 @@ export interface TimelineProject {
   volume: number; // Volume master (0-100)
   reverb: number; // Reverb master (0-100)
   eqBands?: EQBand[];
+  usedSamples?: Record<string, AudioSample>; // Samples utilisés par les audio clips
   version: string;
   createdAt: Date;
   updatedAt: Date;

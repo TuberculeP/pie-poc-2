@@ -329,6 +329,15 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
     isInitialized.value = true;
   };
 
+  const restoreSamples = (sampleMap: Record<string, AudioSample>): void => {
+    for (const [sampleId, sample] of Object.entries(sampleMap)) {
+      if (!samples.value.has(sampleId)) {
+        samples.value.set(sampleId, sample);
+        loadingStates.value.set(sampleId, "idle");
+      }
+    }
+  };
+
   return {
     packs,
     samples,
@@ -353,5 +362,6 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
     fetchPacksFromApi,
     fetchPackDetails,
     fetchFolderSamples,
+    restoreSamples,
   };
 });

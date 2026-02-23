@@ -59,7 +59,8 @@ const handlePasteClips = (clipsToPaste: Array<Omit<AudioClip, "id">>) => {
     `Paste ${clipsToPaste.length} clips`,
   );
   for (const clipData of clipsToPaste) {
-    timelineStore.addClipToTrack(props.track.id, clipData);
+    const sample = audioLibraryStore.getSample(clipData.sampleId);
+    timelineStore.addClipToTrack(props.track.id, clipData, sample);
   }
   trackHistoryStore.endBatch();
 };
@@ -157,12 +158,16 @@ const handleDrop = async (event: DragEvent): Promise<void> => {
   const stepsPerSecond = (timelineStore.tempo / 60) * 4;
   const durationInSteps = Math.ceil(loadedSample.duration * stepsPerSecond);
 
-  trackHistoryStore.recordAddClip(props.track.id, {
-    sampleId,
-    x: Math.max(0, x),
-    w: Math.max(1, durationInSteps),
-    startOffset: 0,
-  });
+  trackHistoryStore.recordAddClip(
+    props.track.id,
+    {
+      sampleId,
+      x: Math.max(0, x),
+      w: Math.max(1, durationInSteps),
+      startOffset: 0,
+    },
+    loadedSample,
+  );
 };
 
 const handleDragOver = (event: DragEvent): void => {

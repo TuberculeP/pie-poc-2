@@ -5,6 +5,7 @@ import type {
   TimelineProject,
   MidiNote,
   AudioClip,
+  AudioSample,
   EQBand,
   InstrumentConfig,
   InstrumentType,
@@ -367,6 +368,7 @@ export const useTimelineStore = defineStore("timelineStore", () => {
   const addClipToTrack = (
     trackId: string,
     clip: Omit<AudioClip, "id">,
+    sample?: AudioSample,
   ): string | null => {
     const track = project.value.tracks.find((t) => t.id === trackId);
     if (!track) return null;
@@ -382,6 +384,15 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     };
 
     track.clips.push(newClip);
+
+    // Stocker les métadonnées du sample pour la persistence
+    if (sample) {
+      if (!project.value.usedSamples) {
+        project.value.usedSamples = {};
+      }
+      project.value.usedSamples[sample.id] = sample;
+    }
+
     track.updatedAt = new Date();
     project.value.updatedAt = new Date();
 
@@ -620,6 +631,14 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     }
 
     project.value = data;
+
+    // Restaurer les métadonnées des samples utilisés dans audioLibraryStore
+    if (data.usedSamples) {
+      import("./audioLibraryStore").then(({ useAudioLibraryStore }) => {
+        const audioLibraryStore = useAudioLibraryStore();
+        audioLibraryStore.restoreSamples(data.usedSamples!);
+      });
+    }
 
     // Clear all undo/redo history when loading a new project
     import("./trackHistoryStore").then(({ useTrackHistoryStore }) => {

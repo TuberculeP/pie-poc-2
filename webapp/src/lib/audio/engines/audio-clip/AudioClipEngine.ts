@@ -12,6 +12,8 @@ interface ActiveSource {
 
 export class AudioClipEngine extends BaseEngine {
   readonly type = "audioTrack";
+  readonly resourceKey = null;
+  readonly resourceLabel = "Audio Track";
 
   private activeSources: Map<string, ActiveSource> = new Map();
   private gain: number;

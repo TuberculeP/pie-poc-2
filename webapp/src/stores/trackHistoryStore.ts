@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import type { MidiNote, AudioClip } from "../lib/utils/types";
+import type { MidiNote, AudioClip, AudioSample } from "../lib/utils/types";
 import { useTimelineStore } from "./timelineStore";
 
 const MAX_HISTORY_SIZE = 50;
@@ -153,13 +153,14 @@ export const useTrackHistoryStore = defineStore("trackHistory", () => {
   const recordAddClip = (
     trackId: string,
     clip: Omit<AudioClip, "id">,
+    sample?: AudioSample,
   ): string | null => {
     const timelineStore = useTimelineStore();
     const track = timelineStore.project.tracks.find((t) => t.id === trackId);
     if (!track) return null;
 
     const clipsBefore = cloneClips(track.clips);
-    const clipId = timelineStore.addClipToTrack(trackId, clip);
+    const clipId = timelineStore.addClipToTrack(trackId, clip, sample);
 
     if (clipId) {
       pushHistory(

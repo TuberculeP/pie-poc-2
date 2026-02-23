@@ -23,6 +23,16 @@ export class SmplrEngine extends BaseEngine {
     this.currentSoundfontName = config.soundfont;
   }
 
+  get resourceKey(): string {
+    return `smplr:${this.currentSoundfontName}`;
+  }
+
+  get resourceLabel(): string {
+    return this.currentSoundfontName
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
   async preload(): Promise<void> {
     if (this._state === "ready") return;
     if (this._state === "loading" && this.loadPromise) {
