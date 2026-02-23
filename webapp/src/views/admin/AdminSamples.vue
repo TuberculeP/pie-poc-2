@@ -90,11 +90,7 @@
     </div>
 
     <!-- Edit Pack Modal -->
-    <div
-      v-if="editingPack"
-      class="modal-overlay"
-      @click="closeModal"
-    >
+    <div v-if="editingPack" class="modal-overlay" @click="closeModal">
       <div class="modal" @click.stop>
         <h2>Edit Pack</h2>
         <form @submit.prevent="submitPack">
@@ -135,9 +131,7 @@
             <button type="button" @click="closeModal" class="btn-secondary">
               Cancel
             </button>
-            <button type="submit" class="btn-primary">
-              Save
-            </button>
+            <button type="submit" class="btn-primary">Save</button>
           </div>
         </form>
       </div>

@@ -376,6 +376,7 @@ export const useAdminStore = defineStore("admin", () => {
   async function importPackFromZip(
     file: File,
     data: { name: string; slug: string; author?: string },
+    onProgress?: (progress: number, stage: "upload" | "processing") => void,
   ): Promise<ImportPackResult> {
     const formData = new FormData();
     formData.append("zipFile", file);
@@ -383,39 +384,63 @@ export const useAdminStore = defineStore("admin", () => {
     formData.append("slug", data.slug);
     if (data.author) formData.append("author", data.author);
 
-    try {
-      const response = await fetch("/api/admin/import-pack", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
+    return new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable && onProgress) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(percent, "upload");
+        }
       });
 
-      const result = await response.json();
+      xhr.upload.addEventListener("load", () => {
+        if (onProgress) {
+          onProgress(100, "processing");
+        }
+      });
 
-      if (!response.ok) {
-        return {
+      xhr.addEventListener("load", async () => {
+        try {
+          const result = JSON.parse(xhr.responseText);
+
+          if (xhr.status >= 400) {
+            resolve({
+              success: false,
+              error: result.error || "Import failed",
+              warnings: result.warnings,
+            });
+            return;
+          }
+
+          if (result.body?.pack) {
+            await fetchPacks();
+          }
+
+          resolve({
+            success: true,
+            pack: result.body.pack,
+            warnings: result.body.warnings,
+          });
+        } catch (error) {
+          resolve({
+            success: false,
+            error: "Failed to parse server response",
+          });
+        }
+      });
+
+      xhr.addEventListener("error", () => {
+        resolve({
           success: false,
-          error: result.error || "Import failed",
-          warnings: result.warnings,
-        };
-      }
+          error: "Network error during import",
+        });
+      });
 
-      if (result.body?.pack) {
-        await fetchPacks();
-      }
-
-      return {
-        success: true,
-        pack: result.body.pack,
-        warnings: result.body.warnings,
-      };
-    } catch (error) {
-      console.error("Import error:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Import failed",
-      };
-    }
+      xhr.open("POST", "/api/admin/import-pack");
+      xhr.withCredentials = true;
+      xhr.send(formData);
+    });
   }
 
   // ===== STATS =====

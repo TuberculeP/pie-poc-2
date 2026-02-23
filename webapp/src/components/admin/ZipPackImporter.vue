@@ -20,7 +20,11 @@
           <span class="drop-icon">ZIP</span>
           <p>
             Drag a ZIP file here or
-            <button type="button" @click="fileInput?.click()" class="browse-btn">
+            <button
+              type="button"
+              @click="fileInput?.click()"
+              class="browse-btn"
+            >
               browse
             </button>
           </p>
@@ -33,7 +37,9 @@
     <div v-else-if="!isUploading" class="step-preview">
       <div class="preview-header">
         <h3>{{ zipFile.name }}</h3>
-        <button type="button" @click="reset" class="btn-reset">Change file</button>
+        <button type="button" @click="reset" class="btn-reset">
+          Change file
+        </button>
       </div>
 
       <div v-if="isParsing" class="parsing-state">
@@ -71,7 +77,9 @@
               >
                 <span class="folder-icon">FOLDER</span>
                 <span class="folder-name">{{ folder.name }}</span>
-                <span class="folder-count">{{ folder.samples.length }} samples</span>
+                <span class="folder-count"
+                  >{{ folder.samples.length }} samples</span
+                >
               </div>
               <div v-if="parsedStructure.cover" class="cover-item">
                 <span class="cover-icon">IMG</span>
@@ -90,7 +98,10 @@
           <div v-if="parsedStructure.warnings.length > 0" class="warnings">
             <h4>Warnings ({{ parsedStructure.warnings.length }})</h4>
             <ul>
-              <li v-for="(warning, i) in parsedStructure.warnings.slice(0, 5)" :key="i">
+              <li
+                v-for="(warning, i) in parsedStructure.warnings.slice(0, 5)"
+                :key="i"
+              >
                 {{ warning }}
               </li>
               <li v-if="parsedStructure.warnings.length > 5">
@@ -100,14 +111,14 @@
           </div>
 
           <div class="form-actions">
-            <button type="button" @click="$emit('cancel')" class="btn-secondary">
+            <button
+              type="button"
+              @click="$emit('cancel')"
+              class="btn-secondary"
+            >
               Cancel
             </button>
-            <button
-              type="submit"
-              class="btn-primary"
-              :disabled="!canImport"
-            >
+            <button type="submit" class="btn-primary" :disabled="!canImport">
               Import Pack
             </button>
           </div>
@@ -116,34 +127,57 @@
 
       <div v-else-if="parseError" class="error-state">
         <p>{{ parseError }}</p>
-        <button type="button" @click="reset" class="btn-secondary">Try again</button>
+        <button type="button" @click="reset" class="btn-secondary">
+          Try again
+        </button>
       </div>
     </div>
 
     <!-- Step 3: Upload Progress -->
     <div v-else class="step-uploading">
       <div class="upload-status">
-        <span class="spinner"></span>
-        <p>Importing pack...</p>
-        <p class="upload-hint">This may take a while for large packs</p>
+        <div class="progress-info">
+          <span class="progress-stage">Importing pack...</span>
+          <span class="progress-percent">{{ uploadProgress }}%</span>
+        </div>
+        <div class="progress-bar-container">
+          <div
+            class="progress-bar-fill"
+            :style="{ width: uploadProgress + '%' }"
+          ></div>
+        </div>
+        <p class="upload-hint">{{ currentFile || 'Starting...' }}</p>
       </div>
     </div>
 
     <!-- Result -->
-    <div v-if="importResult" class="import-result" :class="{ success: importResult.success, error: !importResult.success }">
+    <div
+      v-if="importResult"
+      class="import-result"
+      :class="{ success: importResult.success, error: !importResult.success }"
+    >
       <template v-if="importResult.success">
         <p class="result-title">Pack imported successfully!</p>
-        <p>{{ importResult.pack?.foldersCount }} folders, {{ importResult.pack?.samplesCount }} samples</p>
+        <p>
+          {{ importResult.pack?.foldersCount }} folders,
+          {{ importResult.pack?.samplesCount }} samples
+        </p>
         <div v-if="importResult.warnings?.length" class="result-warnings">
-          <small>{{ importResult.warnings.length }} warnings during import</small>
+          <small
+            >{{ importResult.warnings.length }} warnings during import</small
+          >
         </div>
       </template>
       <template v-else>
         <p class="result-title">Import failed</p>
         <p>{{ importResult.error }}</p>
       </template>
-      <button type="button" @click="$emit('done', importResult)" class="btn-primary">
-        {{ importResult.success ? 'Done' : 'Close' }}
+      <button
+        type="button"
+        @click="$emit('done', importResult)"
+        class="btn-primary"
+      >
+        {{ importResult.success ? "Done" : "Close" }}
       </button>
     </div>
   </div>
@@ -189,6 +223,9 @@ const parseError = ref<string | null>(null);
 const parsedStructure = ref<ParsedStructure | null>(null);
 const isUploading = ref(false);
 const importResult = ref<any>(null);
+const uploadProgress = ref(0);
+const uploadStage = ref<"upload" | "processing">("upload");
+const currentFile = ref("");
 
 const packName = ref("");
 const packSlug = ref("");
@@ -197,7 +234,10 @@ const packAuthor = ref("");
 const totalFolders = computed(() => parsedStructure.value?.folders.length || 0);
 const totalSamples = computed(() => {
   if (!parsedStructure.value) return 0;
-  return parsedStructure.value.folders.reduce((sum, f) => sum + f.samples.length, 0);
+  return parsedStructure.value.folders.reduce(
+    (sum, f) => sum + f.samples.length,
+    0,
+  );
 });
 
 const canImport = computed(() => {
@@ -210,7 +250,10 @@ const canImport = computed(() => {
 });
 
 watch(packName, (name) => {
-  if (!packSlug.value || packSlug.value === generateSlug(packName.value.slice(0, -1))) {
+  if (
+    !packSlug.value ||
+    packSlug.value === generateSlug(packName.value.slice(0, -1))
+  ) {
     packSlug.value = generateSlug(name);
   }
 });
@@ -285,8 +328,14 @@ async function parseZip(file: File) {
       const ext = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
 
       if (IMAGE_EXTENSIONS.includes(ext)) {
-        const baseName = fileName.substring(0, fileName.lastIndexOf(".")).toLowerCase();
-        if (baseName === "cover" || baseName === "artwork" || baseName === "folder") {
+        const baseName = fileName
+          .substring(0, fileName.lastIndexOf("."))
+          .toLowerCase();
+        if (
+          baseName === "cover" ||
+          baseName === "artwork" ||
+          baseName === "folder"
+        ) {
           cover = { name: fileName, path };
         }
         continue;
@@ -342,15 +391,103 @@ async function startImport() {
 
   isUploading.value = true;
   importResult.value = null;
+  uploadProgress.value = 0;
+  uploadStage.value = "upload";
+  currentFile.value = "";
 
-  const result = await adminStore.importPackFromZip(zipFile.value, {
-    name: packName.value.trim(),
-    slug: packSlug.value.trim(),
-    author: packAuthor.value.trim() || undefined,
-  });
+  const formData = new FormData();
+  formData.append("zipFile", zipFile.value);
+  formData.append("name", packName.value.trim());
+  formData.append("slug", packSlug.value.trim());
+  if (packAuthor.value.trim()) {
+    formData.append("author", packAuthor.value.trim());
+  }
 
-  isUploading.value = false;
-  importResult.value = result;
+  try {
+    const response = await fetch("/api/admin/import-pack", {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      isUploading.value = false;
+      importResult.value = {
+        success: false,
+        error: errorData.error || "Import failed",
+      };
+      return;
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error("No response body");
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          try {
+            const event = JSON.parse(line.slice(6));
+            handleSSEEvent(event);
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      }
+    }
+
+    // Process any remaining data
+    if (buffer.startsWith("data: ")) {
+      try {
+        const event = JSON.parse(buffer.slice(6));
+        handleSSEEvent(event);
+      } catch {
+        // Ignore
+      }
+    }
+  } catch (error) {
+    isUploading.value = false;
+    importResult.value = {
+      success: false,
+      error: error instanceof Error ? error.message : "Import failed",
+    };
+  }
+}
+
+function handleSSEEvent(event: any) {
+  if (event.type === "progress") {
+    uploadProgress.value = event.progress;
+    uploadStage.value = "processing";
+    if (event.file) {
+      currentFile.value = event.file;
+    }
+  } else if (event.type === "complete") {
+    isUploading.value = false;
+    importResult.value = {
+      success: true,
+      pack: event.pack,
+      warnings: event.warnings,
+    };
+    adminStore.fetchPacks();
+  } else if (event.type === "error") {
+    isUploading.value = false;
+    importResult.value = {
+      success: false,
+      error: event.error,
+    };
+  }
 }
 
 function reset() {
@@ -673,26 +810,56 @@ function reset() {
 }
 
 .step-uploading {
-  text-align: center;
   padding: 48px 32px;
 }
 
 .upload-status {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 16px;
-
-  p {
-    margin: 0;
-    color: #f2efe8;
-    font-size: 14px;
-  }
+  width: 100%;
 
   .upload-hint {
     color: rgba(255, 255, 255, 0.5);
     font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-stage {
+  font-size: 14px;
+  font-weight: 500;
+  color: #f2efe8;
+}
+
+.progress-percent {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff3fb4;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff3fb4 0%, #e0359e 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
 }
 
 .import-result {

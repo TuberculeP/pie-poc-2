@@ -3,7 +3,11 @@ import multer from "multer";
 import AdmZip from "adm-zip";
 import path from "path";
 import { fileTypeFromBuffer } from "file-type";
-import { uploadToR2, deleteFromR2, isR2Configured } from "../../services/r2.service";
+import {
+  uploadToR2,
+  deleteFromR2,
+  isR2Configured,
+} from "../../services/r2.service";
 import pg from "../../config/db.config";
 import { SamplePack } from "../../config/entities/SamplePack";
 import { SampleFolder } from "../../config/entities/SampleFolder";
@@ -121,7 +125,11 @@ async function parseZipStructure(zipBuffer: Buffer): Promise<ParsedStructure> {
       }
 
       const lowerName = baseName.toLowerCase();
-      if (lowerName === "cover" || lowerName === "artwork" || lowerName === "folder") {
+      if (
+        lowerName === "cover" ||
+        lowerName === "artwork" ||
+        lowerName === "folder"
+      ) {
         cover = {
           path: entryPath,
           folderName: "",
@@ -167,43 +175,63 @@ async function parseZipStructure(zipBuffer: Buffer): Promise<ParsedStructure> {
   return { folders, cover, warnings };
 }
 
+function sendSSE(res: Response, data: object) {
+  res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
 importPackRouter.post("/", upload.single("zipFile"), async (req, res) => {
   const uploadedR2Keys: string[] = [];
 
+  // Validate before starting SSE
+  if (!req.file) {
+    res.status(400).json({ error: "No ZIP file provided" });
+    return;
+  }
+
+  const { name, slug, author } = req.body;
+
+  if (!name || !slug) {
+    res.status(400).json({ error: "Name and slug are required" });
+    return;
+  }
+
+  if (!isR2Configured()) {
+    res.status(500).json({ error: "R2 storage not configured" });
+    return;
+  }
+
+  const packRepo = pg.getRepository(SamplePack);
+  const existing = await packRepo.findOne({ where: { slug } });
+  if (existing) {
+    res.status(400).json({ error: "Slug already exists" });
+    return;
+  }
+
+  // Start SSE response
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
   try {
-    if (!req.file) {
-      res.status(400).json({ error: "No ZIP file provided" });
-      return;
-    }
-
-    const { name, slug, author } = req.body;
-
-    if (!name || !slug) {
-      res.status(400).json({ error: "Name and slug are required" });
-      return;
-    }
-
-    if (!isR2Configured()) {
-      res.status(500).json({ error: "R2 storage not configured" });
-      return;
-    }
-
-    const packRepo = pg.getRepository(SamplePack);
-    const existing = await packRepo.findOne({ where: { slug } });
-    if (existing) {
-      res.status(400).json({ error: "Slug already exists" });
-      return;
-    }
+    sendSSE(res, { type: "progress", progress: 5, file: "Parsing ZIP..." });
 
     const structure = await parseZipStructure(req.file.buffer);
 
     if (structure.folders.size === 0) {
-      res.status(400).json({
-        error: "No valid audio files found in ZIP",
-        warnings: structure.warnings,
-      });
+      sendSSE(res, { type: "error", error: "No valid audio files found in ZIP" });
+      res.end();
       return;
     }
+
+    // Count total files for progress
+    let totalFiles = 0;
+    for (const files of structure.folders.values()) {
+      totalFiles += files.length;
+    }
+    if (structure.cover) totalFiles++;
+
+    sendSSE(res, { type: "progress", progress: 10, file: "Creating pack..." });
 
     const queryRunner = pg.createQueryRunner();
     await queryRunner.connect();
@@ -221,6 +249,7 @@ importPackRouter.post("/", upload.single("zipFile"), async (req, res) => {
 
       let foldersCount = 0;
       let samplesCount = 0;
+      let processedFiles = 0;
 
       const sortedFolders = Array.from(structure.folders.keys()).sort();
 
@@ -242,6 +271,15 @@ importPackRouter.post("/", upload.single("zipFile"), async (req, res) => {
           const ext = path.extname(file.path).toLowerCase();
           const r2Key = `samples/${slug}/${sanitizeFilename(folderName)}/${timestamp}-${safeFilename}${ext}`;
 
+          // Send progress
+          processedFiles++;
+          const progress = Math.round(10 + (processedFiles / totalFiles) * 85);
+          sendSSE(res, {
+            type: "progress",
+            progress,
+            file: `${folderName}/${file.fileName}${ext}`,
+          });
+
           const r2Result = await uploadToR2(file.buffer, r2Key, file.mimeType);
           uploadedR2Keys.push(r2Key);
 
@@ -259,8 +297,13 @@ importPackRouter.post("/", upload.single("zipFile"), async (req, res) => {
       }
 
       if (structure.cover) {
+        sendSSE(res, { type: "progress", progress: 98, file: "Uploading cover..." });
         const coverKey = `samples/${slug}/cover${path.extname(structure.cover.path)}`;
-        await uploadToR2(structure.cover.buffer, coverKey, structure.cover.mimeType);
+        await uploadToR2(
+          structure.cover.buffer,
+          coverKey,
+          structure.cover.mimeType,
+        );
         uploadedR2Keys.push(coverKey);
 
         savedPack.cover = `cover${path.extname(structure.cover.path)}`;
@@ -269,19 +312,18 @@ importPackRouter.post("/", upload.single("zipFile"), async (req, res) => {
 
       await queryRunner.commitTransaction();
 
-      res.status(201).json({
-        body: {
-          success: true,
-          pack: {
-            id: savedPack.id,
-            name: savedPack.name,
-            slug: savedPack.slug,
-            foldersCount,
-            samplesCount,
-          },
-          warnings: structure.warnings.length > 0 ? structure.warnings : undefined,
+      sendSSE(res, {
+        type: "complete",
+        pack: {
+          id: savedPack.id,
+          name: savedPack.name,
+          slug: savedPack.slug,
+          foldersCount,
+          samplesCount,
         },
+        warnings: structure.warnings.length > 0 ? structure.warnings : undefined,
       });
+      res.end();
     } catch (dbError) {
       await queryRunner.rollbackTransaction();
 
@@ -308,17 +350,26 @@ importPackRouter.post("/", upload.single("zipFile"), async (req, res) => {
       }
     }
 
-    res.status(500).json({
+    sendSSE(res, {
+      type: "error",
       error: error instanceof Error ? error.message : "Import failed",
     });
+    res.end();
   }
 });
 
 importPackRouter.use(
-  (err: Error & { code?: string }, _: Request, res: Response, next: NextFunction) => {
+  (
+    err: Error & { code?: string },
+    _: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     if (err instanceof multer.MulterError) {
       if (err.code === "LIMIT_FILE_SIZE") {
-        res.status(400).json({ error: "ZIP file too large. Maximum size is 500MB." });
+        res
+          .status(400)
+          .json({ error: "ZIP file too large. Maximum size is 500MB." });
         return;
       }
       res.status(400).json({ error: err.message });
@@ -329,7 +380,7 @@ importPackRouter.use(
       return;
     }
     next();
-  }
+  },
 );
 
 export default importPackRouter;

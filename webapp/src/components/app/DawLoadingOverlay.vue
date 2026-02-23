@@ -33,7 +33,9 @@
                 class="task-item"
                 :class="task.status"
               >
-                <span class="task-status-icon">{{ statusIcon(task.status) }}</span>
+                <span class="task-status-icon">{{
+                  statusIcon(task.status)
+                }}</span>
                 <span class="task-label">{{ task.label }}</span>
               </div>
             </div>
@@ -62,8 +64,14 @@ const props = withDefaults(
 );
 
 const dawLoadingStore = useDawLoadingStore();
-const { isComplete, currentPhase, statusText, overallProgress, allTasks, error } =
-  storeToRefs(dawLoadingStore);
+const {
+  isComplete,
+  currentPhase,
+  statusText,
+  overallProgress,
+  allTasks,
+  error,
+} = storeToRefs(dawLoadingStore);
 
 function statusIcon(status: string): string {
   switch (status) {
