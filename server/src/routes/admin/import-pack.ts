@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import multer from "multer";
 import AdmZip from "adm-zip";
 import path from "path";
-import { fileTypeFromBuffer } from "file-type";
+import FileType from "file-type";
 import {
   uploadToR2,
   deleteFromR2,
@@ -21,11 +21,22 @@ const ALLOWED_AUDIO_MIMES = [
   "audio/wav",
   "audio/wave",
   "audio/x-wav",
+  "audio/vnd.wave",
   "audio/ogg",
   "audio/flac",
+  "audio/x-flac",
   "audio/aiff",
   "audio/x-aiff",
 ];
+
+// Fallback MIME types based on extension (when file-type can't detect)
+const EXT_TO_MIME: Record<string, string> = {
+  ".wav": "audio/wav",
+  ".mp3": "audio/mpeg",
+  ".ogg": "audio/ogg",
+  ".flac": "audio/flac",
+  ".aiff": "audio/aiff",
+};
 
 const ALLOWED_IMAGE_MIMES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -116,7 +127,7 @@ async function parseZipStructure(zipBuffer: Buffer): Promise<ParsedStructure> {
     }
 
     const buffer = entry.getData();
-    const fileType = await fileTypeFromBuffer(buffer);
+    const fileType = await FileType.fromBuffer(buffer);
 
     if (IMAGE_EXTENSIONS.includes(ext)) {
       if (!fileType || !ALLOWED_IMAGE_MIMES.includes(fileType.mime)) {
@@ -146,7 +157,14 @@ async function parseZipStructure(zipBuffer: Buffer): Promise<ParsedStructure> {
       continue;
     }
 
-    if (!fileType || !ALLOWED_AUDIO_MIMES.includes(fileType.mime)) {
+    // Determine MIME type: use file-type detection or fallback to extension-based
+    let mimeType: string;
+    if (fileType && ALLOWED_AUDIO_MIMES.includes(fileType.mime)) {
+      mimeType = fileType.mime;
+    } else if (EXT_TO_MIME[ext]) {
+      // Fallback: trust extension for known audio formats
+      mimeType = EXT_TO_MIME[ext];
+    } else {
       warnings.push(`Invalid audio file (bad MIME): ${entryPath}`);
       continue;
     }
@@ -163,7 +181,7 @@ async function parseZipStructure(zipBuffer: Buffer): Promise<ParsedStructure> {
       folderName,
       fileName: baseName,
       buffer,
-      mimeType: fileType.mime,
+      mimeType,
     };
 
     if (!folders.has(folderName)) {
@@ -219,7 +237,10 @@ importPackRouter.post("/", upload.single("zipFile"), async (req, res) => {
     const structure = await parseZipStructure(req.file.buffer);
 
     if (structure.folders.size === 0) {
-      sendSSE(res, { type: "error", error: "No valid audio files found in ZIP" });
+      sendSSE(res, {
+        type: "error",
+        error: "No valid audio files found in ZIP",
+      });
       res.end();
       return;
     }
@@ -297,7 +318,11 @@ importPackRouter.post("/", upload.single("zipFile"), async (req, res) => {
       }
 
       if (structure.cover) {
-        sendSSE(res, { type: "progress", progress: 98, file: "Uploading cover..." });
+        sendSSE(res, {
+          type: "progress",
+          progress: 98,
+          file: "Uploading cover...",
+        });
         const coverKey = `samples/${slug}/cover${path.extname(structure.cover.path)}`;
         await uploadToR2(
           structure.cover.buffer,
@@ -321,7 +346,8 @@ importPackRouter.post("/", upload.single("zipFile"), async (req, res) => {
           foldersCount,
           samplesCount,
         },
-        warnings: structure.warnings.length > 0 ? structure.warnings : undefined,
+        warnings:
+          structure.warnings.length > 0 ? structure.warnings : undefined,
       });
       res.end();
     } catch (dbError) {

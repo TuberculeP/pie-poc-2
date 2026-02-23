@@ -29,7 +29,7 @@
     "express": "^4.21.1",
     "express-session": "^1.18.1",
     "express-session-sqlite": "^2.1.1",
-    "file-type": "^21.3.0",
+    "file-type": "^16.5.4",
     "grid-layout-plus": "^1.1.0",
     "gsap": "^3.14.2",
     "idb": "^8.0.3",
