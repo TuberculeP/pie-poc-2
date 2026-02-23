@@ -358,6 +358,91 @@ export const useAdminStore = defineStore("admin", () => {
     }
   }
 
+  // ===== IMPORT ZIP =====
+
+  interface ImportPackResult {
+    success: boolean;
+    pack?: {
+      id: string;
+      name: string;
+      slug: string;
+      foldersCount: number;
+      samplesCount: number;
+    };
+    warnings?: string[];
+    error?: string;
+  }
+
+  async function importPackFromZip(
+    file: File,
+    data: { name: string; slug: string; author?: string },
+    onProgress?: (progress: number, stage: "upload" | "processing") => void,
+  ): Promise<ImportPackResult> {
+    const formData = new FormData();
+    formData.append("zipFile", file);
+    formData.append("name", data.name);
+    formData.append("slug", data.slug);
+    if (data.author) formData.append("author", data.author);
+
+    return new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable && onProgress) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(percent, "upload");
+        }
+      });
+
+      xhr.upload.addEventListener("load", () => {
+        if (onProgress) {
+          onProgress(100, "processing");
+        }
+      });
+
+      xhr.addEventListener("load", async () => {
+        try {
+          const result = JSON.parse(xhr.responseText);
+
+          if (xhr.status >= 400) {
+            resolve({
+              success: false,
+              error: result.error || "Import failed",
+              warnings: result.warnings,
+            });
+            return;
+          }
+
+          if (result.body?.pack) {
+            await fetchPacks();
+          }
+
+          resolve({
+            success: true,
+            pack: result.body.pack,
+            warnings: result.body.warnings,
+          });
+        } catch (error) {
+          resolve({
+            success: false,
+            error: "Failed to parse server response",
+          });
+        }
+      });
+
+      xhr.addEventListener("error", () => {
+        resolve({
+          success: false,
+          error: "Network error during import",
+        });
+      });
+
+      xhr.open("POST", "/api/admin/import-pack");
+      xhr.withCredentials = true;
+      xhr.send(formData);
+    });
+  }
+
   // ===== STATS =====
 
   async function fetchStats() {
@@ -426,6 +511,7 @@ export const useAdminStore = defineStore("admin", () => {
 
     // Upload
     uploadFile,
+    importPackFromZip,
 
     // Stats
     fetchStats,
