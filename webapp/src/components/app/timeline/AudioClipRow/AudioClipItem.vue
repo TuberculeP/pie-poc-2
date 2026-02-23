@@ -17,7 +17,13 @@ const emit = defineEmits<{
   (e: "select", event: MouseEvent): void;
   (e: "delete"): void;
   (e: "move", newX: number): void;
-  (e: "resize", side: "left" | "right", newX: number, newW: number, newStartOffset: number): void;
+  (
+    e: "resize",
+    side: "left" | "right",
+    newX: number,
+    newW: number,
+    newStartOffset: number,
+  ): void;
 }>();
 
 const audioLibraryStore = useAudioLibraryStore();
@@ -97,15 +103,19 @@ const handleMouseMove = (event: MouseEvent): void => {
   } else if (isResizing.value) {
     if (resizeSide.value === "right") {
       const newW = Math.max(1, initialClipState.value.w + deltaCols);
-      emit("resize", "right", initialClipState.value.x, newW, initialClipState.value.startOffset);
-    } else {
-      const effectiveDelta = Math.min(
-        deltaCols,
-        initialClipState.value.w - 1,
+      emit(
+        "resize",
+        "right",
+        initialClipState.value.x,
+        newW,
+        initialClipState.value.startOffset,
       );
+    } else {
+      const effectiveDelta = Math.min(deltaCols, initialClipState.value.w - 1);
       const newX = initialClipState.value.x + effectiveDelta;
       const newW = initialClipState.value.w - effectiveDelta;
-      const newStartOffset = initialClipState.value.startOffset + effectiveDelta;
+      const newStartOffset =
+        initialClipState.value.startOffset + effectiveDelta;
 
       if (newX >= 0 && newW >= 1 && newStartOffset >= 0) {
         emit("resize", "left", newX, newW, newStartOffset);
@@ -141,7 +151,11 @@ onBeforeUnmount(() => {
 <template>
   <div
     class="audio-clip-item"
-    :class="{ selected: isSelected, dragging: isDragging, resizing: isResizing }"
+    :class="{
+      selected: isSelected,
+      dragging: isDragging,
+      resizing: isResizing,
+    }"
     :style="clipStyle"
     @mousedown="handleMouseDown"
     @dblclick="handleDoubleClick"

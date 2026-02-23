@@ -31,12 +31,17 @@ const drawWaveform = (): void => {
   const data = props.waveformData;
   if (data.length === 0) return;
 
-  const startRatio = props.sampleDurationCols > 0
-    ? props.startOffset / props.sampleDurationCols
-    : 0;
-  const endRatio = props.sampleDurationCols > 0
-    ? Math.min(1, (props.startOffset + props.clipWidth) / props.sampleDurationCols)
-    : 1;
+  const startRatio =
+    props.sampleDurationCols > 0
+      ? props.startOffset / props.sampleDurationCols
+      : 0;
+  const endRatio =
+    props.sampleDurationCols > 0
+      ? Math.min(
+          1,
+          (props.startOffset + props.clipWidth) / props.sampleDurationCols,
+        )
+      : 1;
 
   const startIndex = Math.floor(startRatio * data.length);
   const endIndex = Math.ceil(endRatio * data.length);
@@ -87,7 +92,12 @@ onMounted(() => {
 });
 
 watch(
-  () => [props.waveformData, props.startOffset, props.clipWidth, props.sampleDurationCols],
+  () => [
+    props.waveformData,
+    props.startOffset,
+    props.clipWidth,
+    props.sampleDurationCols,
+  ],
   () => {
     drawWaveform();
   },

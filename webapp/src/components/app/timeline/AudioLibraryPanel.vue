@@ -2,7 +2,11 @@
 import { ref, computed, onMounted } from "vue";
 import { useAudioLibraryStore } from "../../../stores/audioLibraryStore";
 import { useAudioBusStore } from "../../../stores/audioBusStore";
-import type { SamplePack, SampleFolder, AudioSample } from "../../../lib/utils/types";
+import type {
+  SamplePack,
+  SampleFolder,
+  AudioSample,
+} from "../../../lib/utils/types";
 
 const audioLibraryStore = useAudioLibraryStore();
 const audioBusStore = useAudioBusStore();
@@ -72,11 +76,16 @@ const openFolder = async (folder: SampleFolder): Promise<void> => {
   isLoading.value = true;
 
   if (folder.id && folder.samples.length === 0) {
-    await audioLibraryStore.fetchFolderSamples(selectedPack.value.id, folder.id);
+    await audioLibraryStore.fetchFolderSamples(
+      selectedPack.value.id,
+      folder.id,
+    );
     const updatedPack = audioLibraryStore.getPack(selectedPack.value.id);
     if (updatedPack) {
       selectedPack.value = updatedPack;
-      const updatedFolder = updatedPack.folders.find((f: SampleFolder) => f.id === folder.id);
+      const updatedFolder = updatedPack.folders.find(
+        (f: SampleFolder) => f.id === folder.id,
+      );
       if (updatedFolder) {
         folder = updatedFolder;
       }
@@ -163,7 +172,9 @@ const getSampleCount = (pack: SamplePack): number => {
         >
           {{ part.label }}
         </span>
-        <span v-if="index < breadcrumb.length - 1" class="breadcrumb-sep">/</span>
+        <span v-if="index < breadcrumb.length - 1" class="breadcrumb-sep"
+          >/</span
+        >
       </template>
     </div>
 
@@ -188,7 +199,11 @@ const getSampleCount = (pack: SamplePack): number => {
           @click="openPack(pack)"
         >
           <div class="pack-cover">
-            <img v-if="pack.cover" :src="`/samples/packs/${pack.id}/${pack.cover}`" :alt="pack.name" />
+            <img
+              v-if="pack.cover"
+              :src="`/samples/packs/${pack.id}/${pack.cover}`"
+              :alt="pack.name"
+            />
             <div v-else class="pack-cover-placeholder">
               <span>{{ pack.name.charAt(0).toUpperCase() }}</span>
             </div>
@@ -196,7 +211,9 @@ const getSampleCount = (pack: SamplePack): number => {
           <div class="pack-info">
             <span class="pack-name">{{ pack.name }}</span>
             <span class="pack-meta">
-              <span v-if="pack.author" class="pack-author">{{ pack.author }}</span>
+              <span v-if="pack.author" class="pack-author">{{
+                pack.author
+              }}</span>
               <span class="pack-count">{{ getSampleCount(pack) }} samples</span>
             </span>
           </div>
@@ -205,7 +222,10 @@ const getSampleCount = (pack: SamplePack): number => {
       </div>
 
       <!-- Folders List -->
-      <div v-else-if="currentLevel === 'folders' && selectedPack" class="folders-list">
+      <div
+        v-else-if="currentLevel === 'folders' && selectedPack"
+        class="folders-list"
+      >
         <div
           v-for="folder in selectedPack.folders"
           :key="folder.name"
@@ -215,14 +235,19 @@ const getSampleCount = (pack: SamplePack): number => {
           <div class="folder-icon">📁</div>
           <div class="folder-info">
             <span class="folder-name">{{ folder.name }}</span>
-            <span class="folder-count">{{ folder.samples.length }} samples</span>
+            <span class="folder-count"
+              >{{ folder.samples.length }} samples</span
+            >
           </div>
           <div class="nav-arrow">›</div>
         </div>
       </div>
 
       <!-- Samples List -->
-      <div v-else-if="currentLevel === 'samples' && selectedFolder" class="samples-list">
+      <div
+        v-else-if="currentLevel === 'samples' && selectedFolder"
+        class="samples-list"
+      >
         <div
           v-for="sample in selectedFolder.samples"
           :key="sample.id"
@@ -239,7 +264,9 @@ const getSampleCount = (pack: SamplePack): number => {
           </div>
           <div class="sample-info">
             <span class="sample-name">{{ sample.name }}</span>
-            <span class="sample-duration">{{ formatDuration(sample.duration) }}</span>
+            <span class="sample-duration">{{
+              formatDuration(sample.duration)
+            }}</span>
           </div>
           <div class="drag-hint">⋮⋮</div>
         </div>
@@ -317,8 +344,13 @@ const getSampleCount = (pack: SamplePack): number => {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .empty-state {

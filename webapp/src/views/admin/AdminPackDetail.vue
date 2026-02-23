@@ -28,11 +28,17 @@
           </div>
           <div class="pack-details">
             <h1>{{ currentPack.name }}</h1>
-            <p v-if="currentPack.author" class="author">by {{ currentPack.author }}</p>
+            <p v-if="currentPack.author" class="author">
+              by {{ currentPack.author }}
+            </p>
             <div class="pack-meta">
               <span>Slug: {{ currentPack.slug }}</span>
-              <span v-if="currentPack.featured" class="badge featured">Featured</span>
-              <span v-if="!currentPack.isActive" class="badge inactive">Inactive</span>
+              <span v-if="currentPack.featured" class="badge featured"
+                >Featured</span
+              >
+              <span v-if="!currentPack.isActive" class="badge inactive"
+                >Inactive</span
+              >
             </div>
           </div>
         </div>
@@ -59,8 +65,13 @@
               <span class="folder-order">Order: {{ folder.order }}</span>
             </div>
             <div class="folder-actions" @click.stop>
-              <button @click="editFolder(folder)" class="action-btn">Edit</button>
-              <button @click="confirmDeleteFolder(folder)" class="action-btn danger">
+              <button @click="editFolder(folder)" class="action-btn">
+                Edit
+              </button>
+              <button
+                @click="confirmDeleteFolder(folder)"
+                class="action-btn danger"
+              >
                 Delete
               </button>
             </div>
@@ -70,7 +81,11 @@
     </div>
 
     <!-- Create/Edit Folder Modal -->
-    <div v-if="showCreateFolder || editingFolder" class="modal-overlay" @click="closeModal">
+    <div
+      v-if="showCreateFolder || editingFolder"
+      class="modal-overlay"
+      @click="closeModal"
+    >
       <div class="modal" @click.stop>
         <h2>{{ editingFolder ? "Edit Folder" : "Create Folder" }}</h2>
         <form @submit.prevent="submitFolder">
@@ -164,7 +179,11 @@ async function submitFolder() {
 }
 
 async function confirmDeleteFolder(folder: any) {
-  if (confirm(`Delete folder "${folder.name}"? This will also delete all samples in it.`)) {
+  if (
+    confirm(
+      `Delete folder "${folder.name}"? This will also delete all samples in it.`,
+    )
+  ) {
     await adminStore.deleteFolder(folder.id);
   }
 }

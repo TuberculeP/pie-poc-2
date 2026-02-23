@@ -31,7 +31,7 @@ adminUsersRouter.get("/", async (req, res) => {
     if (search) {
       query.where(
         "LOWER(user.email) LIKE :search OR LOWER(user.firstName) LIKE :search OR LOWER(user.lastName) LIKE :search",
-        { search: `%${search.toLowerCase()}%` }
+        { search: `%${search.toLowerCase()}%` },
       );
     }
 

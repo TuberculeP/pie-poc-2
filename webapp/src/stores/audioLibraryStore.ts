@@ -97,7 +97,7 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
 
   const generateWaveformData = (
     buffer: AudioBuffer,
-    points: number = 128
+    points: number = 128,
   ): number[] => {
     const channelData = buffer.getChannelData(0);
     const blockSize = Math.floor(channelData.length / points);
@@ -115,7 +115,6 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
     const max = Math.max(...waveform, 0.001);
     return waveform.map((v) => v / max);
   };
-
 
   const loadSample = async (sampleId: string): Promise<AudioBuffer | null> => {
     const sample = samples.value.get(sampleId);
@@ -152,7 +151,7 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
       if (cached) {
         try {
           const audioBuffer = await audioBusStore.audioContext.decodeAudioData(
-            cached.slice(0)
+            cached.slice(0),
           );
           buffers.value.set(sampleId, markRaw(audioBuffer));
           sample.duration = audioBuffer.duration;
@@ -174,7 +173,7 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
       await cacheStore.set(sampleId, arrayBuffer);
 
       const audioBuffer = await audioBusStore.audioContext.decodeAudioData(
-        arrayBuffer.slice(0)
+        arrayBuffer.slice(0),
       );
 
       buffers.value.set(sampleId, markRaw(audioBuffer));
@@ -208,10 +207,10 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
 
   const fetchPacksFromApi = async (
     page = 1,
-    limit = 50
+    limit = 50,
   ): Promise<SamplePack[]> => {
     const result = await apiClient.get<ApiResponse<PaginatedPacksResponse>>(
-      `/samples/packs?page=${page}&limit=${limit}`
+      `/samples/packs?page=${page}&limit=${limit}`,
     );
 
     if (result.error || !result.data?.body) {
@@ -231,11 +230,9 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
     }));
   };
 
-  const fetchPackDetails = async (
-    slug: string
-  ): Promise<SamplePack | null> => {
+  const fetchPackDetails = async (slug: string): Promise<SamplePack | null> => {
     const result = await apiClient.get<ApiResponse<ApiPack>>(
-      `/samples/packs/${slug}`
+      `/samples/packs/${slug}`,
     );
 
     if (result.error || !result.data?.body) {
@@ -272,10 +269,10 @@ export const useAudioLibraryStore = defineStore("audioLibrary", () => {
 
   const fetchFolderSamples = async (
     packSlug: string,
-    folderId: string
+    folderId: string,
   ): Promise<AudioSample[]> => {
     const result = await apiClient.get<ApiResponse<ApiSample[]>>(
-      `/samples/packs/${packSlug}/folders/${folderId}`
+      `/samples/packs/${packSlug}/folders/${folderId}`,
     );
 
     if (result.error || !result.data?.body) {

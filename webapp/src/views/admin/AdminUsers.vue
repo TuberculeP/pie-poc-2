@@ -32,7 +32,12 @@
               <td>
                 <select
                   :value="user.role"
-                  @change="updateRole(user.id, ($event.target as HTMLSelectElement).value)"
+                  @change="
+                    updateRole(
+                      user.id,
+                      ($event.target as HTMLSelectElement).value,
+                    )
+                  "
                   class="role-select"
                 >
                   <option value="ROLE_USER">User</option>
@@ -41,7 +46,10 @@
               </td>
               <td>
                 <span
-                  :class="['status-badge', user.isActive ? 'active' : 'inactive']"
+                  :class="[
+                    'status-badge',
+                    user.isActive ? 'active' : 'inactive',
+                  ]"
                 >
                   {{ user.isActive ? "Active" : "Inactive" }}
                 </span>

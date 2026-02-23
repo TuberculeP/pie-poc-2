@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, inject, type Ref } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  inject,
+  type Ref,
+} from "vue";
 import { useRouter } from "vue-router";
 import { useTimelineStore } from "../../../stores/timelineStore";
 import { useTrackAudioStore } from "../../../stores/trackAudioStore";
@@ -52,6 +59,7 @@ const scrollContainerRef = ref<HTMLElement | null>(null);
 
 const isPlaying = ref(false);
 const currentPosition = ref(0);
+const checkpointPosition = ref(0);
 const playbackStartTime = ref(0);
 const animationFrameId = ref<number | null>(null);
 
@@ -68,8 +76,26 @@ const sortedTracks = computed(() => timelineStore.sortedTracks);
 const TRACK_HEADER_WIDTH = 180;
 
 const cursorStyle = computed(() => ({
-  left: `${currentPosition.value * COL_WIDTH + TRACK_HEADER_WIDTH}px`,
+  transform: `translateX(${currentPosition.value * COL_WIDTH + TRACK_HEADER_WIDTH}px)`,
 }));
+
+const checkpointStyle = computed(() => ({
+  left: `${checkpointPosition.value * COL_WIDTH + TRACK_HEADER_WIDTH}px`,
+}));
+
+const loopEndPosition = computed(() => {
+  let lastNoteEnd = 0;
+  for (const track of timelineStore.getPlayableTracks()) {
+    for (const note of track.notes) {
+      const noteEnd = note.x + note.w;
+      if (noteEnd > lastNoteEnd) {
+        lastNoteEnd = noteEnd;
+      }
+    }
+  }
+  if (lastNoteEnd === 0) return timelineStore.project.cols;
+  return Math.ceil(lastNoteEnd / 4) * 4;
+});
 
 const noteNamesDescending = [
   "B",
@@ -163,6 +189,29 @@ const stopAllActiveNotes = () => {
   activeNotes.value.clear();
 };
 
+const triggerNotesAtPosition = (position: number) => {
+  const intPosition = Math.floor(position);
+
+  for (const track of timelineStore.getPlayableTracks()) {
+    for (const note of track.notes) {
+      const noteKey = `${track.id}_${note.i}`;
+      const noteStart = note.x;
+      const noteEnd = note.x + note.w;
+
+      if (
+        intPosition >= noteStart &&
+        intPosition < noteEnd &&
+        !activeNotes.value.has(noteKey)
+      ) {
+        const noteName = noteIndexToName(note.y);
+        trackAudioStore.playNoteOnTrack(track.id, noteName, note.i);
+        activeNotes.value.set(noteKey, { trackId: track.id, noteId: note.i });
+        emit("note-start", note, noteName, intPosition, track.id);
+      }
+    }
+  }
+};
+
 const stopAllActiveClips = () => {
   for (const [_, { trackId, clip }] of activeClips.value) {
     trackAudioStore.stopClipOnTrack(trackId, clip.id);
@@ -175,11 +224,14 @@ const animate = () => {
 
   const elapsed = (performance.now() - playbackStartTime.value) / 1000;
   const stepsPerSecond = (timelineStore.tempo / 60) * 4;
-  const newPosition = elapsed * stepsPerSecond;
+  let newPosition = checkpointPosition.value + elapsed * stepsPerSecond;
 
-  if (newPosition >= timelineStore.project.cols) {
-    stopPlayback();
-    return;
+  if (newPosition >= loopEndPosition.value) {
+    stopAllActiveNotes();
+    newPosition = 0;
+    playbackStartTime.value =
+      performance.now() + (checkpointPosition.value / stepsPerSecond) * 1000;
+    triggerNotesAtPosition(newPosition);
   }
 
   const prevIntPosition = Math.floor(currentPosition.value);
@@ -198,13 +250,11 @@ const animate = () => {
 const startPlayback = () => {
   if (isPlaying.value) return;
 
+  currentPosition.value = checkpointPosition.value;
   isPlaying.value = true;
-  playbackStartTime.value =
-    performance.now() -
-    (currentPosition.value / ((timelineStore.tempo / 60) * 4)) * 1000;
+  playbackStartTime.value = performance.now();
 
-  // Jouer les notes et clips à la position initiale
-  playNotesAtPosition(currentPosition.value);
+  triggerNotesAtPosition(currentPosition.value);
   playClipsAtPosition(currentPosition.value);
 
   animationFrameId.value = requestAnimationFrame(animate);
@@ -217,6 +267,7 @@ const stopPlayback = () => {
     animationFrameId.value = null;
   }
   stopAllActiveNotes();
+  currentPosition.value = checkpointPosition.value;
   stopAllActiveClips();
 };
 
@@ -228,13 +279,16 @@ const togglePlayback = () => {
   }
 };
 
-const seekTo = (position: number) => {
-  currentPosition.value = position;
+const setCheckpoint = (position: number) => {
+  checkpointPosition.value = position;
   if (isPlaying.value) {
     stopAllActiveNotes();
     stopAllActiveClips();
-    playbackStartTime.value =
-      performance.now() - (position / ((timelineStore.tempo / 60) * 4)) * 1000;
+    currentPosition.value = position;
+    playbackStartTime.value = performance.now();
+    triggerNotesAtPosition(position);
+  } else {
+    currentPosition.value = position;
   }
 };
 
@@ -362,7 +416,7 @@ defineExpose({
   startPlayback,
   stopPlayback,
   togglePlayback,
-  seekTo,
+  setCheckpoint,
 });
 </script>
 
@@ -391,7 +445,7 @@ defineExpose({
         <div class="transport-controls">
           <button
             class="transport-btn"
-            @click="seekTo(0)"
+            @click="setCheckpoint(0)"
             title="Retour au début"
           >
             ⏮
@@ -480,7 +534,7 @@ defineExpose({
           :cols="timelineStore.project.cols"
           :col-width="COL_WIDTH"
           :scroll-left="scrollLeft"
-          @seek="seekTo"
+          @seek="setCheckpoint"
         />
 
         <div class="tracks-container">
@@ -512,11 +566,8 @@ defineExpose({
           </div>
         </div>
 
-        <div
-          v-if="isPlaying || currentPosition > 0"
-          class="playhead"
-          :style="cursorStyle"
-        />
+        <div class="checkpoint-marker" :style="checkpointStyle" />
+        <div v-if="isPlaying" class="playhead" :style="cursorStyle" />
       </div>
     </div>
 
@@ -788,14 +839,37 @@ defineExpose({
   }
 }
 
-.playhead {
+.checkpoint-marker {
   position: absolute;
   top: 0;
   bottom: 0;
   width: 2px;
+  background: #22c55e;
+  pointer-events: none;
+  z-index: 49;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -5px;
+    width: 12px;
+    height: 12px;
+    background: #22c55e;
+    clip-path: polygon(50% 100%, 0 0, 100% 0);
+  }
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
   background: #ef4444;
   pointer-events: none;
   z-index: 50;
+  will-change: transform;
 
   &::before {
     content: "";

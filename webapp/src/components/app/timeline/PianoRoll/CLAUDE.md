@@ -122,13 +122,14 @@ Orchestre tous les raccourcis clavier.
 
 ```typescript
 usePianoGridKeyboard(selectedNotes, {
-  onUndo,      // Ctrl+Z
-  onRedo,      // Ctrl+Shift+Z ou Ctrl+Y
-  onDelete,    // Delete/Backspace
-  onEscape,    // Escape (clear selection)
-  onCopy,      // Ctrl+C
-  onPaste,     // Ctrl+V
-  onDuplicate, // Ctrl+D
+  onUndo,          // Ctrl+Z
+  onRedo,          // Ctrl+Shift+Z ou Ctrl+Y
+  onDelete,        // Delete/Backspace
+  onEscape,        // Escape (clear selection)
+  onCopy,          // Ctrl+C
+  onPaste,         // Ctrl+V
+  onDuplicate,     // Ctrl+D
+  onMoveSelection, // Shift+flèches (1 step) ou Ctrl/Cmd+flèches (1 octave)
 });
 ```
 
@@ -180,6 +181,8 @@ clearAllHistory()           // Appelé par timelineStore.loadProject/createNew
 | Undo | Ctrl+Z |
 | Redo | Ctrl+Shift+Z ou Ctrl+Y |
 | Supprimer sélection | Delete ou Backspace |
+| Déplacer sélection (1 step) | Shift + ↑↓←→ |
+| Déplacer sélection (1 octave) | Ctrl/Cmd + ↑↓ |
 | Preview note | Clic/drag sur clavier |
 
 ## Constantes (`lib/audio/pianoRollConstants.ts`)

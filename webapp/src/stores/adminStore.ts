@@ -109,11 +109,11 @@ export const useAdminStore = defineStore("admin", () => {
 
   async function updateUser(
     id: string,
-    data: { role?: string; isActive?: boolean }
+    data: { role?: string; isActive?: boolean },
   ) {
     const result = await apiClient.patch<ApiResponse<AdminUser>>(
       `/admin/users/${id}`,
-      data
+      data,
     );
     if (!result.error && result.data?.body) {
       const index = users.value.findIndex((u) => u.id === id);
@@ -126,7 +126,7 @@ export const useAdminStore = defineStore("admin", () => {
 
   async function deleteUser(id: string) {
     const result = await apiClient.delete<{ message: string }>(
-      `/admin/users/${id}`
+      `/admin/users/${id}`,
     );
     if (!result.error) {
       const index = users.value.findIndex((u) => u.id === id);
@@ -173,7 +173,7 @@ export const useAdminStore = defineStore("admin", () => {
   }) {
     const result = await apiClient.post<ApiResponse<AdminPack>>(
       "/admin/samples/packs",
-      data
+      data,
     );
     if (!result.error && result.data?.body) {
       packs.value.unshift(result.data.body);
@@ -184,7 +184,7 @@ export const useAdminStore = defineStore("admin", () => {
   async function updatePack(id: string, data: Partial<AdminPack>) {
     const result = await apiClient.put<ApiResponse<AdminPack>>(
       `/admin/samples/packs/${id}`,
-      data
+      data,
     );
     if (!result.error && result.data?.body) {
       const index = packs.value.findIndex((p) => p.id === id);
@@ -200,7 +200,7 @@ export const useAdminStore = defineStore("admin", () => {
 
   async function deletePack(id: string) {
     const result = await apiClient.delete<{ message: string }>(
-      `/admin/samples/packs/${id}`
+      `/admin/samples/packs/${id}`,
     );
     if (!result.error) {
       packs.value = packs.value.filter((p) => p.id !== id);
@@ -212,7 +212,7 @@ export const useAdminStore = defineStore("admin", () => {
 
   async function fetchFolders(packId: string) {
     const result = await apiClient.get<ApiResponse<AdminFolder[]>>(
-      `/admin/samples/packs/${packId}/folders`
+      `/admin/samples/packs/${packId}/folders`,
     );
 
     if (result.data?.body) {
@@ -221,10 +221,13 @@ export const useAdminStore = defineStore("admin", () => {
     return result.data?.body || [];
   }
 
-  async function createFolder(packId: string, data: { name: string; order?: number }) {
+  async function createFolder(
+    packId: string,
+    data: { name: string; order?: number },
+  ) {
     const result = await apiClient.post<ApiResponse<AdminFolder>>(
       `/admin/samples/packs/${packId}/folders`,
-      data
+      data,
     );
     if (!result.error && result.data?.body) {
       currentFolders.value.push(result.data.body);
@@ -232,10 +235,13 @@ export const useAdminStore = defineStore("admin", () => {
     return result;
   }
 
-  async function updateFolder(id: string, data: { name?: string; order?: number }) {
+  async function updateFolder(
+    id: string,
+    data: { name?: string; order?: number },
+  ) {
     const result = await apiClient.put<ApiResponse<AdminFolder>>(
       `/admin/samples/folders/${id}`,
-      data
+      data,
     );
     if (!result.error && result.data?.body) {
       const index = currentFolders.value.findIndex((f) => f.id === id);
@@ -248,7 +254,7 @@ export const useAdminStore = defineStore("admin", () => {
 
   async function deleteFolder(id: string) {
     const result = await apiClient.delete<{ message: string }>(
-      `/admin/samples/folders/${id}`
+      `/admin/samples/folders/${id}`,
     );
     if (!result.error) {
       currentFolders.value = currentFolders.value.filter((f) => f.id !== id);
@@ -260,7 +266,7 @@ export const useAdminStore = defineStore("admin", () => {
 
   async function fetchSamples(folderId: string) {
     const result = await apiClient.get<ApiResponse<AdminSample[]>>(
-      `/admin/samples/folders/${folderId}/samples`
+      `/admin/samples/folders/${folderId}/samples`,
     );
 
     if (result.data?.body) {
@@ -278,11 +284,11 @@ export const useAdminStore = defineStore("admin", () => {
       waveform?: number[];
       previewUrl?: string;
       fullUrl?: string;
-    }
+    },
   ) {
     const result = await apiClient.post<ApiResponse<AdminSample>>(
       `/admin/samples/folders/${folderId}/samples`,
-      data
+      data,
     );
     if (!result.error && result.data?.body) {
       currentSamples.value.push(result.data.body);
@@ -293,7 +299,7 @@ export const useAdminStore = defineStore("admin", () => {
   async function updateSample(id: string, data: Partial<AdminSample>) {
     const result = await apiClient.put<ApiResponse<AdminSample>>(
       `/admin/samples/samples/${id}`,
-      data
+      data,
     );
     if (!result.error && result.data?.body) {
       const index = currentSamples.value.findIndex((s) => s.id === id);
@@ -306,7 +312,7 @@ export const useAdminStore = defineStore("admin", () => {
 
   async function deleteSample(id: string) {
     const result = await apiClient.delete<{ message: string }>(
-      `/admin/samples/samples/${id}`
+      `/admin/samples/samples/${id}`,
     );
     if (!result.error) {
       currentSamples.value = currentSamples.value.filter((s) => s.id !== id);
@@ -319,7 +325,7 @@ export const useAdminStore = defineStore("admin", () => {
   async function uploadFile(
     file: File,
     packSlug: string,
-    folderName?: string
+    folderName?: string,
   ): Promise<{
     filename: string;
     key: string;

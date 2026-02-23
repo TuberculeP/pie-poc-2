@@ -40,10 +40,9 @@ export const useSampleCacheStore = defineStore("sampleCache", {
     async get(sampleId: string): Promise<ArrayBuffer | null> {
       if (!this.db) return null;
 
-      const cached = (await this.db.get(
-        STORE_NAME,
-        sampleId
-      )) as CachedSample | undefined;
+      const cached = (await this.db.get(STORE_NAME, sampleId)) as
+        | CachedSample
+        | undefined;
       if (cached) {
         cached.cachedAt = Date.now();
         await this.db.put(STORE_NAME, cached);

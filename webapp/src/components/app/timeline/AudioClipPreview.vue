@@ -88,7 +88,10 @@ const renderWaveform = (clip: AudioClip): string => {
           :viewBox="`0 0 ${Math.max(clip.w * colWidth - 4, 4)} ${rowHeight - 12}`"
           preserveAspectRatio="none"
         >
-          <polygon :points="renderWaveform(clip)" fill="rgba(255,255,255,0.4)" />
+          <polygon
+            :points="renderWaveform(clip)"
+            fill="rgba(255,255,255,0.4)"
+          />
         </svg>
         <div v-else class="clip-placeholder" />
       </div>

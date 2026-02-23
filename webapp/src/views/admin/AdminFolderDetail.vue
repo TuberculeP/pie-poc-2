@@ -5,7 +5,12 @@
         <div class="breadcrumb">
           <router-link :to="{ name: 'admin-samples' }">Samples</router-link>
           <span>/</span>
-          <router-link :to="{ name: 'admin-pack-detail', params: { packId: route.params.packId } }">
+          <router-link
+            :to="{
+              name: 'admin-pack-detail',
+              params: { packId: route.params.packId },
+            }"
+          >
             {{ currentPack?.name || "..." }}
           </router-link>
           <span>/</span>
@@ -41,7 +46,11 @@
         </div>
 
         <div v-else class="samples-list">
-          <div v-for="sample in currentSamples" :key="sample.id" class="sample-item">
+          <div
+            v-for="sample in currentSamples"
+            :key="sample.id"
+            class="sample-item"
+          >
             <span class="sample-icon">🔊</span>
             <div class="sample-info">
               <span class="sample-name">{{ sample.name }}</span>
@@ -53,8 +62,13 @@
               </span>
             </div>
             <div class="sample-actions">
-              <button @click="editSample(sample)" class="action-btn">Edit</button>
-              <button @click="confirmDeleteSample(sample)" class="action-btn danger">
+              <button @click="editSample(sample)" class="action-btn">
+                Edit
+              </button>
+              <button
+                @click="confirmDeleteSample(sample)"
+                class="action-btn danger"
+              >
                 Delete
               </button>
             </div>
@@ -74,7 +88,12 @@
           </div>
           <div class="form-group">
             <label>Duration (seconds)</label>
-            <input v-model.number="sampleForm.duration" type="number" min="0" step="0.01" />
+            <input
+              v-model.number="sampleForm.duration"
+              type="number"
+              min="0"
+              step="0.01"
+            />
           </div>
           <div class="modal-actions">
             <button type="button" @click="closeModal" class="btn-secondary">
@@ -118,7 +137,9 @@ onMounted(async () => {
   }
 
   // Find folder in current folders
-  currentFolder.value = adminStore.currentFolders.find((f) => f.id === folderId);
+  currentFolder.value = adminStore.currentFolders.find(
+    (f) => f.id === folderId,
+  );
 
   // Fetch samples
   await adminStore.fetchSamples(folderId);

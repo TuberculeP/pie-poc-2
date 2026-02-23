@@ -54,7 +54,10 @@ const {
 );
 
 const handlePasteClips = (clipsToPaste: Array<Omit<AudioClip, "id">>) => {
-  trackHistoryStore.startBatch(props.track.id, `Paste ${clipsToPaste.length} clips`);
+  trackHistoryStore.startBatch(
+    props.track.id,
+    `Paste ${clipsToPaste.length} clips`,
+  );
   for (const clipData of clipsToPaste) {
     timelineStore.addClipToTrack(props.track.id, clipData);
   }
@@ -84,15 +87,19 @@ const handleDeleteSelected = (): void => {
   selectedClipIds.value.clear();
 };
 
-useAudioClipKeyboard(selectedClipIds, {
-  onUndo: () => trackHistoryStore.undo(props.track.id),
-  onRedo: () => trackHistoryStore.redo(props.track.id),
-  onDelete: handleDeleteSelected,
-  onEscape: clearSelection,
-  onCopy: copySelectedClips,
-  onPaste: pasteClips,
-  onDuplicate: duplicateSelectedClips,
-}, isContainerFocused);
+useAudioClipKeyboard(
+  selectedClipIds,
+  {
+    onUndo: () => trackHistoryStore.undo(props.track.id),
+    onRedo: () => trackHistoryStore.redo(props.track.id),
+    onDelete: handleDeleteSelected,
+    onEscape: clearSelection,
+    onCopy: copySelectedClips,
+    onPaste: pasteClips,
+    onDuplicate: duplicateSelectedClips,
+  },
+  isContainerFocused,
+);
 
 const handleClipSelect = (clipId: string, event: MouseEvent): void => {
   selectClip(clipId, event);
@@ -250,7 +257,9 @@ onBeforeUnmount(() => {
         @select="handleClipSelect(clip.id, $event)"
         @delete="handleClipDelete(clip.id)"
         @move="handleClipMove(clip.id, $event)"
-        @resize="(side, x, w, offset) => handleClipResize(clip.id, side, x, w, offset)"
+        @resize="
+          (side, x, w, offset) => handleClipResize(clip.id, side, x, w, offset)
+        "
       />
 
       <div

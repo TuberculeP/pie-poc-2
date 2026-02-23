@@ -3,8 +3,11 @@ import { computed } from "vue";
 import type { Track } from "../../../lib/utils/types";
 import TrackHeader from "./TrackHeader.vue";
 import TrackTimelinePreview from "./TrackTimelinePreview.vue";
+import TrackTimelinePreviewCanvas from "./TrackTimelinePreviewCanvas.vue";
 import AudioClipPreview from "./AudioClipPreview.vue";
 import PianoRoll from "./PianoRoll/PianoRoll.vue";
+
+const USE_CANVAS = true;
 import { AudioClipRow } from "./AudioClipRow";
 
 const props = defineProps<{
@@ -28,7 +31,9 @@ const emit = defineEmits<{
   (e: "toggle-expand", track: Track): void;
 }>();
 
-const isAudioTrack = computed(() => props.track.instrument.type === "audioTrack");
+const isAudioTrack = computed(
+  () => props.track.instrument.type === "audioTrack",
+);
 </script>
 
 <template>
@@ -48,7 +53,8 @@ const isAudioTrack = computed(() => props.track.instrument.type === "audioTrack"
       @toggle-expand="emit('toggle-expand', track)"
     />
 
-    <TrackTimelinePreview
+    <component
+      :is="USE_CANVAS ? TrackTimelinePreviewCanvas : TrackTimelinePreview"
       v-if="!isAudioTrack"
       :notes="track.notes"
       :cols="cols"

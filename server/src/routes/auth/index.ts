@@ -157,10 +157,10 @@ authRouter.get("/config", (_, res) => {
 });
 
 authRouter.get("/google", (req, res, next) => {
-  const origin = req.headers.origin || req.headers.referer || "/";
+  const redirect = (req.query.redirect as string) || "/";
   passport.authenticate("google", {
     scope: ["profile", "email"],
-    state: Buffer.from(origin).toString("base64"),
+    state: Buffer.from(redirect).toString("base64"),
   })(req, res, next);
 });
 
@@ -171,25 +171,23 @@ authRouter.get(
   }),
   (req, res) => {
     const state = req.query.state as string;
-    let redirectUrl = "/";
+    let redirectPath = "/";
     if (state) {
       try {
         const decoded = Buffer.from(state, "base64").toString("utf-8");
-        const url = new URL(decoded);
-        const authPaths = [
-          "/login",
-          "/register",
-          "/forgot-password",
-          "/reset-password",
-        ];
-        if (!authPaths.includes(url.pathname)) {
-          redirectUrl = url.pathname;
-        }
+        const routeToPathMap: Record<string, string> = {
+          "app-main": "/app",
+          "app-sequencer": "/app/sequencer",
+          "app-blog": "/blog",
+          profile: "/profile",
+          messages: "/messages",
+        };
+        redirectPath = routeToPathMap[decoded] || "/";
       } catch {
-        redirectUrl = "/";
+        redirectPath = "/";
       }
     }
-    res.redirect(redirectUrl);
+    res.redirect(redirectPath);
   },
 );
 

@@ -36,7 +36,9 @@
           </div>
           <div class="pack-info">
             <h3>{{ pack.name }}</h3>
-            <span v-if="pack.author" class="pack-author">{{ pack.author }}</span>
+            <span v-if="pack.author" class="pack-author">{{
+              pack.author
+            }}</span>
             <div class="pack-badges">
               <span v-if="pack.featured" class="badge featured">Featured</span>
               <span v-if="!pack.isActive" class="badge inactive">Inactive</span>
@@ -73,7 +75,11 @@
     </div>
 
     <!-- Create/Edit Modal -->
-    <div v-if="showCreateModal || editingPack" class="modal-overlay" @click="closeModal">
+    <div
+      v-if="showCreateModal || editingPack"
+      class="modal-overlay"
+      @click="closeModal"
+    >
       <div class="modal" @click.stop>
         <h2>{{ editingPack ? "Edit Pack" : "Create Pack" }}</h2>
         <form @submit.prevent="submitPack">
@@ -204,7 +210,11 @@ async function submitPack() {
 }
 
 async function confirmDeletePack(pack: any) {
-  if (confirm(`Delete pack "${pack.name}"? This will also delete all folders and samples.`)) {
+  if (
+    confirm(
+      `Delete pack "${pack.name}"? This will also delete all folders and samples.`,
+    )
+  ) {
     await adminStore.deletePack(pack.id);
   }
 }

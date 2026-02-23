@@ -170,9 +170,12 @@ export class UndertaleEngine extends BaseEngine {
     if (activeNote) {
       try {
         activeNote.stopFn();
-        setTimeout(() => {
-          activeNote.envelopeNode.disconnect();
-        }, this.release * 1000 + 100);
+        setTimeout(
+          () => {
+            activeNote.envelopeNode.disconnect();
+          },
+          this.release * 1000 + 100,
+        );
       } catch {
         // Ignore errors
       }

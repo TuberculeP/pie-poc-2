@@ -45,7 +45,9 @@
               error: item.status === 'error',
             }"
           >
-            {{ item.status === 'uploading' ? `${item.progress}%` : item.status }}
+            {{
+              item.status === "uploading" ? `${item.progress}%` : item.status
+            }}
           </span>
         </div>
       </div>
@@ -115,7 +117,7 @@ async function processFiles(files: File[]) {
       const uploadResult = await adminStore.uploadFile(
         file,
         props.packSlug,
-        props.folderName
+        props.folderName,
       );
 
       if (!uploadResult) {

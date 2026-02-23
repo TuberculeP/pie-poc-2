@@ -40,7 +40,7 @@ async function importManifest() {
 
   const manifestPath = path.resolve(
     __dirname,
-    "../../webapp/public/samples/manifest.json"
+    "../../webapp/public/samples/manifest.json",
   );
 
   if (!fs.existsSync(manifestPath)) {
