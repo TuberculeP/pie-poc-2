@@ -11,6 +11,12 @@ const showMenu = ref(false);
 
 const instruments = [
   {
+    type: "audioTrack" as InstrumentType,
+    name: "Audio",
+    icon: "🔊",
+    description: "Piste audio pour samples et boucles",
+  },
+  {
     type: "basicSynth" as InstrumentType,
     name: "Synth",
     icon: "🎹",

@@ -95,7 +95,8 @@ export type InstrumentType =
   | "basicSynth"
   | "elementarySynth"
   | "smplr"
-  | "undertale";
+  | "undertale"
+  | "audioTrack";
 
 export type OscillatorType = "sine" | "square" | "sawtooth" | "triangle";
 
@@ -127,11 +128,17 @@ export interface UndertaleConfig {
   release?: number;
 }
 
+export interface AudioTrackConfig {
+  type: "audioTrack";
+  gain?: number;
+}
+
 export type InstrumentConfig =
   | BasicSynthConfig
   | SmplrConfig
   | ElementarySynthConfig
-  | UndertaleConfig;
+  | UndertaleConfig
+  | AudioTrackConfig;
 
 export interface InstrumentConfigUpdate {
   oscillatorType?: OscillatorType;
@@ -145,6 +152,40 @@ export interface InstrumentConfigUpdate {
   release?: number;
 }
 
+export interface AudioClip {
+  id: string;
+  sampleId: string;
+  x: number;
+  w: number;
+  startOffset: number;
+}
+
+export interface AudioSample {
+  id: string;
+  name: string;
+  packId: string;
+  folder: string;
+  filename: string;
+  duration: number;
+  waveformData?: number[];
+  fullUrl: string;
+}
+
+export interface SampleFolder {
+  id?: string;
+  name: string;
+  samples: AudioSample[];
+}
+
+export interface SamplePack {
+  id: string;
+  name: string;
+  author?: string;
+  featured?: boolean;
+  cover?: string;
+  folders: SampleFolder[];
+}
+
 export interface Track {
   id: string;
   name: string;
@@ -156,7 +197,8 @@ export interface Track {
   muted: boolean;
   solo: boolean;
   order: number;
-  notes: MidiNote[]; // Notes avec positions absolues sur la timeline
+  notes: MidiNote[]; // Notes avec positions absolues sur la timeline (MIDI tracks)
+  clips?: AudioClip[]; // Audio clips (audio tracks)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -181,6 +223,7 @@ export interface TimelineProject {
   volume: number; // Volume master (0-100)
   reverb: number; // Reverb master (0-100)
   eqBands?: EQBand[];
+  usedSamples?: Record<string, AudioSample>; // Samples utilisés par les audio clips
   version: string;
   createdAt: Date;
   updatedAt: Date;

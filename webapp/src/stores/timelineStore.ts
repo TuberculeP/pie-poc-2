@@ -4,6 +4,8 @@ import type {
   Track,
   TimelineProject,
   MidiNote,
+  AudioClip,
+  AudioSample,
   EQBand,
   InstrumentConfig,
   InstrumentType,
@@ -112,6 +114,10 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     return `${trackId}_note_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
   };
 
+  const generateClipId = (trackId: string): string => {
+    return `${trackId}_clip_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+  };
+
   const getNextTrackColor = (): TrackColor => {
     const usedColors = new Set(project.value.tracks.map((t) => t.color));
     const available = TRACK_COLORS.filter((c) => !usedColors.has(c));
@@ -132,6 +138,7 @@ export const useTimelineStore = defineStore("timelineStore", () => {
       elementarySynth: "Elementary",
       smplr: "Sampler",
       undertale: "Undertale",
+      audioTrack: "Audio",
     };
     const baseName = baseNames[instrumentType];
     let counter = 1;
@@ -355,6 +362,99 @@ export const useTimelineStore = defineStore("timelineStore", () => {
   };
 
   // ============================================
+  // Actions - Audio Clips sur Track
+  // ============================================
+
+  const addClipToTrack = (
+    trackId: string,
+    clip: Omit<AudioClip, "id">,
+    sample?: AudioSample,
+  ): string | null => {
+    const track = project.value.tracks.find((t) => t.id === trackId);
+    if (!track) return null;
+
+    if (!track.clips) {
+      track.clips = [];
+    }
+
+    const clipId = generateClipId(trackId);
+    const newClip: AudioClip = {
+      ...clip,
+      id: clipId,
+    };
+
+    track.clips.push(newClip);
+
+    // Stocker les métadonnées du sample pour la persistence
+    if (sample) {
+      if (!project.value.usedSamples) {
+        project.value.usedSamples = {};
+      }
+      project.value.usedSamples[sample.id] = sample;
+    }
+
+    track.updatedAt = new Date();
+    project.value.updatedAt = new Date();
+
+    return clipId;
+  };
+
+  const removeClipFromTrack = (trackId: string, clipId: string): boolean => {
+    const track = project.value.tracks.find((t) => t.id === trackId);
+    if (!track || !track.clips) return false;
+
+    const index = track.clips.findIndex((c) => c.id === clipId);
+    if (index === -1) return false;
+
+    track.clips.splice(index, 1);
+    track.updatedAt = new Date();
+    project.value.updatedAt = new Date();
+
+    return true;
+  };
+
+  const updateClipInTrack = (
+    trackId: string,
+    clipId: string,
+    updates: Partial<AudioClip>,
+  ): boolean => {
+    const track = project.value.tracks.find((t) => t.id === trackId);
+    if (!track || !track.clips) return false;
+
+    const clip = track.clips.find((c) => c.id === clipId);
+    if (!clip) return false;
+
+    Object.assign(clip, updates);
+    track.updatedAt = new Date();
+    project.value.updatedAt = new Date();
+
+    return true;
+  };
+
+  const setTrackClips = (trackId: string, clips: AudioClip[]): boolean => {
+    const track = project.value.tracks.find((t) => t.id === trackId);
+    if (!track) return false;
+
+    track.clips = clips;
+    track.updatedAt = new Date();
+    project.value.updatedAt = new Date();
+
+    return true;
+  };
+
+  const getTrackClipsAtPosition = (
+    trackId: string,
+    position: number,
+  ): AudioClip[] => {
+    const track = project.value.tracks.find((t) => t.id === trackId);
+    if (!track || !track.clips) return [];
+
+    return track.clips.filter(
+      (clip) => position >= clip.x && position < clip.x + clip.w,
+    );
+  };
+
+  // ============================================
   // Actions - Piano Roll Expand/Collapse
   // ============================================
 
@@ -475,6 +575,10 @@ export const useTimelineStore = defineStore("timelineStore", () => {
         if (!track.notes) {
           track.notes = [];
         }
+        // S'assurer que clips existe pour les audio tracks
+        if (track.instrument.type === "audioTrack" && !track.clips) {
+          track.clips = [];
+        }
         // Migration: ajouter reverb et eqBands si manquants
         if (track.reverb === undefined) {
           track.reverb = 0;
@@ -508,6 +612,10 @@ export const useTimelineStore = defineStore("timelineStore", () => {
       if (!track.notes) {
         track.notes = [];
       }
+      // S'assurer que clips existe pour les audio tracks
+      if (track.instrument.type === "audioTrack" && !track.clips) {
+        track.clips = [];
+      }
       // Migration: ajouter reverb et eqBands si manquants
       if (track.reverb === undefined) {
         track.reverb = 0;
@@ -523,6 +631,14 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     }
 
     project.value = data;
+
+    // Restaurer les métadonnées des samples utilisés dans audioLibraryStore
+    if (data.usedSamples) {
+      import("./audioLibraryStore").then(({ useAudioLibraryStore }) => {
+        const audioLibraryStore = useAudioLibraryStore();
+        audioLibraryStore.restoreSamples(data.usedSamples!);
+      });
+    }
 
     // Clear all undo/redo history when loading a new project
     import("./trackHistoryStore").then(({ useTrackHistoryStore }) => {
@@ -638,6 +754,13 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     removeNoteFromTrack,
     updateNoteInTrack,
     setTrackNotes,
+
+    // Actions - Clips
+    addClipToTrack,
+    removeClipFromTrack,
+    updateClipInTrack,
+    setTrackClips,
+    getTrackClipsAtPosition,
 
     // Actions - Piano Roll
     expandTrack,

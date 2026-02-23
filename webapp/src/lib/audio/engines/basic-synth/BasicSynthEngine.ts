@@ -14,6 +14,8 @@ interface ActiveOscillator {
 
 export class BasicSynthEngine extends BaseEngine {
   readonly type = "basicSynth";
+  readonly resourceKey = null;
+  readonly resourceLabel = "Basic Synth";
 
   private activeOscillators: Map<string, ActiveOscillator> = new Map();
   private oscillatorType: OscillatorType;

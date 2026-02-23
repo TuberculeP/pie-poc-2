@@ -110,7 +110,10 @@ const handleUndertaleInstrumentChange = (instrument: string) => {
   trackAudioStore.updateTrackInstrument(props.track.id, { instrument });
 };
 
-const handleADSRChange = (param: "attack" | "decay" | "sustain" | "release", value: number) => {
+const handleADSRChange = (
+  param: "attack" | "decay" | "sustain" | "release",
+  value: number,
+) => {
   timelineStore.updateTrackInstrument(props.track.id, { [param]: value });
   trackAudioStore.updateTrackInstrument(props.track.id, { [param]: value });
 };
@@ -274,7 +277,9 @@ const handleClose = () => {
                         )
                       "
                     />
-                    <span class="adsr-value">{{ undertaleAttack.toFixed(2) }}s</span>
+                    <span class="adsr-value"
+                      >{{ undertaleAttack.toFixed(2) }}s</span
+                    >
                   </div>
                   <div class="adsr-slider">
                     <span class="adsr-label">D</span>
@@ -291,7 +296,9 @@ const handleClose = () => {
                         )
                       "
                     />
-                    <span class="adsr-value">{{ undertaleDecay.toFixed(2) }}s</span>
+                    <span class="adsr-value"
+                      >{{ undertaleDecay.toFixed(2) }}s</span
+                    >
                   </div>
                   <div class="adsr-slider">
                     <span class="adsr-label">S</span>
@@ -308,7 +315,9 @@ const handleClose = () => {
                         )
                       "
                     />
-                    <span class="adsr-value">{{ (undertaleSustain * 100).toFixed(0) }}%</span>
+                    <span class="adsr-value"
+                      >{{ (undertaleSustain * 100).toFixed(0) }}%</span
+                    >
                   </div>
                   <div class="adsr-slider">
                     <span class="adsr-label">R</span>
@@ -325,7 +334,9 @@ const handleClose = () => {
                         )
                       "
                     />
-                    <span class="adsr-value">{{ undertaleRelease.toFixed(2) }}s</span>
+                    <span class="adsr-value"
+                      >{{ undertaleRelease.toFixed(2) }}s</span
+                    >
                   </div>
                 </div>
               </div>

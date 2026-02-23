@@ -4,11 +4,14 @@ import { useTimelineStore } from "./timelineStore";
 import { useAudioBusStore } from "./audioBusStore";
 import type { EngineState, InstrumentEngine } from "../lib/audio/engines/types";
 import type {
+  AudioClip,
   InstrumentConfig,
   NoteName,
   Track,
   EQBand,
 } from "../lib/utils/types";
+import { useAudioLibraryStore } from "./audioLibraryStore";
+import { AudioClipEngine } from "../lib/audio/engines/audio-clip";
 import { createInstrumentEngine } from "../lib/audio/instrumentFactory";
 import { createImpulseResponse, createEQFilter } from "../lib/audio/config";
 
@@ -173,6 +176,79 @@ export const useTrackAudioStore = defineStore("trackAudioStore", () => {
   const stopAllNotes = (): void => {
     for (const channel of trackChannels.value.values()) {
       channel.engine.stopAllNotes();
+    }
+  };
+
+  // ============================================
+  // Audio Clip Methods
+  // ============================================
+
+  const playClipOnTrack = async (
+    trackId: string,
+    clip: AudioClip,
+    playbackOffsetColumns: number = 0,
+  ): Promise<void> => {
+    await ensureAudioContextResumed();
+
+    const track = timelineStore.tracks.find((t) => t.id === trackId);
+    if (!track) {
+      console.warn(`Track not found: ${trackId}`);
+      return;
+    }
+
+    if (track.instrument.type !== "audioTrack") {
+      console.warn(`Track ${trackId} is not an audio track`);
+      return;
+    }
+
+    const hasSolo = timelineStore.tracks.some((t) => t.solo);
+    if (track.muted || (hasSolo && !track.solo)) {
+      return;
+    }
+
+    const channel = getOrCreateChannel(track);
+    const engine = channel.engine;
+
+    if (!(engine instanceof AudioClipEngine)) {
+      console.warn(`Track ${trackId} engine is not an AudioClipEngine`);
+      return;
+    }
+
+    const audioLibraryStore = useAudioLibraryStore();
+    const buffer = await audioLibraryStore.loadSample(clip.sampleId);
+
+    if (!buffer) {
+      console.warn(`Failed to load sample: ${clip.sampleId}`);
+      return;
+    }
+
+    const stepsPerSecond = (timelineStore.tempo / 60) * 4;
+    const offsetInSeconds =
+      (clip.startOffset + playbackOffsetColumns) / stepsPerSecond;
+    const durationInSeconds = (clip.w - playbackOffsetColumns) / stepsPerSecond;
+
+    engine.playClip(clip.id, buffer, offsetInSeconds, durationInSeconds);
+  };
+
+  const stopClipOnTrack = (trackId: string, clipId: string): void => {
+    const channel = trackChannels.value.get(trackId);
+    if (channel && channel.engine instanceof AudioClipEngine) {
+      channel.engine.stopClip(clipId);
+    }
+  };
+
+  const stopAllClipsOnTrack = (trackId: string): void => {
+    const channel = trackChannels.value.get(trackId);
+    if (channel && channel.engine instanceof AudioClipEngine) {
+      channel.engine.stopAllClips();
+    }
+  };
+
+  const stopAllClips = (): void => {
+    for (const channel of trackChannels.value.values()) {
+      if (channel.engine instanceof AudioClipEngine) {
+        channel.engine.stopAllClips();
+      }
     }
   };
 
@@ -363,6 +439,11 @@ export const useTrackAudioStore = defineStore("trackAudioStore", () => {
     stopNoteOnTrack,
     stopAllNotesOnTrack,
     stopAllNotes,
+
+    playClipOnTrack,
+    stopClipOnTrack,
+    stopAllClipsOnTrack,
+    stopAllClips,
 
     updateTrackVolume,
     updateTrackReverb,

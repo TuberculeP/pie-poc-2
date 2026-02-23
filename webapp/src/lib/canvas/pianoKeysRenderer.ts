@@ -3,7 +3,6 @@ import {
   NOTE_ROW_HEIGHT,
   WHITE_KEY_MULTIPLIERS,
   isOctaveStart,
-  getOctaveNumber,
   getWhiteKeys,
   getBlackKeys,
   ALL_NOTES,
@@ -54,11 +53,7 @@ export class PianoKeysRenderer {
   private allNotes: NoteName[];
   private hoveredKey: NoteName | null = null;
 
-  constructor(
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-  ) {
+  constructor(ctx: CanvasRenderingContext2D, width: number, height: number) {
     this.ctx = ctx;
     this.width = width;
     this.height = height;
@@ -155,7 +150,9 @@ export class PianoKeysRenderer {
     ctx.roundRect(key.x, key.y, key.w - 1, key.h - 1, [0, 0, 3, 3]);
     ctx.fill();
 
-    ctx.strokeStyle = isOctave ? COLORS.whiteKey.octaveBorder : COLORS.whiteKey.border;
+    ctx.strokeStyle = isOctave
+      ? COLORS.whiteKey.octaveBorder
+      : COLORS.whiteKey.border;
     ctx.lineWidth = isOctave ? 2 : 1;
     ctx.beginPath();
     ctx.moveTo(key.x, key.y + key.h - 1);
@@ -165,7 +162,9 @@ export class PianoKeysRenderer {
     ctx.font = "bold 10px system-ui, sans-serif";
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = isActive ? COLORS.whiteKey.textActive : COLORS.whiteKey.text;
+    ctx.fillStyle = isActive
+      ? COLORS.whiteKey.textActive
+      : COLORS.whiteKey.text;
     ctx.fillText(key.note, key.w - 6, key.y + key.h / 2);
   }
 
@@ -173,7 +172,12 @@ export class PianoKeysRenderer {
     const { ctx } = this;
     const isHovered = this.hoveredKey === key.note;
 
-    const gradient = ctx.createLinearGradient(key.x, key.y, key.x, key.y + key.h);
+    const gradient = ctx.createLinearGradient(
+      key.x,
+      key.y,
+      key.x,
+      key.y + key.h,
+    );
     if (isActive) {
       gradient.addColorStop(0, COLORS.blackKey.fillActive);
       gradient.addColorStop(1, COLORS.blackKey.fillActive);
@@ -202,7 +206,9 @@ export class PianoKeysRenderer {
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
 
-    ctx.fillStyle = isActive ? COLORS.blackKey.textActive : COLORS.blackKey.text;
+    ctx.fillStyle = isActive
+      ? COLORS.blackKey.textActive
+      : COLORS.blackKey.text;
     ctx.font = "bold 8px system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";

@@ -1,4 +1,4 @@
-import { onMounted, onBeforeUnmount, type Ref, type ComputedRef } from "vue";
+import { onMounted, onBeforeUnmount, type Ref } from "vue";
 
 export interface KeyboardActions {
   onUndo: () => void;
@@ -78,7 +78,12 @@ export function usePianoGridKeyboard(
 
     // Arrow keys with modifiers for moving selection
     if (selectedNotes.value.size > 0) {
-      const isArrowKey = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key);
+      const isArrowKey = [
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+      ].includes(event.key);
 
       if (isArrowKey && (event.shiftKey || event.ctrlKey || event.metaKey)) {
         event.preventDefault();

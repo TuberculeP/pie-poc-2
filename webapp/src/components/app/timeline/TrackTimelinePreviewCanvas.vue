@@ -105,8 +105,13 @@ const render = () => {
   ctx.globalAlpha = 1;
 };
 
-watch([() => props.notes, () => props.color, isHovered], render, { deep: true });
-watch([() => props.cols, () => props.colWidth, () => props.rowHeight], updateCanvasSize);
+watch([() => props.notes, () => props.color, isHovered], render, {
+  deep: true,
+});
+watch(
+  [() => props.cols, () => props.colWidth, () => props.rowHeight],
+  updateCanvasSize,
+);
 
 onMounted(() => {
   initCanvas();

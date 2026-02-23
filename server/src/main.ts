@@ -13,6 +13,7 @@ import passport from "passport";
 import initializePassport from "./config/passport.config";
 
 import customSession from "./config/cache.config";
+import { seedDefaultAdmin } from "./scripts/seedAdmin";
 
 const main = async () => {
   const dev = process.env.NODE_ENV !== "production";
@@ -65,5 +66,6 @@ const main = async () => {
 (async () => {
   await pg.initialize();
   await pg.runMigrations();
+  await seedDefaultAdmin();
   await main();
 })();

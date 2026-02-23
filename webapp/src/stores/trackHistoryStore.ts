@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import type { MidiNote } from "../lib/utils/types";
+import type { MidiNote, AudioClip, AudioSample } from "../lib/utils/types";
 import { useTimelineStore } from "./timelineStore";
 
 const MAX_HISTORY_SIZE = 50;
@@ -10,6 +10,8 @@ interface HistoryEntry {
   description: string;
   notesBefore: MidiNote[];
   notesAfter: MidiNote[];
+  clipsBefore?: AudioClip[];
+  clipsAfter?: AudioClip[];
 }
 
 interface TrackHistory {
@@ -23,6 +25,7 @@ export const useTrackHistoryStore = defineStore("trackHistory", () => {
   let pendingBatch: {
     trackId: string;
     notesBefore: MidiNote[];
+    clipsBefore: AudioClip[];
     description: string;
   } | null = null;
 
@@ -37,11 +40,18 @@ export const useTrackHistoryStore = defineStore("trackHistory", () => {
     return JSON.parse(JSON.stringify(notes));
   };
 
+  const cloneClips = (clips: AudioClip[] | undefined): AudioClip[] => {
+    if (!clips) return [];
+    return JSON.parse(JSON.stringify(clips));
+  };
+
   const pushHistory = (
     trackId: string,
     notesBefore: MidiNote[],
     notesAfter: MidiNote[],
     description: string,
+    clipsBefore?: AudioClip[],
+    clipsAfter?: AudioClip[],
   ): void => {
     const history = getTrackHistory(trackId);
 
@@ -50,6 +60,8 @@ export const useTrackHistoryStore = defineStore("trackHistory", () => {
       description,
       notesBefore: cloneNotes(notesBefore),
       notesAfter: cloneNotes(notesAfter),
+      clipsBefore: clipsBefore ? cloneClips(clipsBefore) : undefined,
+      clipsAfter: clipsAfter ? cloneClips(clipsAfter) : undefined,
     };
 
     history.undoStack.push(entry);
@@ -72,6 +84,10 @@ export const useTrackHistoryStore = defineStore("trackHistory", () => {
 
     timelineStore.setTrackNotes(trackId, cloneNotes(entry.notesBefore));
 
+    if (entry.clipsBefore !== undefined) {
+      timelineStore.setTrackClips(trackId, cloneClips(entry.clipsBefore));
+    }
+
     return true;
   };
 
@@ -85,6 +101,10 @@ export const useTrackHistoryStore = defineStore("trackHistory", () => {
     history.undoStack.push(entry);
 
     timelineStore.setTrackNotes(trackId, cloneNotes(entry.notesAfter));
+
+    if (entry.clipsAfter !== undefined) {
+      timelineStore.setTrackClips(trackId, cloneClips(entry.clipsAfter));
+    }
 
     return true;
   };
@@ -130,6 +150,54 @@ export const useTrackHistoryStore = defineStore("trackHistory", () => {
     return success;
   };
 
+  const recordAddClip = (
+    trackId: string,
+    clip: Omit<AudioClip, "id">,
+    sample?: AudioSample,
+  ): string | null => {
+    const timelineStore = useTimelineStore();
+    const track = timelineStore.project.tracks.find((t) => t.id === trackId);
+    if (!track) return null;
+
+    const clipsBefore = cloneClips(track.clips);
+    const clipId = timelineStore.addClipToTrack(trackId, clip, sample);
+
+    if (clipId) {
+      pushHistory(
+        trackId,
+        track.notes,
+        track.notes,
+        "Add clip",
+        clipsBefore,
+        track.clips,
+      );
+    }
+
+    return clipId;
+  };
+
+  const recordRemoveClip = (trackId: string, clipId: string): boolean => {
+    const timelineStore = useTimelineStore();
+    const track = timelineStore.project.tracks.find((t) => t.id === trackId);
+    if (!track) return false;
+
+    const clipsBefore = cloneClips(track.clips);
+    const success = timelineStore.removeClipFromTrack(trackId, clipId);
+
+    if (success) {
+      pushHistory(
+        trackId,
+        track.notes,
+        track.notes,
+        "Remove clip",
+        clipsBefore,
+        track.clips,
+      );
+    }
+
+    return success;
+  };
+
   const startBatch = (trackId: string, description: string): void => {
     const timelineStore = useTimelineStore();
     const track = timelineStore.project.tracks.find((t) => t.id === trackId);
@@ -138,6 +206,7 @@ export const useTrackHistoryStore = defineStore("trackHistory", () => {
     pendingBatch = {
       trackId,
       notesBefore: cloneNotes(track.notes),
+      clipsBefore: cloneClips(track.clips),
       description,
     };
   };
@@ -156,6 +225,8 @@ export const useTrackHistoryStore = defineStore("trackHistory", () => {
         pendingBatch.notesBefore,
         track.notes,
         pendingBatch.description,
+        pendingBatch.clipsBefore,
+        track.clips,
       );
     }
 
@@ -181,6 +252,8 @@ export const useTrackHistoryStore = defineStore("trackHistory", () => {
     canRedo,
     recordAddNote,
     recordRemoveNote,
+    recordAddClip,
+    recordRemoveClip,
     startBatch,
     endBatch,
     cancelBatch,

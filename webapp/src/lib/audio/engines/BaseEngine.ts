@@ -7,6 +7,8 @@ import type {
 
 export abstract class BaseEngine implements InstrumentEngine {
   abstract readonly type: string;
+  abstract readonly resourceKey: string | null;
+  abstract readonly resourceLabel: string;
   config: InstrumentConfig;
 
   protected _state: EngineState = "idle";

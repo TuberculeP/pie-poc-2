@@ -1,13 +1,16 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { Track } from "../../../lib/utils/types";
 import TrackHeader from "./TrackHeader.vue";
 import TrackTimelinePreview from "./TrackTimelinePreview.vue";
 import TrackTimelinePreviewCanvas from "./TrackTimelinePreviewCanvas.vue";
+import AudioClipPreview from "./AudioClipPreview.vue";
 import PianoRoll from "./PianoRoll/PianoRoll.vue";
 
 const USE_CANVAS = true;
+import { AudioClipRow } from "./AudioClipRow";
 
-defineProps<{
+const props = defineProps<{
   track: Track;
   cols: number;
   colWidth: number;
@@ -27,6 +30,10 @@ const emit = defineEmits<{
   (e: "open-settings", track: Track): void;
   (e: "toggle-expand", track: Track): void;
 }>();
+
+const isAudioTrack = computed(
+  () => props.track.instrument.type === "audioTrack",
+);
 </script>
 
 <template>
@@ -48,6 +55,7 @@ const emit = defineEmits<{
 
     <component
       :is="USE_CANVAS ? TrackTimelinePreviewCanvas : TrackTimelinePreview"
+      v-if="!isAudioTrack"
       :notes="track.notes"
       :cols="cols"
       :col-width="colWidth"
@@ -56,8 +64,27 @@ const emit = defineEmits<{
       @dblclick="emit('toggle-expand', track)"
     />
 
+    <AudioClipPreview
+      v-else
+      :clips="track.clips ?? []"
+      :cols="cols"
+      :col-width="colWidth"
+      :row-height="rowHeight"
+      :color="track.color"
+      @dblclick="emit('toggle-expand', track)"
+    />
+
     <PianoRoll
-      v-if="isExpanded"
+      v-if="isExpanded && !isAudioTrack"
+      :track="track"
+      :cols="cols"
+      :col-width="colWidth"
+      :playback-position="playbackPosition"
+      :is-playing="isPlaying"
+    />
+
+    <AudioClipRow
+      v-else-if="isExpanded && isAudioTrack"
       :track="track"
       :cols="cols"
       :col-width="colWidth"
@@ -98,6 +125,11 @@ const emit = defineEmits<{
 }
 
 :deep(.piano-roll-wrapper) {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+:deep(.audio-clip-row-wrapper) {
   grid-column: 1 / -1;
   grid-row: 2;
 }

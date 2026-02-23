@@ -16,6 +16,8 @@ interface ActiveNote {
 
 export class UndertaleEngine extends BaseEngine {
   readonly type = "undertale";
+  readonly resourceKey = "undertale:sf2";
+  readonly resourceLabel = "Undertale Soundfont";
 
   private sampler: Soundfont2Sampler | null = null;
   private activeNotes: Map<string, ActiveNote> = new Map();
@@ -170,9 +172,12 @@ export class UndertaleEngine extends BaseEngine {
     if (activeNote) {
       try {
         activeNote.stopFn();
-        setTimeout(() => {
-          activeNote.envelopeNode.disconnect();
-        }, this.release * 1000 + 100);
+        setTimeout(
+          () => {
+            activeNote.envelopeNode.disconnect();
+          },
+          this.release * 1000 + 100,
+        );
       } catch {
         // Ignore errors
       }

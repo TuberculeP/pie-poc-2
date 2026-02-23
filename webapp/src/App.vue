@@ -29,4 +29,11 @@ onSocketConnected((socket) => {
   padding: 0;
   box-sizing: border-box;
 }
+
+html,
+body,
+#app {
+  height: 100%;
+  min-height: 100vh;
+}
 </style>

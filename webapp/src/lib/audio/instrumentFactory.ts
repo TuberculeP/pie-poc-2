@@ -1,5 +1,6 @@
 import type { InstrumentConfig } from "../utils/types";
 import {
+  AudioClipEngine,
   BasicSynthEngine,
   SmplrEngine,
   UndertaleEngine,
@@ -30,6 +31,9 @@ export function createInstrumentEngine(
 
     case "undertale":
       return new UndertaleEngine(audioContext, destination, config);
+
+    case "audioTrack":
+      return new AudioClipEngine(audioContext, destination, config);
 
     default:
       throw new Error(`Unknown instrument type: ${(config as any).type}`);
@@ -70,6 +74,12 @@ export function getDefaultConfigForType(
         decay: 0,
         sustain: 1,
         release: 0.3,
+      };
+
+    case "audioTrack":
+      return {
+        type: "audioTrack",
+        gain: 1,
       };
 
     default:

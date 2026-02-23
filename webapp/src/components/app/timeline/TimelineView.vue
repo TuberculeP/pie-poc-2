@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  inject,
+  type Ref,
+} from "vue";
 import { useRouter } from "vue-router";
 import { useTimelineStore } from "../../../stores/timelineStore";
 import { useTrackAudioStore } from "../../../stores/trackAudioStore";
@@ -8,6 +15,7 @@ import type {
   Track,
   InstrumentType,
   MidiNote,
+  AudioClip,
   NoteName,
 } from "../../../lib/utils/types";
 import { getDefaultConfigForType } from "../../../lib/audio/instrumentFactory";
@@ -57,6 +65,7 @@ const animationFrameId = ref<number | null>(null);
 
 const settingsTrack = ref<Track | null>(null);
 const showSettings = ref(false);
+const showAudioLibrary = inject<Ref<boolean>>("showAudioLibrary", ref(false));
 
 const isEditingProjectName = ref(false);
 const editedProjectName = ref("");
@@ -113,6 +122,10 @@ const activeNotes = ref<Map<string, { trackId: string; noteId: string }>>(
   new Map(),
 );
 
+const activeClips = ref<Map<string, { trackId: string; clip: AudioClip }>>(
+  new Map(),
+);
+
 // Playback - lit directement les notes des tracks (plus de clips)
 const playNotesAtPosition = (position: number) => {
   const intPosition = Math.floor(position);
@@ -137,6 +150,33 @@ const playNotesAtPosition = (position: number) => {
         trackAudioStore.stopNoteOnTrack(track.id, note.i);
         activeNotes.value.delete(noteKey);
         emit("note-end", note, noteName, intPosition, track.id);
+      }
+    }
+  }
+};
+
+const playClipsAtPosition = (position: number) => {
+  const intPosition = Math.floor(position);
+
+  for (const track of timelineStore.getPlayableTracks()) {
+    if (track.instrument.type !== "audioTrack") continue;
+
+    for (const clip of track.clips ?? []) {
+      const clipKey = `${track.id}_${clip.id}`;
+      const clipStart = clip.x;
+      const clipEnd = clip.x + clip.w;
+
+      if (intPosition >= clipStart && intPosition < clipEnd) {
+        if (!activeClips.value.has(clipKey)) {
+          const offsetInClip = intPosition - clipStart;
+          trackAudioStore.playClipOnTrack(track.id, clip, offsetInClip);
+          activeClips.value.set(clipKey, { trackId: track.id, clip });
+        }
+      }
+
+      if (intPosition >= clipEnd && activeClips.value.has(clipKey)) {
+        trackAudioStore.stopClipOnTrack(track.id, clip.id);
+        activeClips.value.delete(clipKey);
       }
     }
   }
@@ -172,6 +212,13 @@ const triggerNotesAtPosition = (position: number) => {
   }
 };
 
+const stopAllActiveClips = () => {
+  for (const [_, { trackId, clip }] of activeClips.value) {
+    trackAudioStore.stopClipOnTrack(trackId, clip.id);
+  }
+  activeClips.value.clear();
+};
+
 const animate = () => {
   if (!isPlaying.value) return;
 
@@ -183,8 +230,7 @@ const animate = () => {
     stopAllActiveNotes();
     newPosition = 0;
     playbackStartTime.value =
-      performance.now() +
-      (checkpointPosition.value / stepsPerSecond) * 1000;
+      performance.now() + (checkpointPosition.value / stepsPerSecond) * 1000;
     triggerNotesAtPosition(newPosition);
   }
 
@@ -195,6 +241,7 @@ const animate = () => {
 
   if (newIntPosition !== prevIntPosition) {
     playNotesAtPosition(newPosition);
+    playClipsAtPosition(newPosition);
   }
 
   animationFrameId.value = requestAnimationFrame(animate);
@@ -208,6 +255,7 @@ const startPlayback = () => {
   playbackStartTime.value = performance.now();
 
   triggerNotesAtPosition(currentPosition.value);
+  playClipsAtPosition(currentPosition.value);
 
   animationFrameId.value = requestAnimationFrame(animate);
 };
@@ -220,6 +268,7 @@ const stopPlayback = () => {
   }
   stopAllActiveNotes();
   currentPosition.value = checkpointPosition.value;
+  stopAllActiveClips();
 };
 
 const togglePlayback = () => {
@@ -234,6 +283,7 @@ const setCheckpoint = (position: number) => {
   checkpointPosition.value = position;
   if (isPlaying.value) {
     stopAllActiveNotes();
+    stopAllActiveClips();
     currentPosition.value = position;
     playbackStartTime.value = performance.now();
     triggerNotesAtPosition(position);
@@ -382,6 +432,14 @@ defineExpose({
           ←
         </button>
         <AddTrackButton @add-track="handleAddTrack" />
+        <button
+          class="header-btn library-btn"
+          :class="{ active: showAudioLibrary }"
+          @click="showAudioLibrary = !showAudioLibrary"
+          title="Audio Library"
+        >
+          🔊
+        </button>
       </div>
       <div class="header-center">
         <div class="transport-controls">
@@ -576,6 +634,16 @@ defineExpose({
 .back-btn {
   padding: 8px 12px;
   font-size: 16px;
+}
+
+.library-btn {
+  padding: 8px 12px;
+  font-size: 16px;
+
+  &.active {
+    background: #7a0f3e;
+    border-color: #ff3fb4;
+  }
 }
 
 .save-indicator-group {

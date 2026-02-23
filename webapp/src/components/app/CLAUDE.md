@@ -60,13 +60,15 @@ getTrackNotesAtPosition(trackId, position): MidiNote[]
 ### Types clés (`lib/utils/types.ts`)
 
 ```typescript
-InstrumentType = "basicSynth" | "elementarySynth" | "smplr"
+InstrumentType = "basicSynth" | "elementarySynth" | "smplr" | "undertale" | "audioTrack"
 
 // Discriminated unions pour type safety
 BasicSynthConfig { type: "basicSynth", oscillatorType: OscillatorType, gain? }
 SmplrConfig { type: "smplr", soundfont: string, gain? }
 ElementarySynthConfig { type: "elementarySynth", preset?, gain? }
-InstrumentConfig = BasicSynthConfig | SmplrConfig | ElementarySynthConfig
+UndertaleConfig { type: "undertale", instrument: string, gain?, attack?, decay?, sustain?, release? }
+AudioTrackConfig { type: "audioTrack", gain? }
+InstrumentConfig = BasicSynthConfig | SmplrConfig | ElementarySynthConfig | UndertaleConfig | AudioTrackConfig
 
 // Pour les updates partiels (sans discriminant)
 InstrumentConfigUpdate { oscillatorType?, soundfont?, preset?, gain? }
@@ -83,8 +85,22 @@ Track {
   id, name, instrument, color, volume, reverb,
   eqBands: EQBand[],  // EQ 5 bandes par piste
   muted, solo, order,
-  notes: MidiNote[]   // Notes avec positions absolues sur la timeline
+  notes: MidiNote[]   // Notes avec positions absolues sur la timeline (MIDI tracks)
+  clips?: AudioClip[] // Clips audio (audio tracks uniquement)
   createdAt, updatedAt
+}
+
+AudioClip {
+  id: string
+  sampleId: string    // Référence vers AudioSample
+  x: number           // Position sur la timeline (en colonnes)
+  w: number           // Largeur (en colonnes)
+  startOffset: number // Décalage dans le sample source
+}
+
+AudioSample {
+  id, name, packId, folder, filename,
+  duration, waveformData?, fullUrl  // URL CDN R2
 }
 
 MidiNote {
@@ -121,9 +137,66 @@ engines/
   smplr/
     SmplrEngine.ts      # Soundfonts via `smplr` (128+ instruments)
     soundfonts.ts       # SOUNDFONT_LIST + SoundfontName
+
+  undertale/
+    UndertaleEngine.ts  # Soundfont custom Undertale avec ADSR
 ```
 
 Factory : `lib/audio/instrumentFactory.ts` - Crée les instances d'engines selon le type.
+
+### Bibliothèque de samples (Audiothèque)
+
+Système de gestion des samples audio stockés sur Cloudflare R2.
+
+```
+stores/
+├── audioLibraryStore.ts   # Fetch samples API + gestion buffers
+└── sampleCacheStore.ts    # Cache IndexedDB (500MB, LRU)
+```
+
+#### audioLibraryStore - API
+
+```typescript
+// État
+packs: SamplePack[]                    // Packs chargés
+samples: Map<string, AudioSample>      // Samples indexés par ID
+buffers: Map<string, AudioBuffer>      // AudioBuffers décodés
+loadingStates: Map<string, LoadingState>  // "idle" | "loading" | "ready" | "error"
+
+// Fetch depuis API
+fetchPacksFromApi(page, limit): SamplePack[]
+fetchPackDetails(slug): SamplePack | null
+fetchFolderSamples(packSlug, folderId): AudioSample[]
+
+// Chargement audio
+loadSample(sampleId): AudioBuffer | null  // Charge depuis R2 + cache IndexedDB
+preloadPack(packId): void                 // Précharge tous les samples d'un pack
+```
+
+#### sampleCacheStore (IndexedDB)
+
+Cache LRU avec limite de 500MB.
+
+```typescript
+get(sampleId): ArrayBuffer | null     // Récupère depuis cache
+set(sampleId, arrayBuffer): void      // Stocke + éviction LRU si nécessaire
+delete(sampleId): void
+clear(): void
+```
+
+#### Flow de chargement
+
+```
+User sélectionne sample
+  → audioLibraryStore.loadSample(sampleId)
+    → Check buffers Map (déjà décodé?)
+    → Check IndexedDB cache (déjà téléchargé?)
+    → Fetch depuis CDN R2 (sample.fullUrl)
+    → Store dans IndexedDB
+    → Decode AudioBuffer
+    → Store dans buffers Map
+    → Génère waveformData
+```
 
 #### Routing Audio par piste (`trackAudioStore`)
 
@@ -181,7 +254,7 @@ Engine → GainNode (volume) → EQ Filters (5 bandes) → DryGain → inputBus
 
 ## Flow utilisateur
 
-1. **Ajouter une piste** : Bouton "+" → Menu avec 3 choix (Synth, Elementary, Sampler)
+1. **Ajouter une piste** : Bouton "+" → Menu instruments (BasicSynth, Smplr, Undertale, AudioTrack)
 2. **Éditer les notes** : Double-clic sur la timeline d'une piste → Piano roll s'expand en dessous
 3. **Ajouter une note** : Clic simple sur la grille du piano roll
 4. **Supprimer une note** : Clic droit sur la note
@@ -253,6 +326,10 @@ cloneEQBands()                // Clone profond des bandes EQ
 - [x] EQ/Reverb par piste (dans InstrumentSettings)
 - [ ] Zoom timeline
 - [ ] ADSR pour ElementarySynth
+- [x] Undertale soundfont engine avec ADSR
+- [ ] Audio tracks (pistes samples) - en cours
+- [x] Bibliothèque de samples connectée à R2/CDN
+- [x] Cache IndexedDB pour samples (500MB, LRU)
 
 ## Conventions de code
 

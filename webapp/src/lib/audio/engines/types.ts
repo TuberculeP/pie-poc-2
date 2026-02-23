@@ -14,6 +14,18 @@ export interface InstrumentEngine {
 
   readonly state: EngineState;
 
+  /**
+   * Clé unique identifiant la ressource à précharger.
+   * Les engines avec la même clé partagent la même ressource (un seul chargement).
+   * null = pas de préchargement nécessaire.
+   */
+  readonly resourceKey: string | null;
+
+  /**
+   * Label lisible pour l'affichage pendant le chargement.
+   */
+  readonly resourceLabel: string;
+
   onStateChange(callback: EngineStateCallback): () => void;
 
   preload(): Promise<void>;

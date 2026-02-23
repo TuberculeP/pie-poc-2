@@ -78,6 +78,27 @@
                     </svg>
                     <span>Mon Profil</span>
                   </router-link>
+                  <router-link
+                    v-if="isAdmin"
+                    to="/admin"
+                    @click="closeProfileMenu"
+                    class="dropdown-item admin"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                      ></path>
+                    </svg>
+                    <span>Admin</span>
+                  </router-link>
                   <button @click="handleLogout" class="dropdown-item logout">
                     <svg
                       width="18"
@@ -158,6 +179,7 @@ const isMobileMenuOpen = ref(false);
 // Auth state
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const user = computed(() => authStore.user);
+const isAdmin = computed(() => user.value?.role === "ROLE_ADMIN");
 
 const userInitials = computed(() => {
   if (!user.value) return "?";
@@ -651,6 +673,14 @@ onUnmounted(() => {
 .dropdown-item.logout:hover {
   background: rgba(238, 53, 53, 0.1);
   color: var(--color-error);
+}
+
+.dropdown-item.admin {
+  color: #ff3fb4;
+}
+
+.dropdown-item.admin:hover {
+  background: rgba(255, 63, 180, 0.1);
 }
 
 /* Dropdown animation */
