@@ -29,20 +29,10 @@
           </div>
         </div>
 
-        <div class="upload-section">
-          <h2>Upload Samples</h2>
-          <SampleUploader
-            :packSlug="currentPack?.slug || ''"
-            :folderName="currentFolder.name"
-            :folderId="currentFolder.id"
-            @uploaded="onSampleUploaded"
-          />
-        </div>
-
         <h2>Samples ({{ currentSamples.length }})</h2>
 
         <div v-if="currentSamples.length === 0" class="empty-state">
-          <p>No samples yet. Upload some audio files above.</p>
+          <p>No samples in this folder.</p>
         </div>
 
         <div v-else class="samples-list">
@@ -111,7 +101,6 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import AdminLayout from "../../layouts/AdminLayout.vue";
-import SampleUploader from "../../components/admin/SampleUploader.vue";
 import { useAdminStore } from "../../stores/adminStore";
 
 const route = useRoute();
@@ -148,10 +137,6 @@ onMounted(async () => {
 onUnmounted(() => {
   adminStore.resetFolderDetail();
 });
-
-function onSampleUploaded() {
-  // Samples are automatically added to the store by createSample
-}
 
 function editSample(sample: any) {
   editingSample.value = sample;
@@ -261,18 +246,6 @@ function formatDuration(seconds: number): string {
 .folder-meta {
   font-size: 14px;
   color: rgba(255, 255, 255, 0.5);
-}
-
-.upload-section {
-  background: #2a1520;
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 24px;
-  border: 1px solid rgba(122, 15, 62, 0.3);
-
-  h2 {
-    margin: 0 0 16px;
-  }
 }
 
 .samples-list {

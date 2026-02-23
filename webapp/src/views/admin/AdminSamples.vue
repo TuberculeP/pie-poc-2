@@ -3,8 +3,8 @@
     <div class="admin-samples">
       <div class="page-header">
         <h1>Sample Library</h1>
-        <button @click="showCreateModal = true" class="btn-primary">
-          + New Pack
+        <button @click="showImportModal = true" class="btn-primary">
+          + Import Pack (ZIP)
         </button>
       </div>
 
@@ -12,8 +12,8 @@
 
       <div v-else-if="packs.length === 0" class="empty-state">
         <p>No sample packs yet</p>
-        <button @click="showCreateModal = true" class="btn-primary">
-          Create your first pack
+        <button @click="showImportModal = true" class="btn-primary">
+          Import your first pack
         </button>
       </div>
 
@@ -74,14 +74,29 @@
       </div>
     </div>
 
-    <!-- Create/Edit Modal -->
+    <!-- Import ZIP Modal -->
     <div
-      v-if="showCreateModal || editingPack"
+      v-if="showImportModal"
+      class="modal-overlay"
+      @click="showImportModal = false"
+    >
+      <div class="modal modal-large" @click.stop>
+        <h2>Import Sample Pack</h2>
+        <ZipPackImporter
+          @cancel="showImportModal = false"
+          @done="handleImportDone"
+        />
+      </div>
+    </div>
+
+    <!-- Edit Pack Modal -->
+    <div
+      v-if="editingPack"
       class="modal-overlay"
       @click="closeModal"
     >
       <div class="modal" @click.stop>
-        <h2>{{ editingPack ? "Edit Pack" : "Create Pack" }}</h2>
+        <h2>Edit Pack</h2>
         <form @submit.prevent="submitPack">
           <div class="form-group">
             <label>Name</label>
@@ -93,7 +108,7 @@
               v-model="packForm.slug"
               required
               pattern="[a-z0-9-]+"
-              :disabled="!!editingPack"
+              disabled
             />
           </div>
           <div class="form-group">
@@ -110,7 +125,7 @@
               Featured
             </label>
           </div>
-          <div class="form-group checkbox" v-if="editingPack">
+          <div class="form-group checkbox">
             <label>
               <input type="checkbox" v-model="packForm.isActive" />
               Active
@@ -121,7 +136,7 @@
               Cancel
             </button>
             <button type="submit" class="btn-primary">
-              {{ editingPack ? "Save" : "Create" }}
+              Save
             </button>
           </div>
         </form>
@@ -134,6 +149,7 @@
 import { ref, reactive, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import AdminLayout from "../../layouts/AdminLayout.vue";
+import ZipPackImporter from "../../components/admin/ZipPackImporter.vue";
 import { useAdminStore } from "../../stores/adminStore";
 
 const router = useRouter();
@@ -143,7 +159,7 @@ const packs = computed(() => adminStore.packs);
 const packsPagination = computed(() => adminStore.packsPagination);
 const packsLoading = computed(() => adminStore.packsLoading);
 
-const showCreateModal = ref(false);
+const showImportModal = ref(false);
 const editingPack = ref<any>(null);
 
 const packForm = reactive({
@@ -178,7 +194,6 @@ function editPack(pack: any) {
 }
 
 function closeModal() {
-  showCreateModal.value = false;
   editingPack.value = null;
   packForm.name = "";
   packForm.slug = "";
@@ -186,6 +201,13 @@ function closeModal() {
   packForm.cover = "";
   packForm.featured = false;
   packForm.isActive = true;
+}
+
+function handleImportDone(result: any) {
+  showImportModal.value = false;
+  if (result?.success) {
+    adminStore.fetchPacks();
+  }
 }
 
 async function submitPack() {
@@ -196,14 +218,6 @@ async function submitPack() {
       cover: packForm.cover || null,
       featured: packForm.featured,
       isActive: packForm.isActive,
-    });
-  } else {
-    await adminStore.createPack({
-      name: packForm.name,
-      slug: packForm.slug,
-      author: packForm.author || undefined,
-      cover: packForm.cover || undefined,
-      featured: packForm.featured,
     });
   }
   closeModal();
@@ -427,6 +441,10 @@ async function confirmDeletePack(pack: any) {
   width: 100%;
   max-width: 400px;
   border: 1px solid rgba(122, 15, 62, 0.5);
+
+  &.modal-large {
+    max-width: 540px;
+  }
 
   h2 {
     margin: 0 0 20px;

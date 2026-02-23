@@ -358,6 +358,66 @@ export const useAdminStore = defineStore("admin", () => {
     }
   }
 
+  // ===== IMPORT ZIP =====
+
+  interface ImportPackResult {
+    success: boolean;
+    pack?: {
+      id: string;
+      name: string;
+      slug: string;
+      foldersCount: number;
+      samplesCount: number;
+    };
+    warnings?: string[];
+    error?: string;
+  }
+
+  async function importPackFromZip(
+    file: File,
+    data: { name: string; slug: string; author?: string },
+  ): Promise<ImportPackResult> {
+    const formData = new FormData();
+    formData.append("zipFile", file);
+    formData.append("name", data.name);
+    formData.append("slug", data.slug);
+    if (data.author) formData.append("author", data.author);
+
+    try {
+      const response = await fetch("/api/admin/import-pack", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: result.error || "Import failed",
+          warnings: result.warnings,
+        };
+      }
+
+      if (result.body?.pack) {
+        await fetchPacks();
+      }
+
+      return {
+        success: true,
+        pack: result.body.pack,
+        warnings: result.body.warnings,
+      };
+    } catch (error) {
+      console.error("Import error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Import failed",
+      };
+    }
+  }
+
   // ===== STATS =====
 
   async function fetchStats() {
@@ -426,6 +486,7 @@ export const useAdminStore = defineStore("admin", () => {
 
     // Upload
     uploadFile,
+    importPackFromZip,
 
     // Stats
     fetchStats,
