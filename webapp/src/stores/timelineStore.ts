@@ -6,6 +6,7 @@ import type {
   MidiNote,
   AudioClip,
   AudioSample,
+  ClipResizeMode,
   InstrumentConfig,
   InstrumentType,
   TrackColor,
@@ -28,6 +29,8 @@ import {
   LEGACY_TO_TICKS_SCALE,
   migrateLegacyProject,
 } from "../lib/audio/timeGrid";
+import { pickStretchFields } from "../lib/audio/clipStretch";
+import { createDebouncer } from "../lib/utils/debounce";
 import { useProjectStore } from "./projectStore";
 import { useUiLayoutPreference } from "../composables/useUiLayoutStorage";
 
@@ -207,6 +210,12 @@ export const useTimelineStore = defineStore("timelineStore", () => {
   const automationExpandedMaster = ref(false);
   const isLoadingProject = ref(false); // Flag pour ignorer markAsChanged pendant le chargement
   const metronomeEnabled = useUiLayoutPreference("metronome-enabled", false);
+  // Mode de resize des clips audio ("edit" = couper, "stretch" = étirer) —
+  // volontairement NON persisté (contrairement aux autres préférences de vue
+  // ci-dessus) : le stretch est un geste ponctuel, moins fréquent que le
+  // trim classique, donc chaque session/reload repart en mode "couper" par
+  // défaut plutôt que de rester bloquée en "stretch" silencieusement.
+  const clipResizeMode = ref<ClipResizeMode>("edit");
   // Aide d'édition éphémère (non persistée) : dernière largeur donnée à une
   // note via un resize individuel, utilisée comme largeur par défaut pour la
   // prochaine note posée au clic dans le piano roll.
@@ -215,7 +224,13 @@ export const useTimelineStore = defineStore("timelineStore", () => {
   // une donnée de projet (non partagée entre collaborateurs).
   const ZOOM_MIN = 0.25;
   const ZOOM_MAX = 4;
-  const zoomLevel = useUiLayoutPreference("timeline-zoom", 1);
+  // zoomLevel pilote le rendu (colWidth) et doit rester réactif à chaque
+  // event wheel. La persistance localStorage est débounce à part (voir
+  // scheduleZoomPersist plus bas) : un event wheel peut arriver à 60-100/s
+  // pendant un pinch trackpad, et useLocalStorage écrirait sinon de façon
+  // synchrone à chaque tick.
+  const persistedZoomLevel = useUiLayoutPreference("timeline-zoom", 1);
+  const zoomLevel = ref(persistedZoomLevel.value);
   // Vitesse du zoom Ctrl+molette/pincement trackpad : le delta d'un geste de
   // pincement macOS est bien plus faible que celui d'un clic de molette, d'où
   // un réglage par utilisateur plutôt qu'une constante unique. 1-20, défaut 5.
@@ -318,7 +333,9 @@ export const useTimelineStore = defineStore("timelineStore", () => {
       elementarySynth: "Elementary",
       smplr: "Sampler",
       undertale: "Undertale",
+      fmSynth: "FM Synth",
       audioTrack: "Audio",
+      samplePlayer: "Sample",
     };
     const baseName = baseNames[instrumentType];
     let counter = 1;
@@ -344,6 +361,7 @@ export const useTimelineStore = defineStore("timelineStore", () => {
       instrument,
       color: getNextTrackColor(),
       volume: 100,
+      pan: 0,
       effects: [],
       muted: false,
       solo: false,
@@ -423,6 +441,10 @@ export const useTimelineStore = defineStore("timelineStore", () => {
 
   const setTrackVolume = (trackId: string, volume: number): boolean => {
     return updateTrack(trackId, { volume: Math.max(0, Math.min(100, volume)) });
+  };
+
+  const setTrackPan = (trackId: string, pan: number): boolean => {
+    return updateTrack(trackId, { pan: Math.max(-127, Math.min(127, pan)) });
   };
 
   const updateTrackInstrument = (
@@ -536,6 +558,17 @@ export const useTimelineStore = defineStore("timelineStore", () => {
   // Actions - Audio Clips sur Track
   // ============================================
 
+  // Enregistre les métadonnées d'un sample dans le projet pour qu'il reste
+  // résolvable (nom, fullUrl...) après un reload, peu importe le sample
+  // d'origine (bibliothèque ou perso) — réutilisé par addClipToTrack et par
+  // la sélection de sample pour l'instrument samplePlayer.
+  const registerUsedSample = (sample: AudioSample): void => {
+    if (!project.value.usedSamples) {
+      project.value.usedSamples = {};
+    }
+    project.value.usedSamples[sample.id] = sample;
+  };
+
   const addClipToTrack = (
     trackId: string,
     clip: Omit<AudioClip, "id">,
@@ -558,10 +591,7 @@ export const useTimelineStore = defineStore("timelineStore", () => {
 
     // Stocker les métadonnées du sample pour la persistence
     if (sample) {
-      if (!project.value.usedSamples) {
-        project.value.usedSamples = {};
-      }
-      project.value.usedSamples[sample.id] = sample;
+      registerUsedSample(sample);
     }
 
     track.updatedAt = new Date();
@@ -626,6 +656,7 @@ export const useTimelineStore = defineStore("timelineStore", () => {
       x: cutPosition,
       w: rightW,
       startOffset: rightStartOffset,
+      ...pickStretchFields(clip),
     });
 
     track.updatedAt = new Date();
@@ -691,6 +722,7 @@ export const useTimelineStore = defineStore("timelineStore", () => {
 
   const setZoomLevel = (value: number): void => {
     zoomLevel.value = clamp(value, ZOOM_MIN, ZOOM_MAX);
+    scheduleZoomPersist();
   };
 
   const setZoomWheelSpeed = (value: number): void => {
@@ -961,33 +993,29 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     }
   };
 
-  // Le watcher deep sur `project` déclenche saveToLocalStorage() à chaque
-  // mutation, y compris les mutations à la volée pendant un drag (clip,
-  // note, point d'automation). JSON.stringify + localStorage.setItem sur
-  // tout le projet est synchrone et coûteux : on le debounce pour ne pas
+  // Le watcher deep sur `project` déclenche scheduleSaveToLocalStorage() à
+  // chaque mutation, y compris les mutations à la volée pendant un drag
+  // (clip, note, point d'automation). JSON.stringify + localStorage.setItem
+  // sur tout le projet est synchrone et coûteux : on le debounce pour ne pas
   // bloquer le thread principal (et donc la boucle rAF du playback) en
   // rafale. `flushSaveToLocalStorage` garantit qu'on ne perd pas les
   // dernières modifications si l'utilisateur ferme l'onglet juste après.
-  let saveDebounceId: ReturnType<typeof setTimeout> | null = null;
-  const SAVE_DEBOUNCE_MS = 500;
+  const {
+    schedule: scheduleSaveToLocalStorage,
+    flush: flushSaveToLocalStorage,
+  } = createDebouncer(saveToLocalStorage, 500);
 
-  const scheduleSaveToLocalStorage = (): void => {
-    if (saveDebounceId) clearTimeout(saveDebounceId);
-    saveDebounceId = setTimeout(() => {
-      saveDebounceId = null;
-      saveToLocalStorage();
-    }, SAVE_DEBOUNCE_MS);
-  };
-
-  const flushSaveToLocalStorage = (): void => {
-    if (!saveDebounceId) return;
-    clearTimeout(saveDebounceId);
-    saveDebounceId = null;
-    saveToLocalStorage();
-  };
+  // zoomLevel pilote le rendu immédiatement (voir sa déclaration) ; seule
+  // l'écriture localStorage est debounce ici, pour ne pas la faire à chaque
+  // event wheel (60-100/s en pinch trackpad).
+  const { schedule: scheduleZoomPersist, flush: flushZoomPersist } =
+    createDebouncer(() => {
+      persistedZoomLevel.value = zoomLevel.value;
+    }, 400);
 
   if (typeof window !== "undefined") {
     window.addEventListener("beforeunload", flushSaveToLocalStorage);
+    window.addEventListener("beforeunload", flushZoomPersist);
   }
 
   const loadFromLocalStorage = (): boolean => {
@@ -1021,6 +1049,10 @@ export const useTimelineStore = defineStore("timelineStore", () => {
         // S'assurer que notes existe
         if (!track.notes) {
           track.notes = [];
+        }
+        // Projets antérieurs à l'ajout du pan
+        if (track.pan === undefined) {
+          track.pan = 0;
         }
         // S'assurer que clips existe pour les audio tracks
         if (track.instrument.type === "audioTrack" && !track.clips) {
@@ -1065,6 +1097,10 @@ export const useTimelineStore = defineStore("timelineStore", () => {
       if (!track.notes) {
         track.notes = [];
       }
+      // Projets antérieurs à l'ajout du pan
+      if (track.pan === undefined) {
+        track.pan = 0;
+      }
       // S'assurer que clips existe pour les audio tracks
       if (track.instrument.type === "audioTrack" && !track.clips) {
         track.clips = [];
@@ -1081,13 +1117,9 @@ export const useTimelineStore = defineStore("timelineStore", () => {
 
     project.value = data;
 
-    // Restaurer les métadonnées des samples utilisés dans audioLibraryStore
-    if (data.usedSamples) {
-      import("./audioLibraryStore").then(({ useAudioLibraryStore }) => {
-        const audioLibraryStore = useAudioLibraryStore();
-        audioLibraryStore.restoreSamples(data.usedSamples!);
-      });
-    }
+    // Restaurer les métadonnées des samples utilisés (usedSamples) est du
+    // ressort de trackAudioStore.initialize(), appelé juste après par le
+    // caller — voir ce fichier pour l'explication de l'ordonnancement.
 
     // Clear all undo/redo history when loading a new project
     import("./trackHistoryStore").then(({ useTrackHistoryStore }) => {
@@ -1191,6 +1223,7 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     expandedTrack,
     automationExpandedMaster,
     metronomeEnabled,
+    clipResizeMode,
     lastResizedNoteWidth,
     zoomLevel,
     zoomWheelSpeed,
@@ -1205,6 +1238,7 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     setTrackMuted,
     setTrackSolo,
     setTrackVolume,
+    setTrackPan,
     updateTrackInstrument,
     reorderTracks,
 
@@ -1218,6 +1252,7 @@ export const useTimelineStore = defineStore("timelineStore", () => {
     addClipToTrack,
     removeClipFromTrack,
     updateClipInTrack,
+    registerUsedSample,
     splitClipInTrack,
     setTrackClips,
     getTrackClipsAtPosition,

@@ -3,9 +3,12 @@
     <div class="admin-samples">
       <div class="page-header">
         <h1>Sample Library</h1>
-        <BaseButton variant="accent2" @click="showImportModal = true">
-          + Import Pack (ZIP)
-        </BaseButton>
+        <BaseButton
+          variant="accent2"
+          @click="showImportModal = true"
+          left-icon="fas fa-plus"
+          label="Import Pack (ZIP)"
+        />
       </div>
 
       <div v-if="packsLoading" class="loading">
@@ -14,9 +17,11 @@
 
       <EmptyState v-else-if="packs.length === 0" title="No sample packs yet">
         <template #action>
-          <BaseButton variant="accent2" @click="showImportModal = true">
-            Import your first pack
-          </BaseButton>
+          <BaseButton
+            variant="accent2"
+            @click="showImportModal = true"
+            label="Import your first pack"
+          />
         </template>
       </EmptyState>
 
@@ -43,48 +48,36 @@
               pack.author
             }}</span>
             <div class="pack-badges">
-              <BaseBadge v-if="pack.featured" variant="featured"
-                >Featured</BaseBadge
-              >
-              <BaseBadge v-if="!pack.isActive" variant="inactive"
-                >Inactive</BaseBadge
-              >
+              <BaseBadge v-if="pack.featured" variant="featured">
+                Featured
+              </BaseBadge>
+              <BaseBadge v-if="!pack.isActive" variant="inactive">
+                Inactive
+              </BaseBadge>
             </div>
           </div>
           <div class="pack-actions" @click.stop>
-            <BaseButton variant="outline" size="small" @click="editPack(pack)"
-              >Edit</BaseButton
-            >
+            <BaseButton
+              variant="outline"
+              size="small"
+              @click="editPack(pack)"
+              label="Edit"
+            />
             <BaseButton
               variant="error"
               size="small"
               @click="confirmDeletePack(pack)"
-            >
-              Delete
-            </BaseButton>
+              label="Delete"
+            />
           </div>
         </div>
       </div>
 
-      <div class="pagination" v-if="packsPagination.pages > 1">
-        <button
-          @click="goToPage(packsPagination.page - 1)"
-          :disabled="packsPagination.page <= 1"
-          class="pagination-btn"
-        >
-          Previous
-        </button>
-        <span class="pagination-info">
-          Page {{ packsPagination.page }} of {{ packsPagination.pages }}
-        </span>
-        <button
-          @click="goToPage(packsPagination.page + 1)"
-          :disabled="packsPagination.page >= packsPagination.pages"
-          class="pagination-btn"
-        >
-          Next
-        </button>
-      </div>
+      <BasePagination
+        :page="packsPagination.page"
+        :pages="packsPagination.pages"
+        @update:page="goToPage"
+      />
     </div>
 
     <!-- Import ZIP Modal -->
@@ -139,9 +132,12 @@
       </form>
       <template #footer>
         <BaseButton variant="outline" @click="closeModal">Cancel</BaseButton>
-        <BaseButton variant="accent2" type="submit" form="edit-pack-form"
-          >Save</BaseButton
-        >
+        <BaseButton
+          variant="accent2"
+          type="submit"
+          form="edit-pack-form"
+          label="Save"
+        />
       </template>
     </BaseModal>
 
@@ -158,12 +154,12 @@
         folders and samples.
       </p>
       <template #footer>
-        <BaseButton variant="outline" @click="cancelDeletePack"
-          >Cancel</BaseButton
-        >
-        <BaseButton variant="error" @click="executeDeletePack">
-          Delete
-        </BaseButton>
+        <BaseButton
+          variant="outline"
+          @click="cancelDeletePack"
+          label="Cancel"
+        />
+        <BaseButton variant="error" @click="executeDeletePack" label="Delete" />
       </template>
     </BaseModal>
   </AdminLayout>
@@ -183,6 +179,7 @@ import BaseSpinner from "../../components/ui/BaseSpinner.vue";
 import EmptyState from "../../components/ui/EmptyState.vue";
 import FormField from "../../components/ui/FormField.vue";
 import BaseInput from "../../components/ui/BaseInput.vue";
+import BasePagination from "../../components/ui/BasePagination.vue";
 
 const router = useRouter();
 const adminStore = useAdminStore();
@@ -289,7 +286,6 @@ async function executeDeletePack() {
   h1 {
     margin: 0;
     font-size: 24px;
-    font-weight: 600;
     color: var(--color-white);
   }
 }
@@ -362,7 +358,6 @@ async function executeDeletePack() {
   h3 {
     margin: 0 0 4px;
     font-size: 16px;
-    font-weight: 600;
     color: var(--color-white);
   }
 }
@@ -383,40 +378,6 @@ async function executeDeletePack() {
   display: flex;
   gap: 8px;
   border-top: 1px solid rgba(122, 15, 62, 0.2);
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.pagination-btn {
-  padding: 8px 16px;
-  background: var(--color-bg-surface-deep);
-  border: 1px solid rgba(122, 15, 62, 0.5);
-  border-radius: 6px;
-  color: var(--color-white);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover:not(:disabled) {
-    background: rgba(122, 15, 62, 0.4);
-    border-color: var(--color-accent2);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
-
-.pagination-info {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
 }
 
 .form-group.checkbox {

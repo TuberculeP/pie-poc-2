@@ -1,10 +1,10 @@
 <template>
   <div class="app-layout">
     <main class="app-main">
-      <AppHeader v-if="!isSequencerPage" />
+      <AppHeader v-if="!isSequencerPage || isErrorPage" />
       <slot />
 
-      <div class="parallax-layer" ref="layer1">
+      <div v-if="!isMobile" class="parallax-layer" ref="layer1">
         <div class="gradient-orb orb-1"></div>
         <div class="gradient-orb orb-2"></div>
         <div class="gradient-orb orb-3"></div>
@@ -16,10 +16,19 @@
 <script setup lang="ts">
 import AppHeader from "../components/ui/AppHeader.vue";
 import { useRoute } from "vue-router";
+import { ref } from "vue";
 
 const route = useRoute();
 const currentPath = route.path;
 const isSequencerPage = currentPath.startsWith("/app/sequencer");
+const isErrorPage =
+  currentPath.startsWith("/403") || currentPath.startsWith("/404");
+
+const isMobile = ref(
+  typeof window !== "undefined"
+    ? window.matchMedia("(max-width: 768px)").matches
+    : false,
+);
 </script>
 
 <style scoped>

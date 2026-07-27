@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { createPost } from "../../services/posts";
 import { getAllTags, defaultTags, type Tag } from "../../services/tags";
 import type { CreatePostData } from "../../lib/utils/types";
@@ -7,6 +8,8 @@ import BaseButton from "../ui/BaseButton.vue";
 import FormField from "../ui/FormField.vue";
 import { useToast } from "../../composables/useToast";
 
+const route = useRoute();
+const router = useRouter();
 const toast = useToast();
 
 const emit = defineEmits<{
@@ -37,6 +40,13 @@ onMounted(async () => {
     ].sort();
   } catch (error) {
     console.error("Erreur lors du chargement des tags:", error);
+  }
+
+  // Pré-remplissage depuis un lien "Partager sur le blog" (ex: séquenceur)
+  const shareText = route.query.shareText;
+  if (typeof shareText === "string") {
+    form.value.body = shareText;
+    router.replace({ query: {} });
   }
 });
 
@@ -196,9 +206,8 @@ const handleSubmit = async () => {
                 size="small"
                 :variant="showAllTags ? 'accent' : 'lightghost'"
                 @click="toggleShowAllTags"
-              >
-                {{ showAllTags ? "Masquer" : "Voir les tags" }}
-              </BaseButton>
+                :label="showAllTags ? 'Masquer' : 'Voir les tags'"
+              />
             </div>
             <!-- Liste des suggestions ou tous les tags -->
             <ul
@@ -228,9 +237,8 @@ const handleSubmit = async () => {
           size="normal"
           :disabled="loading"
           :loading="loading"
-        >
-          Poster
-        </BaseButton>
+          label="Poster"
+        />
       </div>
     </form>
   </div>

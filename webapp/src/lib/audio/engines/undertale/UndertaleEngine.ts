@@ -5,26 +5,70 @@ import type {
 } from "../../../utils/types";
 import { Soundfont2Sampler } from "smplr";
 import { SoundFont2 } from "soundfont2";
+import { useSampleCacheStore } from "../../../../stores/sampleCacheStore";
 import { BaseEngine } from "../BaseEngine";
+import { VoicePool } from "../voicePool";
 
-const UNDERTALE_SF2_URL = "/soundfonts/undertale.sf2";
+export const UNDERTALE_SF2_URL = "/soundfonts/undertale.sf2";
+const UNDERTALE_SF2_CACHE_KEY = "undertale:sf2";
+const VOICE_POOL_SIZE = 8;
 
-interface ActiveNote {
-  stopFn: () => void;
-  envelopeNode: GainNode;
+// Le fichier (154 Mo) est unique et partagé par toutes les pistes/voix
+// Undertale de l'onglet — mémoïsé au niveau module pour ne le fetch/parser
+// qu'une seule fois, quel que soit le nombre de tracks ou la taille du
+// VoicePool. `Soundfont2Sampler` (smplr) ne propose pas de point d'injection
+// pour un buffer déjà chargé : son constructeur refait toujours en interne
+// `fetch(options.url)` (node_modules/smplr/dist/index.mjs:2186-2191). On
+// intercepte donc ce fetch précis pour qu'il résolve instantanément — le
+// `createSoundfont` fourni plus bas ignore les octets reçus (il retourne
+// directement le soundfont déjà parsé), donc une réponse vide suffit, pas
+// besoin de garder le vrai buffer de 154 Mo en mémoire pour ce patch.
+let sharedSoundfontPromise: Promise<SoundFont2> | null = null;
+
+function installUndertaleFetchCache(): void {
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+    const url =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input.url;
+    if (url === UNDERTALE_SF2_URL) {
+      return Promise.resolve(new Response(new ArrayBuffer(0)));
+    }
+    return originalFetch(input, init);
+  }) as typeof window.fetch;
+}
+
+function getSharedUndertaleSoundfont(): Promise<SoundFont2> {
+  if (!sharedSoundfontPromise) {
+    sharedSoundfontPromise = (async () => {
+      const cacheStore = useSampleCacheStore();
+      await cacheStore.initialize();
+      let buffer = await cacheStore.get(UNDERTALE_SF2_CACHE_KEY);
+      if (!buffer) {
+        const response = await fetch(UNDERTALE_SF2_URL);
+        buffer = await response.arrayBuffer();
+        await cacheStore.set(UNDERTALE_SF2_CACHE_KEY, buffer);
+      }
+      const soundfont = new SoundFont2(new Uint8Array(buffer));
+      installUndertaleFetchCache();
+      return soundfont;
+    })();
+  }
+  return sharedSoundfontPromise;
 }
 
 export class UndertaleEngine extends BaseEngine {
   readonly type = "undertale";
-  readonly resourceKey = "undertale:sf2";
+  readonly resourceKey = UNDERTALE_SF2_CACHE_KEY;
   readonly resourceLabel = "Undertale Soundfont";
 
-  private sampler: Soundfont2Sampler | null = null;
-  private activeNotes: Map<string, ActiveNote> = new Map();
+  private voicePool = new VoicePool<Soundfont2Sampler>();
   private currentInstrument: string = "";
   private loadPromise: Promise<void> | null = null;
   private _instrumentNames: string[] = [];
-  private outputNode: GainNode;
 
   private attack: number = 0;
   private decay: number = 0;
@@ -43,9 +87,6 @@ export class UndertaleEngine extends BaseEngine {
     this.decay = config.decay ?? 0;
     this.sustain = config.sustain ?? 1;
     this.release = config.release ?? 0.3;
-
-    this.outputNode = audioContext.createGain();
-    this.outputNode.connect(destination);
   }
 
   get instrumentNames(): string[] {
@@ -69,21 +110,31 @@ export class UndertaleEngine extends BaseEngine {
           await this.audioContext.resume();
         }
 
-        const sampler = new Soundfont2Sampler(this.audioContext, {
-          url: UNDERTALE_SF2_URL,
-          createSoundfont: (data) => new SoundFont2(new Uint8Array(data)),
-          destination: this.outputNode,
-        });
+        const sharedSoundfont = await getSharedUndertaleSoundfont();
 
-        await sampler.load;
+        await this.voicePool.load(
+          VOICE_POOL_SIZE,
+          this.audioContext,
+          this.destination,
+          async (envelopeGain) => {
+            const sampler = new Soundfont2Sampler(this.audioContext, {
+              url: UNDERTALE_SF2_URL,
+              createSoundfont: () => sharedSoundfont,
+              destination: envelopeGain,
+            });
+            await sampler.load;
+            return sampler;
+          },
+        );
 
-        this._instrumentNames = sampler.instrumentNames;
-        this.sampler = sampler;
+        this._instrumentNames = this.voicePool.first?.instrumentNames ?? [];
 
         if (this._instrumentNames.length > 0) {
           const instrumentToLoad =
             this.currentInstrument || this._instrumentNames[0];
-          await sampler.loadInstrument(instrumentToLoad);
+          await this.voicePool.forEachSampler((sampler) => {
+            sampler.loadInstrument(instrumentToLoad);
+          });
           this.currentInstrument = instrumentToLoad;
 
           const config = this.config as UndertaleConfig;
@@ -100,12 +151,14 @@ export class UndertaleEngine extends BaseEngine {
   }
 
   async loadInstrument(instrumentName: string): Promise<void> {
-    if (!this.sampler || this._state !== "ready") return;
+    if (this._state !== "ready") return;
     if (instrumentName === this.currentInstrument) return;
 
     try {
       this.stopAllNotes();
-      await this.sampler.loadInstrument(instrumentName);
+      await this.voicePool.forEachSampler((sampler) => {
+        sampler.loadInstrument(instrumentName);
+      });
       this.currentInstrument = instrumentName;
 
       const config = this.config as UndertaleConfig;
@@ -129,66 +182,26 @@ export class UndertaleEngine extends BaseEngine {
   }
 
   private playNoteInternal(noteName: NoteName, noteId: string): void {
-    if (!this.sampler) return;
-
-    if (this.activeNotes.has(noteId)) {
-      this.stopNote(noteId);
-    }
-
     try {
-      const now = this.audioContext.currentTime;
-      const envelopeNode = this.audioContext.createGain();
-      envelopeNode.connect(this.outputNode);
-
-      envelopeNode.gain.setValueAtTime(0, now);
-
-      if (this.attack > 0) {
-        envelopeNode.gain.linearRampToValueAtTime(1, now + this.attack);
-      } else {
-        envelopeNode.gain.setValueAtTime(1, now);
-      }
-
-      if (this.decay > 0 && this.sustain < 1) {
-        const decayStart = now + this.attack;
-        envelopeNode.gain.linearRampToValueAtTime(
-          this.sustain,
-          decayStart + this.decay,
-        );
-      }
-
-      const stopFn = this.sampler.start({
-        note: noteName,
-        decayTime: this.release,
-      });
-
-      this.activeNotes.set(noteId, { stopFn, envelopeNode });
+      this.voicePool.play(
+        noteId,
+        this.audioContext,
+        this.attack,
+        this.decay,
+        this.sustain,
+        (sampler) => sampler.start({ note: noteName, decayTime: this.release }),
+      );
     } catch (error) {
       console.error("[UndertaleEngine] Failed to play note:", error);
     }
   }
 
   stopNote(noteId: string): void {
-    const activeNote = this.activeNotes.get(noteId);
-    if (activeNote) {
-      try {
-        activeNote.stopFn();
-        setTimeout(
-          () => {
-            activeNote.envelopeNode.disconnect();
-          },
-          this.release * 1000 + 100,
-        );
-      } catch {
-        // Ignore errors
-      }
-      this.activeNotes.delete(noteId);
-    }
+    this.voicePool.stop(noteId, this.audioContext, this.release);
   }
 
   stopAllNotes(): void {
-    for (const noteId of this.activeNotes.keys()) {
-      this.stopNote(noteId);
-    }
+    this.voicePool.stopAll(this.audioContext, this.release);
   }
 
   updateConfig(config: InstrumentConfigUpdate): void {
@@ -204,10 +217,7 @@ export class UndertaleEngine extends BaseEngine {
   }
 
   dispose(): void {
-    this.stopAllNotes();
-    this.activeNotes.clear();
-    this.outputNode.disconnect();
-    this.sampler = null;
+    this.voicePool.dispose();
     this.loadPromise = null;
     this._instrumentNames = [];
     this.stateCallbacks.clear();

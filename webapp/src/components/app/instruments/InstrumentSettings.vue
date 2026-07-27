@@ -1,12 +1,34 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import type { Track, OscillatorType } from "../../../lib/utils/types";
+import { computed, ref, watch, type Component } from "vue";
+import type {
+  Track,
+  OscillatorType,
+  AudioSample,
+  SamplePlaybackMode,
+} from "../../../lib/utils/types";
 import { useTimelineStore } from "../../../stores/timelineStore";
 import { useTrackAudioStore } from "../../../stores/trackAudioStore";
+import { useAudioLibraryStore } from "../../../stores/audioLibraryStore";
 import { SOUNDFONT_LIST, UndertaleEngine } from "../../../lib/audio/engines";
+import { ALL_NOTES } from "../../../lib/audio/pianoRollConstants";
+import { getChannelParamMeta } from "../../../lib/audio/channelParams";
 import RangeSlider from "../../ui/RangeSlider.vue";
 import EffectParamRow from "../effects/EffectParamRow.vue";
 import EffectRack from "../effects/EffectRack.vue";
+import BaseButton from "../../ui/BaseButton.vue";
+import BaseModal from "../../ui/BaseModal.vue";
+import Dx7InstrumentPanel from "./Dx7InstrumentPanel.vue";
+import SamplePreviewButton from "../../shared/SamplePreviewButton.vue";
+import SamplePickerModal from "./SamplePickerModal.vue";
+
+// Instruments avec leur propre interface dédiée : au lieu des paramètres
+// inline habituels, le drawer affiche un bouton qui ouvre cette interface
+// dans une modale (voir `hasCustomInterface` plus bas).
+const INSTRUMENT_INTERFACE_COMPONENTS: Partial<
+  Record<Track["instrument"]["type"], Component>
+> = {
+  fmSynth: Dx7InstrumentPanel,
+};
 
 const props = defineProps<{
   track: Track;
@@ -19,8 +41,49 @@ const emit = defineEmits<{
 
 const timelineStore = useTimelineStore();
 const trackAudioStore = useTrackAudioStore();
+const audioLibraryStore = useAudioLibraryStore();
+
+const volumeMeta = getChannelParamMeta("volume")!;
+const panMeta = getChannelParamMeta("pan")!;
 
 const instrumentType = computed(() => props.track.instrument.type);
+
+const hasCustomInterface = computed(
+  () => instrumentType.value in INSTRUMENT_INTERFACE_COMPONENTS,
+);
+const customInterfaceComponent = computed(
+  () => INSTRUMENT_INTERFACE_COMPONENTS[instrumentType.value],
+);
+
+const showInstrumentModal = ref(false);
+watch(
+  () => [props.track.id, props.visible],
+  () => {
+    showInstrumentModal.value = false;
+  },
+);
+
+const showSamplePickerModal = ref(false);
+
+const samplePlayerSample = computed(() => {
+  const sampleId =
+    props.track.instrument.type === "samplePlayer"
+      ? props.track.instrument.sampleId
+      : null;
+  return sampleId ? audioLibraryStore.getSample(sampleId) : null;
+});
+
+const samplePlayerRootNote = computed(() =>
+  props.track.instrument.type === "samplePlayer"
+    ? props.track.instrument.rootNote
+    : "C4",
+);
+
+const samplePlayerMode = computed(() =>
+  props.track.instrument.type === "samplePlayer"
+    ? props.track.instrument.mode
+    : "normal",
+);
 
 const currentOscillatorType = computed(() => {
   if (props.track.instrument.type === "basicSynth") {
@@ -60,30 +123,57 @@ const undertaleEngineState = computed(() => {
   return trackAudioStore.getTrackEngineState(props.track.id);
 });
 
-const undertaleAttack = computed(() => {
-  if (props.track.instrument.type === "undertale") {
-    return props.track.instrument.attack ?? 0;
+const hasAdsrControls = computed(
+  () =>
+    props.track.instrument.type === "smplr" ||
+    props.track.instrument.type === "undertale" ||
+    props.track.instrument.type === "samplePlayer",
+);
+
+const adsrAttack = computed(() => {
+  const instrument = props.track.instrument;
+  if (
+    instrument.type === "smplr" ||
+    instrument.type === "undertale" ||
+    instrument.type === "samplePlayer"
+  ) {
+    return instrument.attack ?? 0;
   }
   return 0;
 });
 
-const undertaleDecay = computed(() => {
-  if (props.track.instrument.type === "undertale") {
-    return props.track.instrument.decay ?? 0;
+const adsrDecay = computed(() => {
+  const instrument = props.track.instrument;
+  if (
+    instrument.type === "smplr" ||
+    instrument.type === "undertale" ||
+    instrument.type === "samplePlayer"
+  ) {
+    return instrument.decay ?? 0;
   }
   return 0;
 });
 
-const undertaleSustain = computed(() => {
-  if (props.track.instrument.type === "undertale") {
-    return props.track.instrument.sustain ?? 1;
+const adsrSustain = computed(() => {
+  const instrument = props.track.instrument;
+  if (
+    instrument.type === "smplr" ||
+    instrument.type === "undertale" ||
+    instrument.type === "samplePlayer"
+  ) {
+    return instrument.sustain ?? 1;
   }
   return 1;
 });
 
-const undertaleRelease = computed(() => {
-  if (props.track.instrument.type === "undertale") {
-    return props.track.instrument.release ?? 0.3;
+const adsrRelease = computed(() => {
+  const instrument = props.track.instrument;
+  if (
+    instrument.type === "smplr" ||
+    instrument.type === "undertale" ||
+    instrument.type === "samplePlayer"
+  ) {
+    return instrument.release ?? 0.3;
   }
   return 0.3;
 });
@@ -120,8 +210,38 @@ const handleADSRChange = (
   trackAudioStore.updateTrackInstrument(props.track.id, { [param]: value });
 };
 
+const handleSampleSelected = (sample: AudioSample) => {
+  timelineStore.updateTrackInstrument(props.track.id, {
+    sampleId: sample.id,
+  });
+  timelineStore.registerUsedSample(sample);
+  trackAudioStore.updateTrackInstrument(props.track.id, {
+    sampleId: sample.id,
+  });
+};
+
+const handleRootNoteChange = (rootNote: string) => {
+  timelineStore.updateTrackInstrument(props.track.id, { rootNote });
+  trackAudioStore.updateTrackInstrument(props.track.id, { rootNote });
+};
+
+const handleSamplePlaybackModeChange = (mode: SamplePlaybackMode) => {
+  timelineStore.updateTrackInstrument(props.track.id, { mode });
+  trackAudioStore.updateTrackInstrument(props.track.id, { mode });
+};
+
 const handleVolumeChange = (volume: number) => {
   timelineStore.setTrackVolume(props.track.id, volume);
+};
+
+const panDisplayValue = computed(() => {
+  const pan = props.track.pan;
+  if (pan === 0) return "C";
+  return pan < 0 ? `G${-pan}` : `D${pan}`;
+});
+
+const handlePanChange = (pan: number) => {
+  timelineStore.setTrackPan(props.track.id, pan);
 };
 
 const handleClose = () => {
@@ -136,9 +256,7 @@ const handleClose = () => {
         <div class="settings-panel">
           <div class="panel-header">
             <h3>{{ track.name }}</h3>
-            <button class="close-btn close-settings-btn" @click="handleClose">
-              ×
-            </button>
+            <BaseButton @click="handleClose" right-icon="fas fa-times" />
           </div>
 
           <div class="panel-body">
@@ -147,12 +265,28 @@ const handleClose = () => {
                 :track-id="track.id"
                 effect-id="channel"
                 param-id="volume"
-                label="Volume"
-                unit="%"
-                :min="0"
-                :max="100"
+                :label="volumeMeta.label"
+                :unit="volumeMeta.unit"
+                :min="volumeMeta.min"
+                :max="volumeMeta.max"
+                :default-start="volumeMeta.defaultStart"
                 :model-value="track.volume"
                 @update:model-value="handleVolumeChange"
+              />
+            </div>
+
+            <div class="setting-group">
+              <EffectParamRow
+                :track-id="track.id"
+                effect-id="channel"
+                param-id="pan"
+                :label="panMeta.label"
+                :min="panMeta.min"
+                :max="panMeta.max"
+                :default-start="panMeta.defaultStart"
+                :model-value="track.pan"
+                :display-value="panDisplayValue"
+                @update:model-value="handlePanChange"
               />
             </div>
 
@@ -228,67 +362,15 @@ const handleClose = () => {
                   <p class="coming-soon">Aucun preset disponible</p>
                 </template>
               </div>
+            </template>
 
+            <template v-else-if="hasCustomInterface">
               <div class="setting-group">
-                <label class="setting-label">Enveloppe ADSR</label>
-                <div class="adsr-controls">
-                  <div class="adsr-slider">
-                    <span class="adsr-label">A</span>
-                    <RangeSlider
-                      :model-value="undertaleAttack"
-                      :min="0"
-                      :max="2"
-                      :step="0.01"
-                      thumb-size="small"
-                      :display-value="`${undertaleAttack.toFixed(2)}s`"
-                      @update:model-value="
-                        (value) => handleADSRChange('attack', value)
-                      "
-                    />
-                  </div>
-                  <div class="adsr-slider">
-                    <span class="adsr-label">D</span>
-                    <RangeSlider
-                      :model-value="undertaleDecay"
-                      :min="0"
-                      :max="2"
-                      :step="0.01"
-                      thumb-size="small"
-                      :display-value="`${undertaleDecay.toFixed(2)}s`"
-                      @update:model-value="
-                        (value) => handleADSRChange('decay', value)
-                      "
-                    />
-                  </div>
-                  <div class="adsr-slider">
-                    <span class="adsr-label">S</span>
-                    <RangeSlider
-                      :model-value="undertaleSustain"
-                      :min="0"
-                      :max="1"
-                      :step="0.01"
-                      thumb-size="small"
-                      :display-value="`${(undertaleSustain * 100).toFixed(0)}%`"
-                      @update:model-value="
-                        (value) => handleADSRChange('sustain', value)
-                      "
-                    />
-                  </div>
-                  <div class="adsr-slider">
-                    <span class="adsr-label">R</span>
-                    <RangeSlider
-                      :model-value="undertaleRelease"
-                      :min="0"
-                      :max="3"
-                      :step="0.01"
-                      thumb-size="small"
-                      :display-value="`${undertaleRelease.toFixed(2)}s`"
-                      @update:model-value="
-                        (value) => handleADSRChange('release', value)
-                      "
-                    />
-                  </div>
-                </div>
+                <BaseButton
+                  label="Ouvrir l'éditeur d'instrument"
+                  right-icon="fas fa-up-right-and-down-left-from-center"
+                  @click="showInstrumentModal = true"
+                />
               </div>
             </template>
 
@@ -297,11 +379,148 @@ const handleClose = () => {
                 <p class="coming-soon">Paramètres ADSR à venir...</p>
               </div>
             </template>
+
+            <template v-else-if="instrumentType === 'samplePlayer'">
+              <div class="setting-group">
+                <label class="setting-label">Sample</label>
+                <div class="sample-picker-row">
+                  <template v-if="samplePlayerSample">
+                    <SamplePreviewButton :sample="samplePlayerSample" />
+                    <span class="sample-picker-name">{{
+                      samplePlayerSample.name
+                    }}</span>
+                  </template>
+                  <p v-else class="coming-soon">Aucun sample sélectionné</p>
+                </div>
+                <BaseButton
+                  label="Choisir un sample"
+                  left-icon="fas fa-folder-open"
+                  @click="showSamplePickerModal = true"
+                />
+              </div>
+
+              <div class="setting-group">
+                <label class="setting-label">Note de référence</label>
+                <select
+                  class="soundfont-select instrument-select"
+                  :value="samplePlayerRootNote"
+                  @change="
+                    handleRootNoteChange(
+                      ($event.target as HTMLSelectElement).value,
+                    )
+                  "
+                >
+                  <option v-for="n in ALL_NOTES" :key="n" :value="n">
+                    {{ n }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="setting-group">
+                <label class="setting-label">Mode de lecture</label>
+                <div class="waveform-selector">
+                  <button
+                    class="waveform-btn"
+                    :class="{ active: samplePlayerMode === 'normal' }"
+                    @click="handleSamplePlaybackModeChange('normal')"
+                  >
+                    Normal
+                  </button>
+                  <button
+                    class="waveform-btn"
+                    :class="{ active: samplePlayerMode === 'stretch' }"
+                    @click="handleSamplePlaybackModeChange('stretch')"
+                  >
+                    Stretch
+                  </button>
+                </div>
+              </div>
+
+              <SamplePickerModal
+                v-model="showSamplePickerModal"
+                @select="handleSampleSelected"
+              />
+            </template>
+
+            <template v-if="hasAdsrControls">
+              <div class="setting-group">
+                <label class="setting-label">Enveloppe ADSR</label>
+                <div class="adsr-controls">
+                  <div class="adsr-slider">
+                    <span class="adsr-label">A</span>
+                    <RangeSlider
+                      :model-value="adsrAttack"
+                      :min="0"
+                      :max="2"
+                      :step="0.01"
+                      thumb-size="small"
+                      :display-value="`${adsrAttack.toFixed(2)}s`"
+                      @update:model-value="
+                        (value) => handleADSRChange('attack', value)
+                      "
+                    />
+                  </div>
+                  <div class="adsr-slider">
+                    <span class="adsr-label">D</span>
+                    <RangeSlider
+                      :model-value="adsrDecay"
+                      :min="0"
+                      :max="2"
+                      :step="0.01"
+                      thumb-size="small"
+                      :display-value="`${adsrDecay.toFixed(2)}s`"
+                      @update:model-value="
+                        (value) => handleADSRChange('decay', value)
+                      "
+                    />
+                  </div>
+                  <div class="adsr-slider">
+                    <span class="adsr-label">S</span>
+                    <RangeSlider
+                      :model-value="adsrSustain"
+                      :min="0"
+                      :max="1"
+                      :step="0.01"
+                      thumb-size="small"
+                      :display-value="`${(adsrSustain * 100).toFixed(0)}%`"
+                      @update:model-value="
+                        (value) => handleADSRChange('sustain', value)
+                      "
+                    />
+                  </div>
+                  <div class="adsr-slider">
+                    <span class="adsr-label">R</span>
+                    <RangeSlider
+                      :model-value="adsrRelease"
+                      :min="0"
+                      :max="3"
+                      :step="0.01"
+                      thumb-size="small"
+                      :display-value="`${adsrRelease.toFixed(2)}s`"
+                      @update:model-value="
+                        (value) => handleADSRChange('release', value)
+                      "
+                    />
+                  </div>
+                </div>
+              </div>
+            </template>
           </div>
         </div>
       </div>
     </Transition>
   </Teleport>
+
+  <BaseModal v-model="showInstrumentModal" size="large">
+    <template #header>
+      <h3>{{ track.name }}</h3>
+    </template>
+    <component
+      :is="customInterfaceComponent"
+      v-if="customInterfaceComponent"
+      :track="track"
+    />
+  </BaseModal>
 </template>
 
 <style scoped lang="scss">
@@ -333,7 +552,6 @@ const handleClose = () => {
   h3 {
     margin: 0;
     font-size: 16px;
-    font-weight: 600;
     color: var(--color-white);
   }
 }
@@ -431,6 +649,21 @@ const handleClose = () => {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.6);
   font-style: italic;
+}
+
+.sample-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sample-picker-name {
+  font-size: 13px;
+  color: var(--color-white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .loading-text {

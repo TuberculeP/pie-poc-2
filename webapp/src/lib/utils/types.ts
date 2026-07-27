@@ -107,7 +107,13 @@ export interface LegacySequenceData {
 // ============================================
 
 export type InstrumentType =
-  "basicSynth" | "elementarySynth" | "smplr" | "undertale" | "audioTrack";
+  | "basicSynth"
+  | "elementarySynth"
+  | "smplr"
+  | "undertale"
+  | "fmSynth"
+  | "audioTrack"
+  | "samplePlayer";
 
 export type OscillatorType = "sine" | "square" | "sawtooth" | "triangle";
 
@@ -121,6 +127,10 @@ export interface SmplrConfig {
   type: "smplr";
   soundfont: string;
   gain?: number;
+  attack?: number;
+  decay?: number;
+  sustain?: number;
+  release?: number;
 }
 
 export interface ElementarySynthConfig {
@@ -144,12 +154,65 @@ export interface AudioTrackConfig {
   gain?: number;
 }
 
+// Un opérateur FM (style DX7) : forme brute/persistée, sans les valeurs
+// dérivées (outputLevel/ampL/ampR/freqRatio) qui sont recalculées au
+// chargement du patch — voir buildRuntimeParams (dsp/voiceDx7.ts).
+export interface Dx7Operator {
+  idx: number;
+  enabled: boolean;
+  rates: [number, number, number, number]; // vitesses EG (0-99)
+  levels: [number, number, number, number]; // niveaux EG (0-99)
+  detune: number; // -7 à 7
+  velocitySens: number; // 0-7
+  lfoAmpModSens: number; // 0-3
+  volume: number; // 0-99, niveau de sortie brut
+  oscMode: 0 | 1; // 0 = ratio de fréquence, 1 = fréquence fixe
+  freqCoarse: number;
+  freqFine: number;
+  pan: number; // -50 à 50
+}
+
+export interface Dx7Patch {
+  name: string;
+  algorithm: number; // 1-32
+  feedback: number; // 0-7
+  lfoSpeed: number;
+  lfoDelay: number;
+  lfoPitchModDepth: number;
+  lfoAmpModDepth: number;
+  lfoPitchModSens: number; // 0-7
+  lfoWaveform: number; // 0-5
+  operators: Dx7Operator[]; // 6 opérateurs
+}
+
+export interface FmSynthConfig {
+  type: "fmSynth";
+  patch: Dx7Patch;
+  gain?: number;
+}
+
+export type SamplePlaybackMode = "normal" | "stretch";
+
+export interface SamplePlayerConfig {
+  type: "samplePlayer";
+  sampleId: string | null;
+  rootNote: NoteName;
+  mode: SamplePlaybackMode;
+  gain?: number;
+  attack?: number;
+  decay?: number;
+  sustain?: number;
+  release?: number;
+}
+
 export type InstrumentConfig =
   | BasicSynthConfig
   | SmplrConfig
   | ElementarySynthConfig
   | UndertaleConfig
-  | AudioTrackConfig;
+  | FmSynthConfig
+  | AudioTrackConfig
+  | SamplePlayerConfig;
 
 export interface InstrumentConfigUpdate {
   oscillatorType?: OscillatorType;
@@ -161,6 +224,10 @@ export interface InstrumentConfigUpdate {
   decay?: number;
   sustain?: number;
   release?: number;
+  patch?: Dx7Patch;
+  sampleId?: string | null;
+  rootNote?: NoteName;
+  mode?: SamplePlaybackMode;
 }
 
 export interface AudioClip {
@@ -169,7 +236,26 @@ export interface AudioClip {
   x: number;
   w: number;
   startOffset: number;
+
+  // Sticky : une fois vrai, reste vrai pour toujours (même si l'outil
+  // toolbar repasse en "edit" et qu'on redimensionne encore ce clip) — voir
+  // applyResizeStretch (lib/audio/clipStretch.ts).
+  stretched?: boolean;
+  // Ancre du ratio de stretch, réécrite à chaque resize en mode stretch :
+  // w (ticks) et tempo (BPM) juste avant ce resize. Permet de recalculer le
+  // playbackRate à tout moment (y compris après un changement de BPM sans
+  // nouveau resize) — voir computeClipPlaybackParams.
+  stretchReferenceTicks?: number;
+  stretchReferenceTempo?: number;
+
+  // Tune/detune : vrai pitch-shift indépendant de la durée (via GrainPlayer).
+  semitones?: number; // -12..+12
+  cents?: number; // fin, dans le demi-ton courant
 }
+
+// Nom dédié, distinct de SamplePlaybackMode (SamplePlayerConfig.mode) qui est
+// un concept différent (lecture de notes MIDI via l'instrument sampler).
+export type ClipResizeMode = "edit" | "stretch";
 
 export interface AudioSample {
   id: string;
@@ -209,12 +295,12 @@ export interface EffectInstanceConfig {
 }
 
 // Cible d'un paramètre automatisable : une piste (ou "master") + un effet de
-// sa pile (ou la sentinelle "channel" pour le fader de volume, qui n'est pas
-// dans la pile d'effets) + un paramètre de cet effet.
+// sa pile (ou la sentinelle "channel" pour le fader de volume/pan, qui n'est
+// pas dans la pile d'effets) + un paramètre de cet effet.
 export interface AutomationTarget {
   trackId: string | "master";
-  effectId: string; // EffectInstanceConfig.id, ou "channel" (fader volume)
-  paramId: string; // paramId de l'effet, ou "volume" si effectId === "channel"
+  effectId: string; // EffectInstanceConfig.id, ou "channel" (fader volume/pan)
+  paramId: string; // paramId de l'effet, ou "volume"/"pan" si effectId === "channel"
 }
 
 export interface AutomationPoint {
@@ -235,6 +321,7 @@ export interface Track {
   instrument: InstrumentConfig;
   color: string;
   volume: number; // 0-100
+  pan: number; // -127 (gauche) à 127 (droite), 0 = centré (convention musicale)
   effects: EffectInstanceConfig[]; // pile d'effets réordonnable (EQ, reverb, etc.)
   muted: boolean;
   solo: boolean;
@@ -364,7 +451,38 @@ export interface PublicProjectListItem {
   owner: { id: string; firstName: string; lastName: string };
 }
 
+export interface ProjectLinkPreview {
+  id: string;
+  name: string;
+  createdAt: string;
+  owner: { firstName: string; lastName: string };
+}
+
 export type FavoriteProjectListItem = PublicProjectListItem & {
   favoriteId: string;
   favoritedAt: string;
 };
+
+export interface LearningArticle {
+  id?: string;
+  title: string;
+  slug: string;
+  excerpt?: string;
+  body: string;
+  coverImage?: string;
+  author: User;
+  status: "draft" | "published";
+  createdAt?: string;
+  updatedAt?: string;
+  publishedAt?: string | null;
+  score?: number;
+  myVote?: number;
+}
+
+export interface CreateLearningArticleData {
+  title: string;
+  body: string;
+  excerpt?: string;
+  coverImage?: string;
+  status: "draft" | "published";
+}

@@ -40,10 +40,22 @@ const instruments = [
     description: "Instruments réalistes (piano, guitare, etc.)",
   },
   {
+    type: "fmSynth" as InstrumentType,
+    name: "FM Synth",
+    icon: "🎛️",
+    description: "Synthèse FM (style DX7), 32 presets d'usine",
+  },
+  {
     type: "undertale" as InstrumentType,
     name: "Undertale",
     icon: "💀",
     description: "Soundfont Undertale (plusieurs presets)",
+  },
+  {
+    type: "samplePlayer" as InstrumentType,
+    name: "Sample Player",
+    icon: "fas fa-compact-disc",
+    description: "Charge un sample (pack ou perso) et le joue note par note",
   },
 ];
 
@@ -60,11 +72,9 @@ const handleSelect = (type: InstrumentType) => {
       variant="error"
       @click="toggleMenu"
       title="Ajouter une piste"
-    >
-      <span class="label">Nouvelle piste</span>
-      <i class="fas fa-plus" />
-    </BaseButton>
-
+      label="Piste"
+      right-icon="fas fa-plus"
+    />
     <Transition name="fade">
       <div v-if="showMenu" class="instrument-menu">
         <div class="menu-header">Choisir un instrument</div>
@@ -74,7 +84,10 @@ const handleSelect = (type: InstrumentType) => {
           class="instrument-option"
           @click="handleSelect(inst.type)"
         >
-          <span class="inst-icon">{{ inst.icon }}</span>
+          <span class="inst-icon">
+            <i v-if="inst.icon.startsWith('fas ')" :class="inst.icon" />
+            <template v-else>{{ inst.icon }}</template>
+          </span>
           <div class="inst-info">
             <span class="inst-name">{{ inst.name }}</span>
             <span class="inst-desc">{{ inst.description }}</span>

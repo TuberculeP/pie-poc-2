@@ -74,7 +74,7 @@ const handleEQUpdate = (bandId: string, gain: number) => {
         />
       </label>
       <button class="remove-btn" title="Supprimer" @click="emit('remove')">
-        ×
+        <i class="fas fa-times" />
       </button>
     </div>
 
@@ -92,6 +92,7 @@ const handleEQUpdate = (bandId: string, gain: number) => {
         :min="param.min"
         :max="param.max"
         :step="param.step"
+        :options="param.options"
         :model-value="effect.params[param.id] ?? param.defaultValue"
         :display-value="
           param.toDisplay?.(effect.params[param.id] ?? param.defaultValue)

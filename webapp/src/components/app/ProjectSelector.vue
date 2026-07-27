@@ -12,6 +12,7 @@ import type {
   TrashedProjectListItem,
 } from "../../lib/utils/types";
 import TabBar, { type TabItem } from "../shared/TabBar.vue";
+import VpnBanner from "../ad/VpnBanner.vue";
 
 type Tab = "mine" | "favorites" | "discover" | "trash";
 
@@ -243,9 +244,12 @@ onMounted(() => loadProjects());
         </h1>
         <p class="tagline">Votre bibliothèque de compositions</p>
       </div>
-      <BaseButton class="new-project-btn" @click="emit('new-project')">
-        <i class="fas fa-plus" />Nouveau projet
-      </BaseButton>
+      <BaseButton
+        color="accent"
+        label="Nouveau projet"
+        right-icon="fas fa-plus"
+        @click="emit('new-project')"
+      />
     </header>
 
     <TabBar v-model="activeTab" :tabs="tabs" />
@@ -268,12 +272,14 @@ onMounted(() => loadProjects());
         </div>
 
         <div v-else-if="projects.length === 0" class="state-container empty">
-          <div class="music-note">♪</div>
+          <div class="music-note"><i class="fas fa-music" /></div>
           <h3>Bibliothèque vide</h3>
           <p>Commencez votre première composition musicale dès maintenant.</p>
-          <BaseButton variant="ghost" @click="emit('new-project')">
-            Créer mon premier projet
-          </BaseButton>
+          <BaseButton
+            variant="ghost"
+            @click="emit('new-project')"
+            label="Créer mon premier projet"
+          />
         </div>
 
         <div v-else class="projects-grid">
@@ -304,33 +310,33 @@ onMounted(() => loadProjects());
               <h3 class="card-title">{{ project.name }}</h3>
               <div class="card-footer">
                 <div class="card-toggles">
-                  <button
-                    class="icon-toggle"
-                    :class="{ active: project.mcpEnabled }"
+                  <BaseButton
+                    size="small"
+                    variant="outline"
+                    :active="project.mcpEnabled"
                     :disabled="togglingMcp === project.id"
-                    @click="toggleMcp(project, $event)"
-                    title="Contrôle MCP"
-                  >
-                    <i class="fas fa-robot" />
-                  </button>
-                  <button
-                    class="icon-toggle"
-                    :class="{ active: project.isPublic }"
+                    @click="(e) => toggleMcp(project, e)"
+                    tooltip="Contrôle MCP"
+                    right-icon="fas fa-robot"
+                  />
+                  <BaseButton
+                    size="small"
+                    variant="outline"
+                    :active="project.isPublic"
                     :disabled="togglingVisibility === project.id"
-                    @click="toggleVisibility(project, $event)"
-                    :title="
+                    @click="(e) => toggleVisibility(project, e)"
+                    :tooltip="
                       project.isPublic ? 'Projet public' : 'Rendre public'
                     "
-                  >
-                    <i class="fas fa-globe" />
-                  </button>
-                  <button
-                    class="icon-toggle delete-btn"
-                    @click="handleDeleteClick(project.id, $event)"
-                    title="Supprimer"
-                  >
-                    <i class="fas fa-trash" />
-                  </button>
+                    left-icon="fas fa-globe"
+                  />
+                  <BaseButton
+                    size="small"
+                    variant="outline"
+                    @click="(e) => handleDeleteClick(project.id, e)"
+                    tooltip="Supprimer"
+                    left-icon="fas fa-trash"
+                  />
                 </div>
                 <div class="open-hint">
                   <span class="click-hint">Ouvrir</span>
@@ -367,9 +373,11 @@ onMounted(() => loadProjects());
           </div>
           <h3>Aucun favori</h3>
           <p>Explorez les projets publics et ajoutez-en à vos favoris.</p>
-          <BaseButton variant="ghost" @click="activeTab = 'discover'">
-            Explorer les projets
-          </BaseButton>
+          <BaseButton
+            variant="ghost"
+            @click="activeTab = 'discover'"
+            label="Explorer les projets"
+          />
         </div>
 
         <div v-else class="projects-grid">
@@ -401,14 +409,13 @@ onMounted(() => loadProjects());
               </div>
               <h3 class="card-title">{{ project.name }}</h3>
               <div class="card-footer">
-                <button
-                  class="icon-toggle active favorite-btn"
-                  :disabled="togglingFavorite === project.id"
+                <BaseButton
+                  size="small"
+                  tooltip="Retirer des favoris"
                   @click="toggleFavorite(project.id, $event)"
-                  title="Retirer des favoris"
-                >
-                  <i class="fas fa-heart" />
-                </button>
+                  left-icon="fas fa-heart"
+                  :disabled="togglingFavorite === project.id"
+                />
                 <div class="open-hint">
                   <span class="click-hint">Ouvrir</span>
                   <i class="fas fa-arrow-right click-hint"></i>
@@ -439,9 +446,7 @@ onMounted(() => loadProjects());
           v-else-if="publicProjects.length === 0"
           class="state-container empty"
         >
-          <div class="music-note">
-            <i class="fas fa-globe"></i>
-          </div>
+          <div class="music-note"><i class="fas fa-globe" /></div>
           <h3>Aucun projet public</h3>
           <p>
             Soyez le premier à partager un projet ! Rendez l'un de vos projets
@@ -478,25 +483,23 @@ onMounted(() => loadProjects());
               </div>
               <h3 class="card-title">{{ project.name }}</h3>
               <div class="card-footer">
-                <button
-                  class="icon-toggle favorite-btn"
-                  :class="{ active: isProjectFavorited(project.id) }"
+                <BaseButton
+                  size="small"
+                  variant="outline"
+                  :active="isProjectFavorited(project.id)"
+                  :left-icon="
+                    isProjectFavorited(project.id)
+                      ? 'fas fa-heart'
+                      : 'far fa-heart'
+                  "
                   :disabled="togglingFavorite === project.id"
-                  @click="toggleFavorite(project.id, $event)"
-                  :title="
+                  :tooltip="
                     isProjectFavorited(project.id)
                       ? 'Retirer des favoris'
                       : 'Ajouter aux favoris'
                   "
-                >
-                  <i
-                    :class="
-                      isProjectFavorited(project.id)
-                        ? 'fas fa-heart'
-                        : 'far fa-heart'
-                    "
-                  />
-                </button>
+                  @click="toggleFavorite(project.id, $event)"
+                />
                 <div class="open-hint">
                   <span class="click-hint">Ouvrir</span>
                   <i class="fas fa-arrow-right click-hint"></i>
@@ -566,9 +569,9 @@ onMounted(() => loadProjects());
                   :loading="restoringProject === project.id"
                   :disabled="!!restoringProject"
                   @click="handleRestore(project.id, $event)"
-                >
-                  <i class="fas fa-undo" /> Restaurer
-                </BaseButton>
+                  label="Restaurer"
+                  left-icon="fas fa-undo"
+                />
               </div>
             </div>
           </div>
@@ -590,14 +593,19 @@ onMounted(() => loadProjects());
         variant="secondary"
         :disabled="isDeleting"
         @click="cancelDelete"
-      >
-        Annuler
-      </BaseButton>
-      <BaseButton variant="error" :loading="isDeleting" @click="executeDelete">
-        Supprimer
-      </BaseButton>
+        label="Annuler"
+      />
+      <BaseButton
+        variant="error"
+        :loading="isDeleting"
+        @click="executeDelete"
+        label="Supprimer"
+      />
     </template>
   </BaseModal>
+  <div class="vpn-banner-full">
+    <VpnBanner :dismissible="false" />
+  </div>
 </template>
 
 <style scoped>
@@ -782,51 +790,6 @@ onMounted(() => loadProjects());
   transform: translateX(0);
 }
 
-.icon-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: transparent;
-  border: 1px solid var(--color-border-secondary);
-  border-radius: 6px;
-  color: var(--color-white-light);
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  opacity: 0.5;
-
-  &:hover {
-    opacity: 1;
-    border-color: var(--color-accent3-hover);
-    color: var(--color-white);
-  }
-
-  &.active {
-    opacity: 1;
-    border-color: var(--color-accent3-hover);
-    color: var(--color-accent3-hover);
-    background: rgba(var(--color-accent3-rgb), 0.2);
-  }
-
-  &:disabled {
-    cursor: wait;
-    opacity: 0.3;
-  }
-}
-
-.favorite-btn.active {
-  border-color: var(--color-danger-hover);
-  color: var(--color-danger-hover);
-  background: rgba(var(--color-danger-hover-rgb), 0.15);
-}
-
-.favorite-btn:hover {
-  border-color: var(--color-danger-hover);
-  color: var(--color-danger-hover);
-}
-
 .state-container {
   text-align: center;
   padding: 60px 20px;
@@ -835,8 +798,8 @@ onMounted(() => loadProjects());
 .music-note {
   font-size: 4rem;
   margin-bottom: 20px;
-  color: var(--color-accent3);
-  opacity: 0.5;
+  color: var(--color-white);
+  opacity: 0.4;
 }
 
 .state-container h3 {
@@ -872,11 +835,6 @@ onMounted(() => loadProjects());
     color: var(--color-white-light);
     opacity: 0.7;
   }
-}
-
-.delete-btn:hover {
-  border-color: var(--color-danger-hover);
-  color: var(--color-danger-hover);
 }
 
 .trash-card {
@@ -924,5 +882,12 @@ onMounted(() => loadProjects());
   .projects-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.vpn-banner-full {
+  width: 100vw;
+  margin-top: 80px;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
 }
 </style>

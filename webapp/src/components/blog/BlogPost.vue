@@ -14,6 +14,7 @@ import {
   updatePost,
 } from "../../services/posts";
 import type { CreatePostData, Post } from "../../lib/utils/types";
+import ProjectLinkRenderer from "./ProjectLinkRenderer.vue";
 
 const props = defineProps<{
   post: Post;
@@ -249,6 +250,10 @@ const closeAuthorMenu = () => {
   showAuthorMenu.value = false;
 };
 
+const goToProfile = () => {
+  router.push("public-profile/" + props.post.author?.id);
+};
+
 // Envoyer un message à l'auteur
 const sendMessageToAuthor = () => {
   if (props.post.author?.id) {
@@ -293,13 +298,16 @@ fetchComments();
         </div>
         <!-- Menu contextuel auteur -->
         <div v-if="showAuthorMenu && !isOwnPost" class="author-menu">
+          <button class="author-menu-item" @click="goToProfile">
+            <i class="fas fa-user" />
+            Voir le profil
+          </button>
           <button class="author-menu-item" @click="sendMessageToAuthor">
-            <i class="fas fa-envelope"></i>
+            <i class="fas fa-envelope" />
             Envoyer un message
           </button>
           <button class="author-menu-item" @click="closeAuthorMenu">
-            <i class="fas fa-times"></i>
-            Fermer
+            <i class="fas fa-times" />
           </button>
         </div>
       </div>
@@ -339,7 +347,7 @@ fetchComments();
       </div>
     </div>
     <div class="post-content">
-      {{ post.body }}
+      <ProjectLinkRenderer :text="post.body" />
     </div>
 
     <!-- Affichage des tags du post -->
@@ -355,7 +363,7 @@ fetchComments();
     </div>
 
     <div class="post-footer" @click.stop>
-      <div>
+      <div class="post-footer-action">
         <BaseButton
           variant="lightlink"
           size="small"
@@ -366,12 +374,12 @@ fetchComments();
               ? 'Masquer les commentaires'
               : 'Afficher les commentaires'
           "
-        >
-          {{ showComments ? "Masquer" : "Voir" }} commentaires ({{
-            commentsCount
-          }})
-        </BaseButton>
-
+          :label="
+            showComments
+              ? 'Masquer'
+              : 'Voir' + ' commentaires (' + commentsCount + ')'
+          "
+        />
         <!-- Bouton pour ajouter un commentaire (uniquement si connecté) -->
         <BaseButton
           v-if="authStore.isAuthenticated"
@@ -380,9 +388,8 @@ fetchComments();
           @click="toggleCommentForm"
           :title="showCommentForm ? 'Annuler' : 'Ajouter un commentaire'"
           color="primary"
-        >
-          {{ showCommentForm ? "Réduire" : "Commenter" }}
-        </BaseButton>
+          :label="showCommentForm ? 'Réduire' : 'Commenter'"
+        />
       </div>
       <div class="date">{{ formatFullDate(props.post.createdAt) }}</div>
     </div>
@@ -423,18 +430,16 @@ fetchComments();
               size="small"
               @click="toggleCommentForm"
               :disabled="isSubmittingComment"
-            >
-              Annuler
-            </BaseButton>
+              label="Annuler"
+            />
             <BaseButton
               type="submit"
               variant="secondary"
               size="small"
               :disabled="loadingComments"
               :loading="loadingComments"
-            >
-              Poster
-            </BaseButton>
+              label="Poster"
+            />
           </div>
         </div>
       </form>
@@ -452,9 +457,8 @@ fetchComments();
             size="small"
             @click="fetchComments"
             class="retry-button"
-          >
-            Réessayer
-          </BaseButton>
+            label="Réessayer"
+          />
         </div>
 
         <div v-else-if="comments.length === 0" class="comments-empty">
@@ -493,12 +497,16 @@ fetchComments();
       </template>
       <p>Cette action est irréversible.</p>
       <template #footer>
-        <BaseButton variant="secondary" @click.stop="cancelDelete">
-          Annuler
-        </BaseButton>
-        <BaseButton variant="danger" @click.stop="confirmDelete">
-          Supprimer
-        </BaseButton>
+        <BaseButton
+          variant="secondary"
+          @click.stop="cancelDelete"
+          label="Annuler"
+        />
+        <BaseButton
+          color="error"
+          @click.stop="confirmDelete"
+          label="Supprimer"
+        />
       </template>
     </BaseModal>
   </div>

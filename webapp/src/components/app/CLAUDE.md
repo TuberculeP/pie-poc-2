@@ -74,18 +74,20 @@ setAutomationPoints(trackId, laneId, points): boolean
 ### Types clés (`lib/utils/types.ts`)
 
 ```typescript
-InstrumentType = "basicSynth" | "elementarySynth" | "smplr" | "undertale" | "audioTrack"
+InstrumentType = "basicSynth" | "elementarySynth" | "smplr" | "undertale" | "fmSynth" | "audioTrack" | "samplePlayer"
 
 // Discriminated unions pour type safety
 BasicSynthConfig { type: "basicSynth", oscillatorType: OscillatorType, gain? }
-SmplrConfig { type: "smplr", soundfont: string, gain? }
+SmplrConfig { type: "smplr", soundfont: string, gain?, attack?, decay?, sustain?, release? }
 ElementarySynthConfig { type: "elementarySynth", preset?, gain? }
 UndertaleConfig { type: "undertale", instrument: string, gain?, attack?, decay?, sustain?, release? }
+FmSynthConfig { type: "fmSynth", patch: Dx7Patch, gain? }  // synthèse FM style DX7, voir plus bas
 AudioTrackConfig { type: "audioTrack", gain? }
-InstrumentConfig = BasicSynthConfig | SmplrConfig | ElementarySynthConfig | UndertaleConfig | AudioTrackConfig
+SamplePlayerConfig { type: "samplePlayer", sampleId: string | null, rootNote: NoteName, mode: "normal" | "stretch", gain?, attack?, decay?, sustain?, release? }
+InstrumentConfig = BasicSynthConfig | SmplrConfig | ElementarySynthConfig | UndertaleConfig | FmSynthConfig | AudioTrackConfig | SamplePlayerConfig
 
 // Pour les updates partiels (sans discriminant)
-InstrumentConfigUpdate { oscillatorType?, soundfont?, preset?, gain? }
+InstrumentConfigUpdate { oscillatorType?, soundfont?, preset?, gain?, patch?, sampleId?, rootNote?, mode? }
 
 EQBand {
   id: string          // "sub", "bass", "mid", "presence", "brilliance"
@@ -178,20 +180,59 @@ engines/
   types.ts              # InstrumentEngine, EngineState, EngineStateCallback
   BaseEngine.ts         # Classe abstraite avec state management
   noteUtils.ts          # noteNameToFrequency() partagé
+  voicePool.ts          # VoicePool<TSampler> - pool de voix pour ADSR polyphonique (smplr/undertale)
   index.ts              # Re-exports publics
 
   basic-synth/
     BasicSynthEngine.ts # Oscillateurs Web Audio (toujours ready)
 
   smplr/
-    SmplrEngine.ts      # Soundfonts via `smplr` (128+ instruments)
+    SmplrEngine.ts      # Soundfonts via `smplr` (128+ instruments), ADSR via VoicePool
     soundfonts.ts       # SOUNDFONT_LIST + SoundfontName
 
   undertale/
-    UndertaleEngine.ts  # Soundfont custom Undertale avec ADSR
+    UndertaleEngine.ts  # Soundfont custom Undertale, ADSR via VoicePool
+
+  fm-synth/
+    FmSynthEngine.ts        # Synthèse FM (6 opérateurs, style DX7) via AudioWorklet
+    fm-synth-processor.ts   # AudioWorkletProcessor : rendu échantillon par échantillon
+    protocol.ts             # Messages thread principal <-> worklet
+    dsp/                    # Port du moteur DX7 de mmontag/dx7-synth-js (MIT) — pure computation, sans dépendance UI/AudioContext
+    presets/rom1a.json      # 32 presets d'usine (bank ROM1A du DX7 original)
+    index.ts                # Re-exports (FmSynthEngine, FM_SYNTH_PRESETS, ALGORITHMS)
+
+  sample-player/
+    SamplePlayerEngine.ts # Joue un AudioSample par note (playbackRate natif en
+                          # mode "normal", Tone.GrainPlayer en mode "stretch")
 ```
 
+`Soundfont`/`Soundfont2Sampler` (lib `smplr`) fixent leur destination audio à la
+construction et la partagent entre toutes les notes jouées par une même
+instance — impossible d'insérer une enveloppe par note en aval de la sortie
+partagée. `VoicePool` contourne cette limite en pré-chargeant N instances de
+sampler (par défaut 8, `VOICE_POOL_SIZE` dans chaque engine), chacune reliée à
+son propre `GainNode` d'enveloppe, et alloue une voix libre (ou la plus
+ancienne, en voice stealing si le pool est saturé) par note jouée — attack,
+decay et sustain sont réellement audibles et indépendants par voix en
+polyphonie (accords). Le `release` s'appuie sur `decayTime`, géré nativement
+par `smplr` (rampe de fondu interne au `stop()`).
+
+`SamplePlayerEngine` n'a pas ce problème (pas de destination fixée à la
+construction), donc pas besoin de `VoicePool` : chaque note crée directement
+son propre `GainNode` d'enveloppe à la volée. Il ne connaît par ailleurs jamais
+`audioLibraryStore` (aucun fichier sous `lib/audio/` n'importe un store, cf.
+`AudioClipEngine.playClip`) : c'est `trackAudioStore.ts` qui résout le
+`sampleId` en `AudioBuffer` via `audioLibraryStore.loadSample()` et l'injecte
+via `engine.setBuffer(buffer)`, hors de l'interface `InstrumentEngine`.
+
 Factory : `lib/audio/instrumentFactory.ts` - Crée les instances d'engines selon le type.
+
+`fmSynth` est le seul engine avec une interface dédiée plutôt que des paramètres
+inline dans `InstrumentSettings.vue` — voir `hasCustomInterface` /
+`INSTRUMENT_INTERFACE_COMPONENTS` (composant : `Dx7InstrumentPanel.vue`), qui
+ouvre l'interface réelle de l'instrument dans une modale (`BaseModal`) au lieu
+d'adapter ses contrôles aux sliders génériques du drawer. Pattern réutilisable
+pour tout futur instrument avec sa propre UI.
 
 ### Bibliothèque de samples (Audiothèque)
 
@@ -335,14 +376,14 @@ Voir [Système d'effets](#système-deffets-libaudioeffects) plus haut. `EffectRa
 
 ## Flow utilisateur
 
-1. **Ajouter une piste** : Bouton "+" → Menu instruments (BasicSynth, Smplr, Undertale, AudioTrack)
+1. **Ajouter une piste** : Bouton "+" → Menu instruments (BasicSynth, Smplr, Undertale, FM Synth, AudioTrack, Sample Player)
 2. **Éditer les notes** : Double-clic sur la timeline d'une piste → Piano roll s'expand en dessous
 3. **Ajouter une note** : Clic simple sur la grille du piano roll
 4. **Supprimer une note** : Clic droit sur la note
 5. **Sélection multiple** : Ctrl/Cmd+clic sur les notes ou Ctrl/Cmd+drag pour marquee
 6. **Drag/Resize** : Glisser les notes sélectionnées / handle à droite
 7. **Copy/Paste** : Ctrl+C, Ctrl+V (colle à la position souris), Ctrl+D (duplicate à droite)
-8. **Déplacer notes** : Shift+flèches (1 step), Ctrl/Cmd+↑↓ (1 octave)
+8. **Déplacer notes** : Flèches (1 step), Ctrl/Cmd+↑↓ (1 octave), Ctrl/Cmd+←→ (1 mesure)
 9. **Undo/Redo** : Ctrl+Z / Ctrl+Shift+Z (par piste, persiste même si piano roll fermé)
 10. **Configurer l'instrument** : Clic sur ⚙ d'une piste → Panneau latéral
 11. **Playback** : Toutes les pistes jouent simultanément (respect mute/solo)
@@ -394,6 +435,7 @@ cloneEQBands()                // Clone profond des bandes EQ
 ### Bugs résolus
 
 - **SmplrEngine pas de son** : Ne pas utiliser `markRaw()` sur l'objet Soundfont de smplr
+- **ADSR Undertale sans effet audio** : le `GainNode` d'enveloppe n'était connecté qu'en sortie, jamais alimenté par la source réelle (attack/decay/sustain cosmétiques, seul `release` fonctionnait via `decayTime`) — corrigé avec `VoicePool` (voir plus haut)
 - **Délai première note** : Système de preload implémenté
 - **Fuites mémoire engines** : Cleanup complet dans `dispose()` (clear des Maps, stateCallbacks)
 - **Watchers accumulation** : trackAudioStore stocke et cleanup les watchers dans `dispose()`
@@ -410,10 +452,12 @@ cloneEQBands()                // Clone profond des bandes EQ
 - [x] Pile d'effets réordonnable (EQ/Reverb/Compressor/Limiter/Overdrive) par piste et master
 - [ ] Zoom timeline
 - [ ] ADSR pour ElementarySynth
-- [x] Undertale soundfont engine avec ADSR
+- [x] Undertale soundfont engine avec ADSR polyphonique (VoicePool)
+- [x] ADSR polyphonique pour smplr (VoicePool)
 - [ ] Audio tracks (pistes samples) - en cours
 - [x] Bibliothèque de samples connectée à R2/CDN
 - [x] Cache IndexedDB pour samples (500MB, LRU)
+- [x] Sample Player (sampler par note, modes normal/stretch via Tone.GrainPlayer)
 
 ## Conventions de code
 
@@ -442,4 +486,5 @@ npm run lint:webapp  # Lint du frontend
 ## Dépendances clés
 
 - `smplr` : Soundfonts pour les instruments samplés
+- `tone` : `GrainPlayer` pour le mode "stretch" du Sample Player (synthèse granulaire, durée constante quel que soit le pitch)
 - `pinia` : State management

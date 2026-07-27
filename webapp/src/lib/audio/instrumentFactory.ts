@@ -2,6 +2,9 @@ import type { InstrumentConfig } from "../utils/types";
 import {
   AudioClipEngine,
   BasicSynthEngine,
+  FM_SYNTH_PRESETS,
+  FmSynthEngine,
+  SamplePlayerEngine,
   SmplrEngine,
   UndertaleEngine,
   type InstrumentEngine,
@@ -32,8 +35,14 @@ export function createInstrumentEngine(
     case "undertale":
       return new UndertaleEngine(audioContext, destination, config);
 
+    case "fmSynth":
+      return new FmSynthEngine(audioContext, destination, config);
+
     case "audioTrack":
       return new AudioClipEngine(audioContext, destination, config);
+
+    case "samplePlayer":
+      return new SamplePlayerEngine(audioContext, destination, config);
 
     default:
       throw new Error(`Unknown instrument type: ${(config as any).type}`);
@@ -56,6 +65,10 @@ export function getDefaultConfigForType(
         type: "smplr",
         soundfont: "acoustic_grand_piano",
         gain: 1,
+        attack: 0,
+        decay: 0,
+        sustain: 1,
+        release: 0.3,
       };
 
     case "elementarySynth":
@@ -76,10 +89,30 @@ export function getDefaultConfigForType(
         release: 0.3,
       };
 
+    case "fmSynth":
+      return {
+        type: "fmSynth",
+        patch: FM_SYNTH_PRESETS[0],
+        gain: 1,
+      };
+
     case "audioTrack":
       return {
         type: "audioTrack",
         gain: 1,
+      };
+
+    case "samplePlayer":
+      return {
+        type: "samplePlayer",
+        sampleId: null,
+        rootNote: "C4",
+        mode: "normal",
+        gain: 1,
+        attack: 0,
+        decay: 0,
+        sustain: 1,
+        release: 0.05,
       };
 
     default:

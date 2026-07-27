@@ -1,0 +1,218 @@
+{
+  "features": [
+    {
+      "icon": "fas fa-wave-square",
+      "title": "Audio professionnel",
+      "description": "Qualité studio avec notre moteur audio haute fidélité et nos effets professionnels.",
+      "color": "#ffd269"
+    },
+    {
+      "icon": "fas fa-cloud",
+      "title": "100% Cloud",
+      "description": "Vos projets sauvegardés automatiquement, accessibles depuis n'importe où.",
+      "color": "#91a5f9"
+    },
+    {
+      "icon": "fas fa-th-large",
+      "title": "Interface intuitive",
+      "description": "Une expérience utilisateur pensee pour la créativité, pas la complexite.",
+      "color": "#7cc8f5"
+    },
+    {
+      "icon": "fas fa-users",
+      "title": "Collaboration live",
+      "description": "Créez ensemble en temps réel, ou que vous soyez dans le monde.",
+      "color": "#60bd61"
+    },
+    {
+      "icon": "fas fa-microphone",
+      "title": "Multi-pistes",
+      "description": "Enregistrez et mixez autant de pistes que votre créativité l'exige.",
+      "color": "#f59e0b"
+    },
+    {
+      "icon": "fas fa-infinity",
+      "title": "Sans limites",
+      "description": "Pistes, presets et exports illimites pour une création sans frontieres.",
+      "color": "#ec4899"
+    }
+  ],
+  "steps": [
+    {
+      "icon": "fas fa-user-plus",
+      "title": "Créez votre compte",
+      "description": "Inscription gratuite en quelques secondes. Commencez à créer immediatement."
+    },
+    {
+      "icon": "fas fa-sliders-h",
+      "title": "Configurez votre studio",
+      "description": "Choisissez vos instruments, effets et configurez votre espace de travail ideal."
+    },
+    {
+      "icon": "fas fa-rocket",
+      "title": "Lancez-vous !",
+      "description": "Créez, collaborez et partagez vos créations avec le monde entier."
+    }
+  ],
+  "pricingPlans": [
+    {
+      "name": "Freemium",
+      "price": "0",
+      "description": "Pour découvrir Bloop",
+      "popular": false,
+      "features": [
+        "Accès illimité à l'espace MAO",
+        "25 projets sauvegardés",
+        "150+ instruments et presets & éditeurs complets",
+        "Partage de projets en lecture seule",
+        "Ressources d'apprentissage",
+        "Espace communautaire",
+        "2 Go de stockage cloud & Export standard "
+      ],
+      "cta": "Commencer gratuitement"
+    },
+    {
+      "name": "Medium",
+      "price": "9.99",
+      "description": "Pour les créateurs réguliers",
+      "popular": true,
+      "features": [
+        "Pack Free",
+        "80 projets sauvegardés",
+        "300+ instruments et presets",
+        "Collaboration en temps réel & Espace communautaire enrichi",
+        "Diffusion directe sur les plateformes de streaming",
+        "Pack de son medium",
+        "25 Go de stockage cloud & Export haute qualité",
+        "Sans publicité"
+      ],
+      "cta": "Essai gratuit 14 jours"
+    },
+    {
+      "name": "Premium",
+      "price": "14.99",
+      "description": "Pour les artistes et créateurs",
+      "popular": false,
+      "features": [
+        "Pack Medium",
+        "Projets illimités",
+        "Accès aux instruments et effets professionnels cloud",
+        "Collaboration avancée",
+        "Packs de sons premium et collaborations exclusives avec des artistes",
+        "Stockage cloud illimité",
+        "Accès anticipé aux nouvelles fonctionnalités (bêta)"
+      ],
+      "cta": "Souscrire à l'offre"
+    }
+  ],
+  "mcpSteps": [
+    {
+      "title": "Installez Claude Code",
+      "description": "Téléchargez l'extension Claude Code pour VS Code ou utilisez la CLI."
+    },
+    {
+      "title": "Ajoutez la configuration",
+      "description": "Copiez le fichier .mcp.json ci-contre à la racine de votre projet et rechargez Claude Code."
+    },
+    {
+      "title": "Connectez-vous à BLOOP",
+      "description": "Claude Code ouvre votre navigateur — connectez-vous à votre compte BLOOP pour autoriser l'accès."
+    },
+    {
+      "title": "Créez de la musique",
+      "description": "Demandez à Claude de composer, arranger, ajouter des pistes… il agit directement sur vos projets."
+    }
+  ],
+  "socialMedia" : [
+    {
+      "name": "Instagram",
+      "icon": "fab fa-instagram",
+      "link": "https://www.instagram.com/bloop_music/"
+    },
+    {
+      "name": "YouTube",
+      "icon": "fab fa-youtube",
+      "link": "https://www.youtube.com/@BloopOnCloud"
+    }
+  ],
+  "footerLinks" : [
+    {
+      "title": "Produit",
+      "links": [
+        { "label": "Fonctionnalités", "link": "#features" },
+        { "label": "Tarifs", "link": "#about" }
+      ]
+    },
+    {
+      "title": "Ressources",
+      "links": [
+        { "label": "Apprentissage", "link": "/learning" },
+        { "label": "Blog", "link": "/blog" }
+      ]
+    },
+    {
+      "title": "Support",
+      "links": [
+        { "label": "Centre d'aide", "link": "/support" },
+        { "label": "Contact", "link": "/contact" }
+      ]
+    }
+  ],
+  "footerLegalLinks": [
+    {
+      "id": 1,
+      "title": "Confidentialité",
+      "link": "#"
+    },
+    {
+      "id": 2,
+      "title": "CGU",
+      "link": "/cgu"
+    },
+    {
+      "id": 3,
+      "title": "CGV",
+      "link": "/cgv"
+    }
+  ],
+  "aboutSection": [
+    {
+      "icon": "fas fa-laptop",
+      "title": "Accessible",
+      "description": "Directement dans ton navigateur. Aucune installation, aucune compétence technique requise."
+    },
+    {
+      "icon": "fas fa-gift",
+      "title": "Gratuit",
+      "description": "Des centaines d'instruments et de samples inclus, sans carte bancaire nécessaire."
+    },
+    {
+      "icon": "fas fa-sync-alt",
+      "title": "Collaboratif",
+      "description": "Partage tes créations et laisse la communauté les remixer à sa sauce."
+    }
+  ],
+  "contactSection": [
+    {
+      "icon": "fas fa-envelope",
+      "title": "Email",
+      "description": "Pour toute question générale sur Bloop.",
+      "link": "mailto:hello@bloop-on.cloud",
+      "linkLabel": "hello@bloop-on.cloud"
+    },
+    {
+      "icon": "fab fa-instagram",
+      "title": "Instagram",
+      "description": "Rejoins la communauté, pose tes questions en direct.",
+      "link": "https://www.instagram.com/bloop_music/",
+      "linkLabel": "Rejoindre le serveur"
+    },
+    {
+      "icon": "fas fa-newspaper",
+      "title": "Presse",
+      "description": "Demandes médias et partenariats.",
+      "link": "mailto:presse@bloop-on.cloud",
+      "linkLabel": "presse@bloop-on.cloud"
+    }
+  ]
+}

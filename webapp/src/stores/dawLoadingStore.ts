@@ -5,13 +5,14 @@ import { useTrackAudioStore } from "./trackAudioStore";
 import { useAudioLibraryStore } from "./audioLibraryStore";
 import { useElementaryStore } from "./elementaryStore";
 import { useAudioBusStore } from "./audioBusStore";
+import { useStretchRenderCacheStore } from "./stretchRenderCacheStore";
 
 type TaskStatus = "pending" | "loading" | "complete" | "error";
 type PhaseStatus = "pending" | "loading" | "complete";
 
 interface LoadingTask {
   id: string;
-  type: "engine" | "instrument" | "sample";
+  type: "engine" | "instrument" | "sample" | "stretch";
   label: string;
   status: TaskStatus;
   trackId?: string;
@@ -115,22 +116,34 @@ export const useDawLoadingStore = defineStore("dawLoading", () => {
 
     // Phase 3: Samples audio
     const sampleTasks: LoadingTask[] = [];
+    const seenSamples = new Set<string>();
     const audioLibraryStore = useAudioLibraryStore();
+
+    const pushSampleTask = (sampleId: string): void => {
+      if (seenSamples.has(sampleId)) return;
+      seenSamples.add(sampleId);
+      const sample = audioLibraryStore.getSample(sampleId);
+      const label = sample?.name || sample?.filename || sampleId;
+      sampleTasks.push({
+        id: sampleId,
+        type: "sample",
+        label,
+        status: "pending",
+      });
+    };
 
     for (const track of project.tracks) {
       if (track.instrument.type === "audioTrack" && track.clips) {
         for (const clip of track.clips) {
-          if (!sampleTasks.some((t) => t.id === clip.sampleId)) {
-            const sample = audioLibraryStore.getSample(clip.sampleId);
-            const label = sample?.name || sample?.filename || clip.sampleId;
-            sampleTasks.push({
-              id: clip.sampleId,
-              type: "sample",
-              label,
-              status: "pending",
-            });
-          }
+          pushSampleTask(clip.sampleId);
         }
+      }
+
+      if (
+        track.instrument.type === "samplePlayer" &&
+        track.instrument.sampleId
+      ) {
+        pushSampleTask(track.instrument.sampleId);
       }
     }
 
@@ -140,6 +153,33 @@ export const useDawLoadingStore = defineStore("dawLoading", () => {
         name: "Chargement des samples",
         status: "pending",
         tasks: sampleTasks,
+      });
+    }
+
+    // Phase 4: Pré-calcul des clips audio étirés (mode stretch) — rend
+    // disponible un cache chaud dès l'ouverture du projet, pour un premier
+    // play instantané (voir stretchRenderCacheStore.ts).
+    const stretchTasks: LoadingTask[] = [];
+    for (const track of project.tracks) {
+      if (track.instrument.type !== "audioTrack" || !track.clips) continue;
+      for (const clip of track.clips) {
+        if (!clip.stretched) continue;
+        const sample = audioLibraryStore.getSample(clip.sampleId);
+        stretchTasks.push({
+          id: clip.id,
+          type: "stretch",
+          label: `Étirement — ${sample?.name || sample?.filename || clip.sampleId}`,
+          status: "pending",
+        });
+      }
+    }
+
+    if (stretchTasks.length > 0) {
+      phases.value.push({
+        id: "stretch-prerender",
+        name: "Pré-calcul des boucles étirées",
+        status: "pending",
+        tasks: stretchTasks,
       });
     }
   }
@@ -227,6 +267,60 @@ export const useDawLoadingStore = defineStore("dawLoading", () => {
     phase.status = "complete";
   }
 
+  async function executeStretchPrerenderPhase(
+    project: TimelineProject,
+  ): Promise<void> {
+    const phase = phases.value.find((p) => p.id === "stretch-prerender");
+    if (!phase) return;
+
+    phase.status = "loading";
+    const audioLibraryStore = useAudioLibraryStore();
+    const audioBusStore = useAudioBusStore();
+    const stretchRenderCacheStore = useStretchRenderCacheStore();
+
+    // Rendus indépendants les uns des autres (samples déjà en cache mémoire
+    // depuis la phase précédente) — en parallèle, comme executeInstrumentsPhase
+    // ci-dessus, plutôt que séquentiel comme executeSamplesPhase (qui limite
+    // volontairement les requêtes réseau concurrentes ; ici il n'y en a pas).
+    const renderTasks: Promise<void>[] = [];
+
+    for (const track of project.tracks) {
+      if (track.instrument.type !== "audioTrack" || !track.clips) continue;
+      for (const clip of track.clips) {
+        if (!clip.stretched) continue;
+        const task = phase.tasks.find((t) => t.id === clip.id);
+        if (!task) continue;
+
+        task.status = "loading";
+        renderTasks.push(
+          (async () => {
+            try {
+              const buffer = await audioLibraryStore.loadSample(clip.sampleId);
+              if (buffer) {
+                await stretchRenderCacheStore.ensureStretchedClipCached(
+                  clip,
+                  buffer,
+                  project.tempo,
+                  audioBusStore.audioContext,
+                );
+              }
+              task.status = "complete";
+            } catch (e) {
+              console.error(
+                `[DawLoading] Failed to prerender stretched clip ${clip.id}:`,
+                e,
+              );
+              task.status = "error";
+            }
+          })(),
+        );
+      }
+    }
+
+    await Promise.all(renderTasks);
+    phase.status = "complete";
+  }
+
   async function preloadProject(project: TimelineProject): Promise<void> {
     if (isPreloading.value) return;
 
@@ -252,6 +346,9 @@ export const useDawLoadingStore = defineStore("dawLoading", () => {
 
       // Phase 3: Samples
       await executeSamplesPhase();
+
+      // Phase 4: Pré-calcul des clips étirés
+      await executeStretchPrerenderPhase(project);
 
       isComplete.value = true;
     } catch (e) {

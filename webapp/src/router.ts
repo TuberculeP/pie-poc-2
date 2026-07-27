@@ -48,12 +48,17 @@ async function adminGuard(to: any, from: any, next: any) {
 import BlogApp from "./views/blog/BlogApp.vue";
 import BlogSearchResults from "./views/blog/BlogSearchResults.vue";
 import BlogPostDetail from "./views/blog/BlogPostDetail.vue";
+import LearningApp from "./views/learning/LearningApp.vue";
+import LearningArticleDetail from "./views/learning/LearningArticleDetail.vue";
 import ProfileView from "./views/profile/ProfileView.vue";
 import MessagesView from "./views/messages/MessagesView.vue";
 import LandingCgu from "./views/landing/LandingCgu.vue";
 import LandingCgv from "./views/landing/LandingCgv.vue";
 import LandingAbout from "./views/landing/LandingAbout.vue";
 import LandingSupport from "./views/landing/LandingSupport.vue";
+import ButtonView from "./views/messages/ButtonView.vue";
+import LandingContact from "./views/landing/LandingContact.vue";
+import PublicProfileView from "./views/profile/PublicProfileView.vue";
 
 const routes = [
   { path: "/", component: LandingIndex, name: "landing-main" },
@@ -61,6 +66,7 @@ const routes = [
   { path: "/cgv", component: LandingCgv, name: "landing-cgv" },
   { path: "/about", component: LandingAbout, name: "landing-about" },
   { path: "/support", component: LandingSupport, name: "landing-support" },
+  { path: "/contact", component: LandingContact, name: "landing-contact" },
   { path: "/app", component: ProjectSelectorView, name: "app-main" },
   { path: "/app/sequencer", component: BloopApp, name: "app-sequencer" },
   { path: "/login", component: LoginView, name: "app-login" },
@@ -86,8 +92,31 @@ const routes = [
     component: BlogPostDetail,
     name: "blog-post-detail",
   },
+  { path: "/learning", component: LearningApp, name: "learning-list" },
+  {
+    path: "/learning/editor/new",
+    component: () => import("./views/learning/LearningArticleEditor.vue"),
+    name: "learning-new",
+    meta: { requiresAdmin: true },
+  },
+  {
+    path: "/learning/editor/:id",
+    component: () => import("./views/learning/LearningArticleEditor.vue"),
+    name: "learning-edit",
+    meta: { requiresAdmin: true },
+  },
+  {
+    path: "/learning/:slug",
+    component: LearningArticleDetail,
+    name: "learning-detail",
+  },
   { path: "/profile", component: ProfileView, name: "profile" },
   { path: "/messages", component: MessagesView, name: "messages" },
+  {
+    path: "/public-profile/:slug",
+    component: PublicProfileView,
+    name: "public-profile",
+  },
   // Admin routes
   {
     path: "/admin",
@@ -119,10 +148,39 @@ const routes = [
     name: "admin-folder-detail",
     meta: { requiresAdmin: true },
   },
+  {
+    path: "/admin/projects",
+    component: () => import("./views/admin/AdminProjects.vue"),
+    name: "admin-projects",
+    meta: { requiresAdmin: true },
+  },
+  {
+    path: "/admin/buttons",
+    component: ButtonView,
+    name: "admin-buttons",
+    meta: { requiresAdmin: true },
+  },
+  {
+    path: "/403",
+    name: "forbidden",
+    component: () => import("./views/error/Forbidden.vue"),
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    name: "not-found",
+    component: () => import("./views/error/NotFound.vue"),
+  },
 ];
 
 const getGuardedRoutes = () => {
-  const guardedMatches = ["app", "blog", "settings", "profile", "messages"];
+  const guardedMatches = [
+    "app",
+    "blog",
+    "settings",
+    "profile",
+    "messages",
+    "learning",
+  ];
   return routes.map((route: any) => {
     if (route.meta?.requiresAdmin) {
       return {
