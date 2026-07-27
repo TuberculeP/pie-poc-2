@@ -9,7 +9,7 @@ import BaseButton from "../ui/BaseButton.vue";
 import FormField from "../ui/FormField.vue";
 import BaseInput from "../ui/BaseInput.vue";
 import { useToast } from "../../composables/useToast";
-import { useAdsStore } from "../../stores/adsStore.ts";
+import { useAdsStore } from "../../stores/adsStore";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -174,9 +174,8 @@ onMounted(() => {
       <label class="toggle-switch">
         <input
           type="checkbox"
-          :checked="adsStore.isEnabled"
+          v-model="adsStore.isEnabled"
           aria-label="Afficher les publicités"
-          @change="adsStore.toggle"
         />
         <span class="toggle-track">
           <span class="toggle-thumb"></span>
